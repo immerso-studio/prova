@@ -240,6 +240,8 @@
       return texture;
     }
 
+    
+
     const asphaltTexture = createAsphaltTexture();
     const asphaltGeometry = new THREE.PlaneGeometry(aspect * 2, 2);
     const asphaltMaterial = new THREE.MeshBasicMaterial({ map: asphaltTexture });
@@ -281,14 +283,14 @@
       // Particella principale (centro opaco)
       const mainSize = 0.01;
       const mainGeometry = new THREE.CircleGeometry(mainSize, 12);
-      const mainMaterial = createChalkMaterial(color, 0.7 + Math.random() * 0.3);
+      const mainMaterial = createChalkMaterial(color, 0.95 - Math.random() * 0.25);
       const mainParticle = new THREE.Mesh(mainGeometry, mainMaterial);
       group.add(mainParticle);
 
       // Alone polveroso (ring)
       const haloSize = mainSize * (1.5 + brushSize * 0.3);
       const haloGeometry = new THREE.RingGeometry(haloSize * 0.3, haloSize, 16);
-      const haloMaterial = createChalkMaterial(color, 0.18 + Math.random() * 0.22);
+      const haloMaterial = createChalkMaterial(color, 0.1 + Math.random() * 0.15);
       const halo = new THREE.Mesh(haloGeometry, haloMaterial);
       // posizioniamo leggermente dietro per evitare z-fighting visivo
       halo.position.z = -0.001;
@@ -325,6 +327,19 @@
       return group;
     }
 
+    function varyColor(baseColor) {
+      const color = new THREE.Color(baseColor);
+      color.offsetHSL(
+        (Math.random() - 0.5) * 0.02, // leggera variazione di tinta
+        (Math.random() - 0.5) * 0.05,
+        (Math.random() - 0.5) * 0.08
+      );
+      return color;
+    }
+
+
+    
+
     // Disegna una traccia tra start ed end generando particelle in base a distanza e brushSize
     function drawChalkStroke(start, end, color) {
       const distance = Math.sqrt(
@@ -335,7 +350,7 @@
       const segments = Math.max(3, Math.floor(distance * 30 * (brushSize / 4)));
 
       // Densità per randomizzare presenza particelle
-      const density = 1.0;
+      const density = 1.5;
 
       for (let i = 0; i <= segments; i++) {
         const t = i / segments;
@@ -343,12 +358,13 @@
         point.lerpVectors(start, end, t);
 
         // Rumore sul tracciato per effetto naturale
-        point.x += (Math.random() - 0.5) * 0.01;
-        point.y += (Math.random() - 0.5) * 0.01;
+        point.x += (Math.random() - 0.5) * 0.004;
+        point.y += (Math.random() - 0.5) * 0.004;
         point.z = 0.1 + Math.random() * 0.05;
 
         if (Math.random() < density) {
-          createChalkParticle(point, color);
+          createChalkParticle(point, varyColor(color));
+
         }
       }
     }
