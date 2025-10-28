@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Chalk on Asphalt</title>
+  <style>
+    body { margin: 0; overflow: hidden; }
+    canvas { display: block; }
+  </style>
+</head>
+<body>
+  <canvas id="chalkCanvas"></canvas>
+  <script>
+    const canvas = document.getElementById('chalkCanvas');
+    const ctx = canvas.getContext('2d');
+    let drawing = false;
+    let lastX, lastY;
+
+    // Resize canvas
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      drawBackground();
+    }
+
+    // Draw asphalt background
+    function drawBackground() {
+      const bg = new Image();
+      bg.src = 'assets/images/asphalt.jpg';
+      bg.onload = () => {
+        ctx.drawImage(bg, 0, 0, canvas.width, canvas.height);
+      };
+    }
+
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    // Chalk brush effect
+    function drawChalk(x, y) {
+      ctx.save();
+      ctx.globalAlpha = 0.5 + Math.random() * 0.2; // Chalk transparency
+      ctx.globalCompositeOperation = 'lighter'; // Chalk blending
+
+      // Particle scatter for chalk texture
+      for (let i = 0; i < 30; i++) {
+        const angle = Math.random() * 2 * Math.PI;
+        const radius = Math.random() * 20;
+        const px = x + Math.cos(angle) * radius;
+        const py = y + Math.sin(angle) * radius;
+        ctx.beginPath();
+        ctx.arc(px, py, 2 + Math.random() * 2, 0, 2 * Math.PI);
+        ctx.fillStyle = 'rgba(255,255,200,0.7)'; // Chalk color (yellowish-white)
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+
+    canvas.addEventListener('mousedown', e => {
+      drawing = true;
+      lastX = e.offsetX;
+      lastY = e.offsetY;
+    });
+
+    canvas.addEventListener('mouseup', () => drawing = false);
+    canvas.addEventListener('mouseout', () => drawing = false);
+
+    canvas.addEventListener('mousemove', e => {
+      if (!drawing) return;
+      const x = e.offsetX;
+      const y = e.offsetY;
+      // Draw between last and current position for smooth lines
+      const dx = x - lastX;
+      const dy = y - lastY;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      for (let i = 0; i < dist; i++) {
+        const tx = lastX + dx * (i / dist);
+        const ty = lastY + dy * (i / dist);
+        drawChalk(tx, ty);
+      }
+      lastX = x;
+      lastY = y;
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,537 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Gessetto su Asfalto - Three.js</title>
+  <style>
+    html, body {
+      margin: 0;
+      height: 100%;
+      overflow: hidden;
+      background: #000;
+      font-family: system-ui;
+      touch-action: none; /* Previene lo scroll su mobile */
+    }
+    #container {
+      position: relative;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* TOP BAR: pulsanti cancella / salva */
+    .ui-top {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      display: flex;
+      gap: 8px;
+      z-index: 20;
+      align-items: center;
+      background: rgba(0,0,0,0.35);
+      padding: 8px 10px;
+      border-radius: 10px;
+      backdrop-filter: blur(6px);
+    }
+
+    button {
+      background: rgba(255,255,255,0.08);
+      color: white;
+      border: 1px solid rgba(255,255,255,0.12);
+      padding: 8px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      transition: transform 0.16s, background 0.16s;
+      font-family: inherit;
+    }
+    button:hover {
+      transform: translateY(-2px);
+      background: rgba(255,255,255,0.14);
+    }
+    button img.icon {
+      width: 16px;
+      height: 16px;
+      object-fit: contain;
+      filter: invert(1); /* placeholder icons bianchi */
+    }
+
+    /* BRUSH CONTROLS (in alto a destra) */
+    /*.brush-controls {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      z-index: 20;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      background: rgba(255,255,255,0.06);
+      padding: 8px 10px;
+      border-radius: 8px;
+      backdrop-filter: blur(6px);
+    }
+    .brush-size { color: white; font-size: 13px; }
+    input[type="range"] { width: 100px; }
+
+    /* BOTTOM BAR: gessetti verticali che sbucano dal bordo inferiore */
+    .ui-bottom {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: -70px; /* parte nascosta sotto il bordo del viewport */
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+      gap: 0px;
+      z-index: 20;
+      pointer-events: none; /* wrapper non intercetta touch; gli elementi interni sì */
+    }
+
+    .chalk-option {
+      pointer-events: auto;
+      width: 48px;
+      height: 200px; /* verticale */
+      background-repeat: no-repeat;
+      background-position: center bottom;
+      background-size: contain;
+      border-radius: 8px;
+      cursor: pointer;
+      transform: translateY(0);
+      transition: transform 0.18s cubic-bezier(.2,.9,.2,1), box-shadow 0.18s;
+      border: 2px solid transparent;
+      display: inline-block;
+    }
+
+    .chalk-option.active {
+      transform: translateY(-70px); /* si alza abbastanza da uscire completamente dal bordo */
+    }
+
+
+    /* Info box */
+    .info {
+      position: absolute;
+      bottom: 12px;
+      left: 12px;
+      color: rgba(255,255,255,0.85);
+      font-size: 12px;
+      background: rgba(0,0,0,0.45);
+      padding: 6px 10px;
+      border-radius: 6px;
+      z-index: 15;
+    }
+
+    /* Impediamo al menu contestuale di mangiare la UI */
+    canvas { touch-action: none; }
+  </style>
+
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://unpkg.com/three@0.160.0/build/three.module.js"
+    }
+  }
+  </script>
+</head>
+<body>
+  <div id="container"></div>
+
+  <!-- TOP BAR -->
+  <div class="ui-top" role="toolbar" aria-label="Barra strumenti">
+    <button id="clearBtn" title="Cancella disegno">
+      <img class="icon" src="assets/gessetti/icone/icon-cancella.png" alt="">
+      <span>Cancella</span>
+    </button>
+    <button id="saveBtn" title="Salva immagine">
+      <img class="icon" src="assets/gessetti/icone/icon-salva.png" alt="">
+      <span>Salva</span>
+    </button>
+  </div>
+
+  <!-- BRUSH SIZE -->
+  <div class="brush-controls" aria-hidden="false">
+    <span class="brush-size">Dimensione:</span>
+    <input type="range" id="brushSize" min="1" max="10" value="4" step="0.5" aria-label="Dimensione pennello">
+  </div>
+
+  <!-- BOTTOM COLOR PICKER (placeholder images verticali) -->
+  <div class="ui-bottom" aria-label="Selettore colore">
+    <div class="chalk-option active" data-color="#ff536f" style="background-image: url('assets/images/gessetto-rosso.png');" title="Rosso"></div>
+    <div class="chalk-option" data-color="#82db63" style="background-image: url('assets/images/gessetto-verde.png');" title="Verde"></div>
+    <div class="chalk-option" data-color="#0086e9" style="background-image: url('assets/images/gessetto-blu.png');" title="Blu"></div>
+    <div class="chalk-option" data-color="#ffff3c" style="background-image: url('assets/images/gessetto-giallo.png');" title="Giallo"></div>
+    <div class="chalk-option" data-color="#ff3cff" style="background-image: url('assets/images/gessetto-viola.png');" title="Viola"></div>
+    <div class="chalk-option" data-color="#ffffff" style="background-image: url('assets/images/gessetto-bianco.png');" title="Bianco"></div>
+  </div>
+
+
+  <script type="module">
+    import * as THREE from 'three';
+
+    // Container e renderer
+    const container = document.getElementById('container');
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      preserveDrawingBuffer: true
+    });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.domElement.style.touchAction = 'none';
+    container.appendChild(renderer.domElement);
+
+    // Scena e camera
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x151515);
+
+    let aspect = window.innerWidth / window.innerHeight;
+    const camera = new THREE.OrthographicCamera(-aspect, aspect, 1, -1, 0.1, 1000);
+    camera.position.z = 5;
+    camera.lookAt(0, 0, 0);
+
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.85);
+    scene.add(ambientLight);
+
+    // === Texture asfalto (uguale) ===
+    function createAsphaltTexture() {
+      const canvas = document.createElement('canvas');
+      canvas.width = 1024;
+      canvas.height = 1024;
+      const ctx = canvas.getContext('2d');
+
+      ctx.fillStyle = '#0f0f0f';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const data = imageData.data;
+      for (let i = 0; i < data.length; i += 4) {
+        const n = Math.random() * 60;
+        data[i] = Math.max(0, data[i] - n);
+        data[i + 1] = Math.max(0, data[i + 1] - n);
+        data[i + 2] = Math.max(0, data[i + 2] - n);
+        if (Math.random() > 0.95) {
+          data[i] = 120; data[i + 1] = 120; data[i + 2] = 120;
+        }
+      }
+      ctx.putImageData(imageData, 0, 0);
+
+      ctx.strokeStyle = '#0a0a0a';
+      ctx.lineWidth = 2;
+      for (let i = 0; i < 25; i++) {
+        ctx.beginPath();
+        const x1 = Math.random() * canvas.width;
+        const y1 = Math.random() * canvas.height;
+        ctx.moveTo(x1, y1);
+        for (let j = 0; j < 5; j++) {
+          const x2 = x1 + (Math.random() - 0.5) * 100;
+          const y2 = y1 + (Math.random() - 0.5) * 100;
+          ctx.lineTo(x2, y2);
+        }
+        ctx.stroke();
+      }
+
+      const texture = new THREE.CanvasTexture(canvas);
+      texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+      texture.repeat.set(1.5, 1.5);
+      return texture;
+    }
+
+    const asphaltTexture = createAsphaltTexture();
+    const asphaltGeometry = new THREE.PlaneGeometry(aspect * 2, 2);
+    const asphaltMaterial = new THREE.MeshBasicMaterial({ map: asphaltTexture });
+    const asphalt = new THREE.Mesh(asphaltGeometry, asphaltMaterial);
+    scene.add(asphalt);
+
+    // === SISTEMA TRATTO CONTINUO SENZA LIMITI ===
+    let drawing = false;
+    let currentColor = '#ff536f';
+    let brushSize = 4;
+    
+    // Materiale gessetto liscio e uniforme
+    const chalkMaterial = new THREE.MeshBasicMaterial({
+      color: currentColor,
+      transparent: true,
+      opacity: 0.92,
+      depthWrite: false
+    });
+
+    // Array per gestire tutti i tratti
+    let allStrokes = [];
+    let currentStroke = null;
+    let currentStrokePoints = [];
+
+    function createNewStroke() {
+      const geometry = new THREE.BufferGeometry();
+      const material = chalkMaterial.clone();
+      material.color = new THREE.Color(currentColor);
+      
+      currentStroke = new THREE.Mesh(geometry, material);
+      scene.add(currentStroke);
+      allStrokes.push(currentStroke);
+      
+      currentStrokePoints = [];
+      return currentStroke;
+    }
+
+    function updateStrokeGeometry(points, width) {
+      if (points.length < 2) return;
+      
+      const positions = [];
+      const uvs = [];
+      const indices = [];
+      
+      const segmentWidth = width * 0.012;
+      
+      // Crea una striscia continua di triangoli per TUTTI i punti
+      for (let i = 0; i < points.length; i++) {
+        const point = points[i];
+        
+        // Calcola la direzione perpendicolare
+        let perpendicular;
+        if (i === 0) {
+          // Primo punto: usa la direzione verso il secondo punto
+          const nextDir = new THREE.Vector3().subVectors(points[i + 1], point).normalize();
+          perpendicular = new THREE.Vector3(-nextDir.y, nextDir.x, 0);
+        } else if (i === points.length - 1) {
+          // Ultimo punto: usa la direzione dall'ultimo punto
+          const prevDir = new THREE.Vector3().subVectors(point, points[i - 1]).normalize();
+          perpendicular = new THREE.Vector3(-prevDir.y, prevDir.x, 0);
+        } else {
+          // Punti intermedi: media delle direzioni
+          const prevDir = new THREE.Vector3().subVectors(point, points[i - 1]).normalize();
+          const nextDir = new THREE.Vector3().subVectors(points[i + 1], point).normalize();
+          const avgDir = new THREE.Vector3().addVectors(prevDir, nextDir).normalize();
+          perpendicular = new THREE.Vector3(-avgDir.y, avgDir.x, 0);
+        }
+        
+        perpendicular.multiplyScalar(segmentWidth);
+        
+        // Aggiungi due vertici per questo punto (destra e sinistra)
+        const rightPoint = new THREE.Vector3().addVectors(point, perpendicular);
+        const leftPoint = new THREE.Vector3().subVectors(point, perpendicular);
+        
+        positions.push(rightPoint.x, rightPoint.y, rightPoint.z);
+        positions.push(leftPoint.x, leftPoint.y, leftPoint.z);
+        
+        // UVs semplici per texture (se servisse in futuro)
+        const u = i / Math.max(1, points.length - 1);
+        uvs.push(u, 0);
+        uvs.push(u, 1);
+      }
+      
+      // Crea gli indici per i triangoli per TUTTI i segmenti
+      for (let i = 0; i < points.length - 1; i++) {
+        const baseIndex = i * 2;
+        indices.push(
+          baseIndex, baseIndex + 1, baseIndex + 2,
+          baseIndex + 1, baseIndex + 3, baseIndex + 2
+        );
+      }
+      
+      if (currentStroke) {
+        currentStroke.geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+        currentStroke.geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+        currentStroke.geometry.setIndex(indices);
+        currentStroke.geometry.computeBoundingSphere();
+      }
+    }
+
+    function screenToWorld(x, y) {
+      const rect = renderer.domElement.getBoundingClientRect();
+      const worldX = ((x - rect.left) / rect.width) * 2 - 1;
+      const worldY = -((y - rect.top) / rect.height) * 2 + 1;
+
+      return new THREE.Vector3(
+        worldX * aspect,
+        worldY,
+        0.15 // Leggermente sopra l'asfalto
+      );
+    }
+
+    // Gestione input SENZA LIMITI
+    let lastPoint = null;
+
+    function handleStart(x, y) {
+      drawing = true;
+      const point = screenToWorld(x, y);
+      lastPoint = point;
+      createNewStroke();
+      currentStrokePoints = [point]; // Inizia con il primo punto
+    }
+
+    function handleMove(x, y) {
+      if (!drawing || !lastPoint) return;
+      
+      const point = screenToWorld(x, y);
+      const distance = point.distanceTo(lastPoint);
+      
+      // Aggiungi punto solo se ci siamo mossi abbastanza (per performance)
+      if (distance > 0.003) {
+        // Aggiungi il nuovo punto all'array (SENZA LIMITI)
+        currentStrokePoints.push(point.clone());
+        
+        // Applica un leggero smoothing solo agli ultimi punti per performance
+        const pointsToSmooth = currentStrokePoints.slice(-20); // Smooth solo ultimi 20 punti
+        const smoothedLastPoints = smoothPoints(pointsToSmooth, 1);
+        
+        // Ricostruisci l'array completo con gli ultimi punti smoothed
+        const allPoints = [
+          ...currentStrokePoints.slice(0, -20),
+          ...smoothedLastPoints
+        ];
+        
+        updateStrokeGeometry(allPoints, brushSize);
+        
+        lastPoint = point;
+      }
+    }
+
+    function handleEnd() {
+      drawing = false;
+      lastPoint = null;
+      currentStroke = null;
+      // Manteniamo currentStrokePoints così il tratto rimane completo
+    }
+
+    // Funzione di smoothing per tratti più lisci
+    function smoothPoints(points, iterations = 1) {
+      if (points.length < 3) return points;
+      
+      let smoothed = [...points];
+      
+      for (let iter = 0; iter < iterations; iter++) {
+        const newPoints = [smoothed[0]]; // Mantieni il primo punto
+        
+        for (let i = 1; i < smoothed.length - 1; i++) {
+          // Media pesata con punti adiacenti
+          const prev = smoothed[i - 1];
+          const curr = smoothed[i];
+          const next = smoothed[i + 1];
+          
+          const smoothedPoint = new THREE.Vector3()
+            .addVectors(prev, curr)
+            .add(next)
+            .multiplyScalar(1/3);
+          
+          newPoints.push(smoothedPoint);
+        }
+        
+        newPoints.push(smoothed[smoothed.length - 1]); // Mantieni l'ultimo punto
+        smoothed = newPoints;
+      }
+      
+      return smoothed;
+    }
+
+    // Event listeners
+    renderer.domElement.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      handleStart(e.clientX, e.clientY);
+    });
+    renderer.domElement.addEventListener('mousemove', (e) => {
+      e.preventDefault();
+      handleMove(e.clientX, e.clientY);
+    });
+    window.addEventListener('mouseup', (e) => {
+      e.preventDefault();
+      handleEnd();
+    });
+
+    renderer.domElement.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      if (e.touches.length === 1) {
+        const t = e.touches[0];
+        handleStart(t.clientX, t.clientY);
+      }
+    }, { passive: false });
+
+    renderer.domElement.addEventListener('touchmove', (e) => {
+      e.preventDefault();
+      if (e.touches.length === 1) {
+        const t = e.touches[0];
+        handleMove(t.clientX, t.clientY);
+      }
+    }, { passive: false });
+
+    renderer.domElement.addEventListener('touchend', (e) => {
+      e.preventDefault();
+      handleEnd();
+    });
+
+    renderer.domElement.addEventListener('touchcancel', (e) => {
+      e.preventDefault();
+      handleEnd();
+    });
+
+    renderer.domElement.addEventListener('contextmenu', (e) => e.preventDefault());
+
+    // === CONTROLLI UI ===
+    document.getElementById('clearBtn').onclick = () => {
+      // Rimuovi tutti i tratti
+      allStrokes.forEach(stroke => {
+        scene.remove(stroke);
+        stroke.geometry.dispose();
+        stroke.material.dispose();
+      });
+      allStrokes = [];
+      currentStrokePoints = [];
+    };
+
+    document.getElementById('saveBtn').onclick = () => {
+      const link = document.createElement('a');
+      link.download = 'gessetto_asfalto.png';
+      link.href = renderer.domElement.toDataURL('image/png');
+      link.click();
+    };
+
+    // Cambio colore
+    document.querySelectorAll('.chalk-option').forEach(option => {
+      option.addEventListener('click', () => {
+        document.querySelectorAll('.chalk-option').forEach(opt => opt.classList.remove('active'));
+        option.classList.add('active');
+        currentColor = option.getAttribute('data-color') || '#ffffff';
+      });
+      
+      option.addEventListener('touchstart', (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        document.querySelectorAll('.chalk-option').forEach(opt => opt.classList.remove('active'));
+        option.classList.add('active');
+        currentColor = option.getAttribute('data-color') || '#ffffff';
+      }, { passive: false });
+    });
+
+    // Brush size
+    document.getElementById('brushSize').addEventListener('input', (e) => {
+      brushSize = parseFloat(e.target.value);
+    });
+
+    // Resize handler
+    function handleResize() {
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+      aspect = width / height;
+
+      renderer.setSize(width, height);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+      camera.left = -aspect;
+      camera.right = aspect;
+      camera.updateProjectionMatrix();
+
+      const newGeometry = new THREE.PlaneGeometry(aspect * 2, 2);
+      asphalt.geometry.dispose();
+      asphalt.geometry = newGeometry;
+      asphaltTexture.repeat.set(1.5, 1.5);
+    }
+    window.addEventListener('resize', handleResize);
+
+    // Loop di rendering
+    function animate() {
+      requestAnimationFrame(animate);
+      renderer.render(scene, camera);
+    }
+    animate();
+  </script>
+</body>
+</html>

@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gessetto Virtuale - Tratto Grande</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+            background: linear-gradient(135deg, #6e8efb, #a777e3);
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #333;
+        }
+        
+        .container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+        
+        header {
+            text-align: center;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            z-index: 10;
+            width: 100%;
+        }
+        
+        h1 {
+            color: #5d3fd3;
+            margin-bottom: 5px;
+            font-size: 2.2rem;
+            text-shadow: 2px 2px 0px rgba(255, 255, 255, 0.8);
+        }
+        
+        .subtitle {
+            color: #666;
+            font-size: 1rem;
+        }
+        
+        #canvas-container {
+            flex: 1;
+            width: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        #controls {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.85);
+            padding: 15px;
+            border-radius: 20px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            z-index: 100;
+            backdrop-filter: blur(5px);
+            border: 2px solid rgba(255, 255, 255, 0.5);
+        }
+        
+        .colors {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .color-btn {
+            width: 36px;
+            height: 36px;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 3px 5px rgba(0, 0, 0, 0.2);
+            border: 3px solid transparent;
+        }
+        
+        .color-btn:hover {
+            transform: scale(1.1);
+        }
+        
+        .color-btn.active {
+            border: 3px solid #333;
+            transform: scale(1.15);
+        }
+        
+        .tools {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .tool-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.2s ease;
+            box-shadow: 0 3px 5px rgba(0, 0, 0, 0.2);
+            background: #5d3fd3;
+            color: white;
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+        }
+        
+        .tool-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 8px rgba(0, 0, 0, 0.25);
+        }
+        
+        .tool-btn:active {
+            transform: translateY(0);
+        }
+        
+        #clear-btn {
+            background: #ff4757;
+        }
+        
+        #save-btn {
+            background: #2ed573;
+        }
+        
+        .instructions {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.85);
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            max-width: 250px;
+            z-index: 100;
+            backdrop-filter: blur(5px);
+        }
+        
+        .instructions h3 {
+            color: #5d3fd3;
+            margin-bottom: 8px;
+            font-size: 1.1rem;
+        }
+        
+        .instructions p {
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+            color: #555;
+        }
+        
+        .size-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 5px;
+        }
+        
+        .size-btn {
+            width: 30px;
+            height: 30px;
+            border: none;
+            border-radius: 50%;
+            background: #5d3fd3;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .size-display {
+            font-weight: bold;
+            color: #5d3fd3;
+            min-width: 40px;
+            text-align: center;
+        }
+        
+        footer {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.8rem;
+            z-index: 100;
+        }
+        
+        @media (max-width: 768px) {
+            .instructions {
+                display: none;
+            }
+            
+            h1 {
+                font-size: 1.8rem;
+            }
+            
+            #controls {
+                padding: 12px;
+                bottom: 10px;
+            }
+            
+            .color-btn {
+                width: 32px;
+                height: 32px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Gessetto Virtuale - Tratto Grande</h1>
+            <p class="subtitle">Disegna sull'asfalto con un tratto spesso e realistico!</p>
+        </header>
+        
+        <div id="canvas-container"></div>
+        
+        <div class="instructions">
+            <h3>Come usare:</h3>
+            <p>• Clicca e trascina per disegnare</p>
+            <p>• Usa il touch su dispositivi mobili</p>
+            <p>• Cambia colore con i pulsanti</p>
+            <p>• Regola la dimensione del tratto</p>
+            <p>• Pulisci per ricominciare</p>
+            
+            <div class="size-controls">
+                <button id="decrease-size" class="size-btn">-</button>
+                <div class="size-display" id="size-value">5</div>
+                <button id="increase-size" class="size-btn">+</button>
+            </div>
+        </div>
+        
+        <div id="controls">
+            <div class="colors">
+                <button class="color-btn active" style="background: #ffffff;" data-color="#ffffff" title="Bianco"></button>
+                <button class="color-btn" style="background: #ffff00;" data-color="#ffff00" title="Giallo"></button>
+                <button class="color-btn" style="background: #ff69b4;" data-color="#ff69b4" title="Rosa"></button>
+                <button class="color-btn" style="background: #00ffff;" data-color="#00ffff" title="Azzurro"></button>
+                <button class="color-btn" style="background: #ffa500;" data-color="#ffa500" title="Arancione"></button>
+                <button class="color-btn" style="background: #98fb98;" data-color="#98fb98" title="Verde Chiaro"></button>
+                <button class="color-btn" style="background: #dda0dd;" data-color="#dda0dd" title="Viola Chiaro"></button>
+            </div>
+            <div class="tools">
+                <button id="clear-btn" class="tool-btn">Pulisci</button>
+                <button id="save-btn" class="tool-btn">Salva</button>
+            </div>
+        </div>
+        
+        <footer>
+            Three.js - Effetto Gessetto con Tratto Grande
+        </footer>
+    </div>
+
+    <script>
+        class ChalkDrawing {
+            constructor() {
+                this.scene = new THREE.Scene();
+                this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+                this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+                
+                this.setupRenderer();
+                this.setupScene();
+                this.setupEventListeners();
+                
+                this.isDrawing = false;
+                this.currentColor = '#ffffff';
+                this.linePoints = [];
+                this.lines = [];
+                this.currentLine = null;
+                this.lineWidth = 5; // Dimensione iniziale del tratto (molto più grande)
+                
+                this.animate();
+            }
+
+            setupRenderer() {
+                this.renderer.setSize(window.innerWidth, window.innerHeight);
+                this.renderer.setClearColor(0x222222, 1);
+                this.renderer.shadowMap.enabled = true;
+                this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+                document.getElementById('canvas-container').appendChild(this.renderer.domElement);
+            }
+
+            setupScene() {
+                // Illuminazione per l'effetto gessetto
+                const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+                this.scene.add(ambientLight);
+
+                const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+                directionalLight.position.set(5, 10, 5);
+                directionalLight.castShadow = true;
+                directionalLight.shadow.mapSize.width = 2048;
+                directionalLight.shadow.mapSize.height = 2048;
+                this.scene.add(directionalLight);
+
+                // Camera posizionata dall'alto
+                this.camera.position.set(0, 8, 0);
+                this.camera.lookAt(0, 0, 0);
+
+                // Piano che rappresenta l'asfalto
+                const asphaltGeometry = new THREE.PlaneGeometry(20, 20, 32, 32);
+                
+                // Creiamo una texture per l'asfalto
+                const canvas = document.createElement('canvas');
+                canvas.width = 512;
+                canvas.height = 512;
+                const ctx = canvas.getContext('2d');
+                
+                // Riempiamo con un grigio scuro
+                ctx.fillStyle = '#333333';
+                ctx.fillRect(0, 0, 512, 512);
+                
+                // Aggiungiamo dettagli per l'asfalto
+                ctx.fillStyle = '#3a3a3a';
+                for (let i = 0; i < 5000; i++) {
+                    const x = Math.random() * 512;
+                    const y = Math.random() * 512;
+                    const size = Math.random() * 2;
+                    ctx.fillRect(x, y, size, size);
+                }
+                
+                const texture = new THREE.CanvasTexture(canvas);
+                const asphaltMaterial = new THREE.MeshLambertMaterial({ 
+                    map: texture,
+                    roughness: 0.9,
+                    metalness: 0.1
+                });
+                
+                this.asphalt = new THREE.Mesh(asphaltGeometry, asphaltMaterial);
+                this.asphalt.rotation.x = -Math.PI / 2;
+                this.asphalt.receiveShadow = true;
+                this.scene.add(this.asphalt);
+                
+                // Aggiungiamo un bordo intorno all'asfalto
+                const borderGeometry = new THREE.BoxGeometry(20.2, 0.5, 20.2);
+                const borderMaterial = new THREE.MeshLambertMaterial({ color: 0x555555 });
+                const border = new THREE.Mesh(borderGeometry, borderMaterial);
+                border.position.set(0, -0.25, 0);
+                this.scene.add(border);
+            }
+
+            setupEventListeners() {
+                // Eventi mouse
+                this.renderer.domElement.addEventListener('mousedown', this.onMouseDown.bind(this));
+                this.renderer.domElement.addEventListener('mousemove', this.onMouseMove.bind(this));
+                this.renderer.domElement.addEventListener('mouseup', this.onMouseUp.bind(this));
+                
+                // Eventi touch
+                this.renderer.domElement.addEventListener('touchstart', this.onTouchStart.bind(this));
+                this.renderer.domElement.addEventListener('touchmove', this.onTouchMove.bind(this));
+                this.renderer.domElement.addEventListener('touchend', this.onTouchEnd.bind(this));
+                
+                // Pulsanti colore
+                document.querySelectorAll('.color-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
+                        e.target.classList.add('active');
+                        this.currentColor = e.target.dataset.color;
+                    });
+                });
+                
+                // Pulsante pulisci
+                document.getElementById('clear-btn').addEventListener('click', () => {
+                    this.clearDrawing();
+                });
+                
+                // Pulsante salva
+                document.getElementById('save-btn').addEventListener('click', () => {
+                    this.saveDrawing();
+                });
+                
+                // Controlli dimensione tratto
+                document.getElementById('increase-size').addEventListener('click', () => {
+                    this.lineWidth = Math.min(15, this.lineWidth + 1);
+                    document.getElementById('size-value').textContent = this.lineWidth;
+                });
+                
+                document.getElementById('decrease-size').addEventListener('click', () => {
+                    this.lineWidth = Math.max(1, this.lineWidth - 1);
+                    document.getElementById('size-value').textContent = this.lineWidth;
+                });
+                
+                // Ridimensionamento finestra
+                window.addEventListener('resize', this.onWindowResize.bind(this));
+            }
+
+            getMousePosition(event) {
+                const rect = this.renderer.domElement.getBoundingClientRect();
+                return {
+                    x: ((event.clientX - rect.left) / rect.width) * 2 - 1,
+                    y: -((event.clientY - rect.top) / rect.height) * 2 + 1
+                };
+            }
+
+            getTouchPosition(event) {
+                const touch = event.touches[0];
+                const rect = this.renderer.domElement.getBoundingClientRect();
+                return {
+                    x: ((touch.clientX - rect.left) / rect.width) * 2 - 1,
+                    y: -((touch.clientY - rect.top) / rect.height) * 2 + 1
+                };
+            }
+
+            onMouseDown(event) {
+                this.isDrawing = true;
+                this.startNewLine(this.getMousePosition(event));
+            }
+
+            onMouseMove(event) {
+                if (!this.isDrawing) return;
+                this.addPointToLine(this.getMousePosition(event));
+            }
+
+            onMouseUp() {
+                this.isDrawing = false;
+                this.finishLine();
+            }
+
+            onTouchStart(event) {
+                event.preventDefault();
+                this.isDrawing = true;
+                this.startNewLine(this.getTouchPosition(event));
+            }
+
+            onTouchMove(event) {
+                event.preventDefault();
+                if (!this.isDrawing) return;
+                this.addPointToLine(this.getTouchPosition(event));
+            }
+
+            onTouchEnd(event) {
+                event.preventDefault();
+                this.isDrawing = false;
+                this.finishLine();
+            }
+
+            startNewLine(position) {
+                this.linePoints = [this.screenToWorld(position)];
+            }
+
+            addPointToLine(position) {
+                const worldPos = this.screenToWorld(position);
+                
+                // Aggiungi un po' di casualità per un effetto gessetto più realistico
+                if (this.linePoints.length > 0) {
+                    const lastPoint = this.linePoints[this.linePoints.length - 1];
+                    const distance = lastPoint.distanceTo(worldPos);
+                    
+                    // Aggiungi punti intermedi per linee più fluide
+                    if (distance > 0.2) {
+                        const segments = Math.floor(distance / 0.1);
+                        for (let i = 1; i <= segments; i++) {
+                            const t = i / segments;
+                            const intermediatePoint = new THREE.Vector3();
+                            intermediatePoint.lerpVectors(lastPoint, worldPos, t);
+                            
+                            // Aggiungi un po' di rumore per l'effetto gessetto
+                            intermediatePoint.x += (Math.random() - 0.5) * 0.03 * (this.lineWidth / 5);
+                            intermediatePoint.z += (Math.random() - 0.5) * 0.03 * (this.lineWidth / 5);
+                            
+                            this.linePoints.push(intermediatePoint.clone());
+                        }
+                    }
+                }
+                
+                this.linePoints.push(worldPos);
+                
+                // Aggiorna la linea in tempo reale
+                this.updateCurrentLine();
+            }
+
+            screenToWorld(screenPos) {
+                const raycaster = new THREE.Raycaster();
+                raycaster.setFromCamera(screenPos, this.camera);
+                
+                const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+                const intersection = new THREE.Vector3();
+                raycaster.ray.intersectPlane(plane, intersection);
+                
+                return intersection;
+            }
+
+            updateCurrentLine() {
+                // Rimuovi la linea precedente se esiste
+                if (this.currentLine) {
+                    this.scene.remove(this.currentLine);
+                }
+
+                if (this.linePoints.length < 2) return;
+
+                // Crea la geometria della linea
+                const geometry = new THREE.BufferGeometry().setFromPoints(this.linePoints);
+                
+                // Materiale con effetto gessetto - tratto più spesso
+                const material = new THREE.LineBasicMaterial({
+                    color: this.currentColor,
+                    linewidth: this.lineWidth, // Usa la dimensione regolabile
+                    transparent: true,
+                    opacity: 0.9
+                });
+
+                this.currentLine = new THREE.Line(geometry, material);
+                this.scene.add(this.currentLine);
+            }
+
+            finishLine() {
+                if (this.linePoints.length >= 2) {
+                    this.lines.push(this.currentLine);
+                    this.currentLine = null;
+                }
+            }
+
+            clearDrawing() {
+                this.lines.forEach(line => {
+                    this.scene.remove(line);
+                });
+                this.lines = [];
+                
+                if (this.currentLine) {
+                    this.scene.remove(this.currentLine);
+                    this.currentLine = null;
+                }
+            }
+
+            saveDrawing() {
+                // Crea un'immagine del disegno
+                this.renderer.render(this.scene, this.camera);
+                const image = this.renderer.domElement.toDataURL('image/png');
+                
+                // Crea un link per il download
+                const link = document.createElement('a');
+                link.href = image;
+                link.download = 'disegno-gessetto.png';
+                link.click();
+            }
+
+            onWindowResize() {
+                this.camera.aspect = window.innerWidth / window.innerHeight;
+                this.camera.updateProjectionMatrix();
+                this.renderer.setSize(window.innerWidth, window.innerHeight);
+            }
+
+            animate() {
+                requestAnimationFrame(this.animate.bind(this));
+                this.renderer.render(this.scene, this.camera);
+            }
+        }
+
+        // Inizializza l'applicazione quando la pagina è caricata
+        window.addEventListener('DOMContentLoaded', () => {
+            new ChalkDrawing();
+        });
+    </script>
+</body>
+</html>
