@@ -45,11 +45,31 @@
             bottom: 20px;
             left: 50%;
             transform: translateX(-50%);
-            padding: 15px 25px;
-            border-radius: 5px;
+            padding: 20px 30px;
+            border-radius: 16px;
             z-index: 100;
             width: 90%;
-            max-width: 500px;
+            max-width: 600px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .controls-section {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .section-title {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.7);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            font-weight: 500;
+            text-align: center;
+            margin-bottom: 4px;
         }
 
         #product-info {
@@ -60,7 +80,7 @@
             border-radius: 5px;
             max-width: 320px;
             width: calc(100% - 40px);
-            transition: border-radius 0.4s ease;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
             overflow: hidden;
             cursor: pointer;
             z-index: 100;
@@ -166,23 +186,137 @@
             transform: translateY(10px);
         }
 
-        .slider-container {
-            text-align: center;
+        /* Power Switch Section */
+        .power-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
         }
 
-        .slider-label {
+        .power-indicator {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            justify-content: center;
+        }
+
+        .power-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .power-dot.active {
+            background-color: #FFD700;
+            box-shadow: 0 0 12px #FFD700;
+        }
+
+        .power-status {
+            font-size: 13px;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.7);
+            transition: all 0.3s ease;
+        }
+
+        .power-status.active {
+            color: #FFD700;
+            font-weight: 600;
+        }
+
+        /* Toggle Switch Styles - Improved */
+        .toggle-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .toggle-label {
             font-size: 12px;
             color: rgba(255, 255, 255, 0.7);
-            margin-bottom: 12px;
             text-transform: uppercase;
             letter-spacing: 1px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            position: relative;
+        }
+
+        .toggle-label.active {
+            color: #FFD700;
+            font-weight: 600;
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 70px;
+            height: 34px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            transition: .4s;
+            border-radius: 34px;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 3px;
+            background: linear-gradient(135deg, #f5f5f5, #e0e0e0);
+            transition: .4s;
+            border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        input:checked + .toggle-slider {
+            background: linear-gradient(135deg, rgba(255,215,0,0.6), rgba(255,215,0,0.3));
+            border-color: rgba(255, 215, 0, 0.6);
+        }
+
+        input:checked + .toggle-slider:before {
+            transform: translateX(36px);
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            box-shadow: 0 0 8px rgba(255, 215, 0, 0.8);
+        }
+
+        /* Product Slider Section */
+        .product-slider-section {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
         }
 
         .slider-wrapper {
             display: flex;
             align-items: center;
-            justify-content: center;
-            gap: 20px;
+            justify-content: space-between;
+            gap: 15px;
         }
 
         .arrow-btn {
@@ -214,12 +348,23 @@
             transform: scale(0.95);
         }
 
-        .current-product-name {
-            font-size: 16px;
-            color: rgba(255, 255, 255, 0.9);
-            min-width: 120px;
+        .current-product-display {
+            flex: 1;
             text-align: center;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .current-product-name {
+            font-size: 28px;
+            color: rgba(255, 255, 255, 0.9);
             font-weight: 500;
+        }
+
+        .product-counter {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.6);
         }
 
         .loading {
@@ -233,166 +378,125 @@
             padding: 0 20px;
         }
 
-        /* Media Queries per dispositivi mobili */
-        @media (max-width: 768px) {
-            #controls {
-                bottom: 15px;
-                padding: 12px 20px;
-                width: 95%;
-            }
-            
-            #product-info {
-                top: 15px;
-                left: 15px;
-                right: 15px;
-                padding: 15px;
-                max-width: none;
-                width: calc(100% - 30px);
-            }
-            
-            h1 {
-                font-size: 12px;
-            }
-            
-            .product-name {
-                font-size: 22px;
-            }
-            
-            .product-desc {
-                font-size: 13px;
-            }
-            
-            .slider-label {
-                font-size: 11px;
-                margin-bottom: 10px;
-            }
-            
-            .arrow-btn {
-                width: 50px;
-                height: 50px;
-                font-size: 16px;
-            }
-            
-            .current-product-name {
-                font-size: 15px;
-                min-width: 100px;
-            }
-            
-            #product-info.expanded {
-                width: calc(100% - 30px) !important;
-                max-width: none !important;
-            }
-        }
+/* Pulsanti per nascondere/mostrare le singole schede - CORRETTI */
+.toggle-ui-btn {
+    position: fixed;
+    width: 44px;
+    height: 22px;
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 102;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
 
-        @media (max-width: 480px) {
-            #controls {
-                padding: 10px 15px;
-                bottom: 10px;
-            }
-            
-            #product-info {
-                top: 10px;
-                left: 10px;
-                right: 10px;
-                padding: 12px;
-                max-width: none;
-                width: calc(100% - 20px);
-            }
-            
-            h1 {
-                font-size: 11px;
-            }
-            
-            .product-name {
-                font-size: 20px;
-                margin-bottom: 8px;
-            }
-            
-            .product-desc {
-                font-size: 12px;
-                line-height: 1.4;
-            }
-            
-            .slider-wrapper {
-                gap: 15px;
-            }
-            
-            .arrow-btn {
-                width: 32px;
-                height: 32px;
-                font-size: 14px;
-            }
-            
-            .current-product-name {
-                font-size: 14px;
-                min-width: 90px;
-            }
-            
-            .slider-label {
-                font-size: 10px;
-                margin-bottom: 8px;
-            }
-            
-            #product-info.expanded {
-                width: calc(100% - 20px) !important;
-                max-width: none !important;
-            }
-        }
+/* Pulsante per product-info (in alto, centrale) */
+#toggle-product-btn {
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    border-radius: 0 0 22px 22px;
+    border-top: none;
+}
 
-        @media (max-width: 360px) {
-            .slider-wrapper {
-                gap: 10px;
-            }
-            
-            .current-product-name {
-                font-size: 13px;
-                min-width: 80px;
-            }
-            
-            .product-name {
-                font-size: 18px;
-            }
-        }
+/* Pulsante per controls (in basso, centrale) */
+#toggle-controls-btn {
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    border-radius: 22px 22px 0 0;
+    border-bottom: none;
+}
 
-        /* Orientamento landscape per mobile */
-        @media (max-height: 500px) and (orientation: landscape) {
-            #product-info {
-                top: 10px;
-                left: 10px;
-                right: 10px;
-                padding: 10px;
-                max-width: none;
-                width: calc(100% - 20px);
-            }
-            
-            #controls {
-                bottom: 10px;
-                padding: 8px 15px;
-            }
-            
-            .product-desc {
-                display: none;
-            }
-            
-            .product-name {
-                font-size: 16px;
-            }
-        }
+/* Hover effects */
+.toggle-ui-btn:hover {
+    background: rgba(255, 255, 255, 0.25);
+}
 
-        /* Supporto per touch devices */
-        @media (hover: none) and (pointer: coarse) {
-            .arrow-btn:hover {
-                transform: none;
-            }
-            
-            .arrow-btn:active {
-                transform: scale(0.95);
-            }
-            
-            body {
-                cursor: default;
-            }
-        }
+#toggle-product-btn:hover {
+    height: 26px;
+}
+
+#toggle-controls-btn:hover {
+    height: 26px;
+}
+
+/* Stati nascosti per le schede */
+#product-info.hidden {
+    transform: translateY(calc(-100% - 20px));
+    opacity: 0;
+    pointer-events: none;
+}
+
+#controls.hidden {
+    transform: translateX(-50%) translateY(calc(100% + 20px));
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* Media Queries aggiornate per mobile */
+@media (max-width: 768px) {
+    .toggle-ui-btn {
+        width: 40px;
+        height: 20px;
+        font-size: 11px;
+    }
+    
+    #toggle-product-btn:hover,
+    #toggle-controls-btn:hover {
+        height: 24px;
+    }
+}
+
+@media (max-width: 480px) {
+    .toggle-ui-btn {
+        width: 36px;
+        height: 18px;
+        font-size: 10px;
+    }
+    
+    #toggle-product-btn:hover,
+    #toggle-controls-btn:hover {
+        height: 22px;
+    }
+}
+
+@media (max-width: 360px) {
+    .toggle-ui-btn {
+        width: 32px;
+        height: 16px;
+        font-size: 9px;
+    }
+    
+    #toggle-product-btn:hover,
+    #toggle-controls-btn:hover {
+        height: 20px;
+    }
+}
+
+/* Supporto per touch devices */
+@media (hover: none) and (pointer: coarse) {
+    .toggle-ui-btn:hover {
+        transform: translateX(-50%);
+        height: 22px;
+    }
+    
+    #toggle-product-btn:hover {
+        top: 0;
+    }
+    
+    #toggle-controls-btn:hover {
+        bottom: 0;
+    }
+}
     </style>
 </head>
 <body>
@@ -428,11 +532,33 @@
         </div>
         
         <button class="expand-btn" id="expand-btn">▼</button>
+        
+        <!-- Pulsante per nascondere product-info -->
+        
     </div>
 
+    <button class="toggle-ui-btn" id="toggle-product-btn" title="Nascondi scheda prodotto">▲</button>
+    <button class="toggle-ui-btn" id="toggle-controls-btn" title="Nascondi controlli">▼</button>
+
     <div id="controls" class="glass-frosted">
+        
         <div class="slider-container">
-            <div class="slider-label">Seleziona Prodotto</div>
+            <!-- Indicatore stato luce -->
+            <div class="power-indicator">
+                <div class="power-dot" id="power-dot"></div>
+                <span class="toggle-label" id="power-status">LUCE SPENTA</span>
+            </div>
+
+            <!-- Toggle per accensione luce -->
+            <div class="toggle-container">
+                <span class="toggle-label">OFF</span>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="light-toggle">
+                    <span class="toggle-slider"></span>
+                </label>
+                <span class="toggle-label">ON</span>
+            </div>
+
             <div class="slider-wrapper">
                 <div class="arrow-btn" id="prev-btn">◀</div>
                 <div class="current-product-name" id="current-product-name">Lampada Cubo</div>
@@ -443,15 +569,15 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/libs/draco/gltf/draco_wasm_wrapper.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/libs/draco/gltf/draco_decoder.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/DRACOLoader.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/RGBELoader.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <script>
-        let scene, camera, renderer, currentMesh, envMap, plantsSprite;
+        let scene, camera, renderer, currentMesh, envMap, environmentMesh, plantsSprite;
         let isTransitioning = false;
         let loader, textureLoader;
         let currentProductIndex = 0;
+        let isLightOn = false; // Stato luce: false = spenta, true = accesa
         
         // Variabili per effetto parallasse
         let mouseX = 0;
@@ -463,13 +589,20 @@
         let isMouseMoving = false;
         let lastMouseMoveTime = 0;
 
+        // Variabili per la camera del GLB
+        let sceneCamera = null;
+        let originalCameraPosition = new THREE.Vector3();
+        let originalCameraRotation = new THREE.Euler();
+        let useSceneCamera = false;
+
         // Configurazione prodotti con rotazione personalizzata
         const products = [
             { 
-                name: 'Lampada Cubo Moderna', 
+                name: 'Team Round', 
                 shortName: 'Lampada Cubo',
-                desc: 'Lampada a sospensione con design geometrico moderno', 
-                model: 'assets/luce-1-off.glb',
+                desc: 'Segnapasso da parete di grande eleganza e capacità di giocare con la luce d\'ambiente quando spento', 
+                modelOff: 'assets/Prova_export_1.glb',    // Luce spenta
+                modelOn: 'assets/Prova_export_2.glb',     // Luce accesa
                 scale: 15,
                 rotation: { x: 0, y: 0, z: 0 },
                 material: 'Alluminio anodizzato',
@@ -482,7 +615,8 @@
                 name: 'Lampada Sfera Elegante', 
                 shortName: 'Lampada Sfera',
                 desc: 'Lampada da tavolo elegante e minimalista', 
-                model: 'assets/luce-2.glb',
+                modelOff: 'assets/Prova_export_3.glb',    // Luce spenta
+                modelOn: 'assets/Prova_export_4.glb',     // Luce accesa
                 scale: 0.08,
                 rotation: { x: 0, y: Math.PI / 1, z: 0 },
                 material: 'Vetro opalino e ottone',
@@ -495,7 +629,8 @@
                 name: 'Faretto Direzionale', 
                 shortName: 'Faretto',
                 desc: 'Faretto direzionale per illuminazione d\'accento', 
-                model: 'assets/luce-3.glb',
+                modelOff: 'assets/Prova_export_5.glb',    // Luce spenta
+                modelOn: 'assets/Prova_export_6.glb',     // Luce accesa
                 scale: 0.2,
                 rotation: { x: 0, y: Math.PI / 6, z: 0 },
                 material: 'Acciaio inox satinato',
@@ -512,9 +647,9 @@
             // Inizializza loader CON DRACO
             loader = new THREE.GLTFLoader();
             
-            // CONFIGURA DRACO LOADER - AGGIUNTA IMPORTANTE
+            // CONFIGURA DRACO LOADER
             const dracoLoader = new THREE.DRACOLoader();
-            dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
+            dracoLoader.setDecoderPath('https://www.gstatic.com/draco/v1/decoders/');
             loader.setDRACOLoader(dracoLoader);
             
             textureLoader = new THREE.TextureLoader();
@@ -523,7 +658,7 @@
             scene = new THREE.Scene();
             scene.background = new THREE.Color(0x0a0a0a);
 
-            // Camera - adattata per mobile
+            // Camera temporanea - sarà sostituita dalla camera del GLB
             camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
             camera.position.set(0, 2, 6);
 
@@ -548,6 +683,9 @@
             // Carica HDRI
             loadHDRI();
 
+            // Carica l'ambiente con la camera dal GLB
+            loadEnvironmentWithCamera();
+
             // Carica le piante PNG
             loadPlants();
 
@@ -560,13 +698,84 @@
             // Animazione iniziale della scheda
             animateProductInfo();
 
+            // Aggiorna indicatore luce
+            updateLightIndicator();
+
             // Event listeners per UI
             setupEventListeners();
+            setupUIToggle();
 
             window.addEventListener('resize', onWindowResize);
 
             animate();
         }
+
+function setupUIToggle() {
+    const toggleProductBtn = document.getElementById('toggle-product-btn');
+    const toggleControlsBtn = document.getElementById('toggle-controls-btn');
+    const productInfo = document.getElementById('product-info');
+    const controls = document.getElementById('controls');
+    
+    let productVisible = true;
+    let controlsVisible = true;
+    
+    // Toggle per product-info (in alto)
+    toggleProductBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        productVisible = !productVisible;
+        
+        if (productVisible) {
+            // Mostra la scheda prodotto
+            productInfo.classList.remove('hidden');
+            toggleProductBtn.innerHTML = '▲';
+            toggleProductBtn.title = 'Nascondi scheda prodotto';
+            // Ripristina posizione normale
+            toggleProductBtn.style.top = '0';
+        } else {
+            // Nascondi la scheda prodotto
+            productInfo.classList.add('hidden');
+            toggleProductBtn.innerHTML = '▼';
+            toggleProductBtn.title = 'Mostra scheda prodotto';
+            // Sposta il pulsante verso il basso quando nascosto
+            toggleProductBtn.style.top = '22px';
+        }
+    });
+    
+    // Toggle per controls (in basso)
+    toggleControlsBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        controlsVisible = !controlsVisible;
+        
+        if (controlsVisible) {
+            // Mostra i controlli
+            controls.classList.remove('hidden');
+            toggleControlsBtn.innerHTML = '▼';
+            toggleControlsBtn.title = 'Nascondi controlli';
+            // Ripristina posizione normale
+            toggleControlsBtn.style.bottom = '0';
+        } else {
+            // Nascondi i controlli
+            controls.classList.add('hidden');
+            toggleControlsBtn.innerHTML = '▲';
+            toggleControlsBtn.title = 'Mostra controlli';
+            // Sposta il pulsante verso l'alto quando nascosto
+            toggleControlsBtn.style.bottom = '22px';
+        }
+    });
+    
+    // Previeni che il click sulle schede triggeri il toggle quando sono nascoste
+    productInfo.addEventListener('click', (e) => {
+        if (productInfo.classList.contains('hidden')) {
+            e.stopPropagation();
+        }
+    });
+    
+    controls.addEventListener('click', (e) => {
+        if (controls.classList.contains('hidden')) {
+            e.stopPropagation();
+        }
+    });
+}
 
         function setupParallaxEvents() {
             // Desktop - Mouse movement
@@ -576,8 +785,8 @@
                     mouseY = -(event.clientY / window.innerHeight) * 2 + 1;
                     
                     // Calcola target position con effetto parallasse più leggero
-                    targetCameraX = mouseX * 0.5;
-                    targetCameraY = mouseY * 0.3;
+                    targetCameraX = mouseX * 0.01;
+                    targetCameraY = mouseY * 0.01;
                     
                     isMouseMoving = true;
                     lastMouseMoveTime = Date.now();
@@ -606,8 +815,8 @@
                     const deltaY = touch.clientY - lastTouchY;
                     
                     // Calcola movimento parallasse basato su movimento touch
-                    targetCameraX += deltaX * 0.01;
-                    targetCameraY += deltaY * 0.01;
+                    targetCameraX += deltaX * 0.00001;
+                    targetCameraY += deltaY * 0.00001;
                     
                     // Limita il movimento
                     targetCameraX = Math.max(-1, Math.min(1, targetCameraX));
@@ -644,7 +853,7 @@
                     const material = new THREE.SpriteMaterial({
                         map: texture,
                         transparent: true,
-                        alphaTest: 0.1, // Migliora la gestione della trasparenza
+                        alphaTest: 0.1,
                         opacity: 1
                     });
                     
@@ -681,6 +890,15 @@
                 loadProduct(newIndex);
             });
 
+            // Toggle luce
+            document.getElementById('light-toggle').addEventListener('change', (e) => {
+                isLightOn = e.target.checked;
+                console.log('Stato luce:', isLightOn ? 'ACCESA' : 'SPENTA');
+                updateLightIndicator();
+                // Ricarica il prodotto corrente con lo stato luce corretto
+                loadProduct(currentProductIndex);
+            });
+
             // Espandi/contrai scheda info
             const expandBtn = document.getElementById('expand-btn');
             const productInfo = document.getElementById('product-info');
@@ -707,6 +925,21 @@
             }, false);
         }
 
+        function updateLightIndicator() {
+            const powerDot = document.getElementById('power-dot');
+            const powerStatus = document.getElementById('power-status');
+            
+            if (isLightOn) {
+                powerDot.classList.add('active');
+                powerStatus.textContent = 'LUCE ACCESA';
+                powerStatus.style.color = '#FFD700';
+            } else {
+                powerDot.classList.remove('active');
+                powerStatus.textContent = 'LUCE SPENTA';
+                powerStatus.style.color = 'rgba(255, 255, 255, 0.7)';
+            }
+        }
+
         function toggleProductInfo() {
             const expandBtn = document.getElementById('expand-btn');
             const productInfo = document.getElementById('product-info');
@@ -715,13 +948,12 @@
 
             if (isExpanding) {
                 // Misuriamo l'altezza reale del contenuto prima di animare
-                additionalInfo.style.display = "block"; // renderla visibile ma nascosta
+                additionalInfo.style.display = "block";
                 additionalInfo.style.maxHeight = "none";
                 const fullHeight = additionalInfo.scrollHeight + "px";
-                additionalInfo.style.maxHeight = "0"; // torniamo allo stato iniziale
+                additionalInfo.style.maxHeight = "0";
 
                 // Animazione espansione fluida senza "schiacciamento"
-                // SU MOBILE: non cambiamo la larghezza, già è al 100%
                 if (window.innerWidth > 768) {
                     gsap.to(productInfo, {
                         duration: 0.6,
@@ -764,7 +996,6 @@
                 });
 
             } else {
-                // La tua parte di chiusura resta uguale (già perfetta)
                 const tl = gsap.timeline({
                     defaults: { ease: "power2.inOut" },
                     onComplete: () => {
@@ -777,7 +1008,6 @@
                   .to('.info-row', { opacity: 0, y: 10, stagger: 0.05, duration: 0.3 }, 0)
                   .to('.additional-info', { opacity: 0, maxHeight: 0, duration: 0.4 }, 0.1);
                 
-                // SU MOBILE: ripristina la larghezza solo su desktop
                 if (window.innerWidth > 768) {
                     tl.to(productInfo, {
                         width: '320px',
@@ -854,27 +1084,24 @@
                 const infoRows = document.querySelectorAll('.info-row');
                 const priceTag = document.querySelector('.price-tag');
                 
-                // Nascondi immediatamente le additional-info PRIMA di qualsiasi animazione
                 gsap.set([...infoRows, priceTag], {
                     opacity: 0,
                     y: 10
                 });
             }
             
-            // Aggiorna immediatamente il contenuto (sarà nascosto dalle proprietà CSS sopra)
+            // Aggiorna immediatamente il contenuto
             updateProductInfo(currentProductIndex);
             
             // Crea una timeline per l'animazione
             const changeTimeline = gsap.timeline();
             
-            // Fase 1: fade out delle scritte principali (opzionale, dato che stiamo già nascondendo tutto)
             changeTimeline.to([productName, productDesc], {
                 duration: 0.15,
                 opacity: 0,
                 y: -8,
                 ease: "power2.in"
             })
-            // Fase 2: fade in delle nuove scritte principali
             .to([productName, productDesc], {
                 duration: 0.3,
                 opacity: 1,
@@ -888,7 +1115,6 @@
                 const infoRows = document.querySelectorAll('.info-row');
                 const priceTag = document.querySelector('.price-tag');
                 
-                // Animazione delle additional-info con delay coordinato
                 changeTimeline
                     .to(infoRows, {
                         duration: 0.5,
@@ -909,7 +1135,6 @@
         function updateProductInfo(index) {
             const product = products[index];
             
-            // Solo aggiornamento del testo, senza modificare l'opacità
             document.getElementById('product-name').textContent = product.name;
             document.getElementById('product-desc').textContent = product.desc;
             document.getElementById('current-product-name').textContent = product.shortName;
@@ -926,7 +1151,6 @@
             const rgbeLoader = new THREE.RGBELoader();
             rgbeLoader.setDataType(THREE.HalfFloatType);
             
-            // Usa un HDRI di default
             rgbeLoader.load(
                 'https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/industrial_sunset_puresky_1k.hdr',
                 function(texture) {
@@ -975,9 +1199,95 @@
             scene.background = envMap;
         }
 
+function loadEnvironmentWithCamera() {
+    // Carica il GLB che contiene la camera
+    loader.load(
+        'assets/camera.glb', // Usa il primo GLB che contiene la camera
+        (gltf) => {
+            environmentMesh = gltf.scene;
+            
+            // Configura l'ambiente
+            environmentMesh.position.set(0, 2, 0);
+            environmentMesh.scale.set(14, 14, 14);
+            
+            // Cerca una camera nel GLB
+            let cameraFound = false;
+            gltf.scene.traverse((child) => {
+                if (child.isCamera) {
+                    console.log('Camera trovata nel GLB:', child);
+                    sceneCamera = child;
+                    
+                    // Salva la posizione e rotazione originale della camera
+                    originalCameraPosition.copy(sceneCamera.position);
+                    originalCameraRotation.copy(sceneCamera.rotation);
+                    
+                    // Regola i piani di clipping per evitare problemi
+                    if (sceneCamera.isPerspectiveCamera) {
+                        sceneCamera.near = 0.1;  // Piano near molto vicino
+                        sceneCamera.far = 1000;  // Piano far molto lontano
+                        
+                        // *** MODIFICA LA LUNGHEZZA FOCALE QUI ***
+                        sceneCamera.fov = 25; // Cambia questo valore (default: 50)
+                        
+                        console.log('Piani di clipping regolati:', sceneCamera.near, sceneCamera.far);
+                        console.log('FOV impostato a:', sceneCamera.fov);
+                    }
+                    
+                    // Usa la camera del GLB invece di quella creata
+                    camera = sceneCamera;
+                    useSceneCamera = true;
+                    cameraFound = true;
+                    
+                    // Aggiorna il rapporto d'aspetto
+                    camera.aspect = window.innerWidth / window.innerHeight;
+                    camera.updateProjectionMatrix();
+                    
+                    console.log('Camera del GLB impostata come camera principale');
+                }
+            });
+            
+            if (!cameraFound) {
+                console.warn('Nessuna camera trovata nel GLB, uso camera di default');
+                createBasicEnvironment();
+            } else {
+                scene.add(environmentMesh);
+                console.log('Ambiente con camera GLB caricato con successo');
+            }
+        },
+        undefined,
+        (error) => {
+            console.error('Errore nel caricamento dell\'ambiente con camera:', error);
+            createBasicEnvironment();
+        }
+    );
+}
+
+        function createBasicEnvironment() {
+            // Pavimento riflettente di fallback
+            const floorGeometry = new THREE.CircleGeometry(15, 32);
+            const floorMaterial = new THREE.MeshStandardMaterial({ 
+                color: 0x1a1a1a,
+                roughness: 0.1,
+                metalness: 0.9,
+                envMap: envMap
+            });
+            const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+            floor.rotation.x = -Math.PI / 2;
+            floor.receiveShadow = true;
+            floor.position.y = -1;
+            scene.add(floor);
+
+            environmentMesh = floor;
+            console.log('Ambiente base creato con successo');
+        }
+
         function createGeometry(index) {
             return new Promise((resolve, reject) => {
-                const modelPath = products[index].model;
+                const product = products[index];
+                const modelPath = isLightOn ? product.modelOn : product.modelOff;
+                
+                console.log(`Caricamento prodotto ${index}: ${isLightOn ? 'LUCE ACCESA' : 'LUCE SPENTA'}`);
+                console.log(`Percorso modello: ${modelPath}`);
                 
                 loader.load(
                     modelPath,
@@ -1008,15 +1318,15 @@
                         const center = box.getCenter(new THREE.Vector3());
                         model.position.sub(center);
                         
-                        // Posiziona sopra le rocce
+                        // Posiziona sopra il pavimento
                         model.position.y = 0;
                         
                         // Applica la scala fissa per questo prodotto
-                        const scale = products[index].scale;
+                        const scale = product.scale;
                         model.scale.set(scale, scale, scale);
                         
                         // Applica la rotazione personalizzata
-                        const rotation = products[index].rotation;
+                        const rotation = product.rotation;
                         model.rotation.set(rotation.x, rotation.y, rotation.z);
                         
                         resolve(model);
@@ -1064,7 +1374,7 @@
                                 isTransitioning = false;
                                 loadingEl.style.display = 'none';
                                 
-                                // Animazione della scheda informativa - SENZA DELAY
+                                // Animazione della scheda informativa
                                 animateProductChange();
                             });
                         });
@@ -1091,7 +1401,7 @@
         }
 
         function fadeOut(mesh, callback) {
-            const duration = 400;
+            const duration = 100;
             const startTime = Date.now();
 
             function animate() {
@@ -1174,17 +1484,35 @@
             requestAnimationFrame(animate);
 
             // Smooth camera movement per effetto parallasse
-            if (!isTransitioning) {
+            if (!isTransitioning && useSceneCamera) {
                 // Interpolazione smooth della posizione camera
                 currentCameraX += (targetCameraX - currentCameraX) * 0.1;
                 currentCameraY += (targetCameraY - currentCameraY) * 0.1;
                 
-                // Applica movimento parallasse alla camera
+                // Applica movimento parallasse alla camera del GLB
+                // Usiamo la posizione originale come base e aggiungiamo l'offset parallasse
+                camera.position.x = originalCameraPosition.x + currentCameraX;
+                camera.position.y = originalCameraPosition.y + currentCameraY;
+                camera.position.z = originalCameraPosition.z;
+                
+                // Manteniamo la rotazione originale della camera del GLB
+                camera.rotation.copy(originalCameraRotation);
+                
+                // Reset graduale se il mouse non si muove da un po'
+                if (isMouseMoving && Date.now() - lastMouseMoveTime > 1000) {
+                    isMouseMoving = false;
+                    targetCameraX = 0;
+                    targetCameraY = 0;
+                }
+            } else if (!isTransitioning) {
+                // Fallback per quando non c'è camera nel GLB
+                currentCameraX += (targetCameraX - currentCameraX) * 0.1;
+                currentCameraY += (targetCameraY - currentCameraY) * 0.1;
+                
                 camera.position.x = currentCameraX;
                 camera.position.y = 2 + currentCameraY;
                 camera.lookAt(currentCameraX * 0.3, currentCameraY * 0.2, 0);
                 
-                // Reset graduale se il mouse non si muove da un po'
                 if (isMouseMoving && Date.now() - lastMouseMoveTime > 1000) {
                     isMouseMoving = false;
                     targetCameraX = 0;
