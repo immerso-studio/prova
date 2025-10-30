@@ -852,8 +852,8 @@
                     mouseY = -(event.clientY / window.innerHeight) * 2 + 1;
                     
                     // Calcola target position con effetto parallasse più leggero
-                    targetCameraX = mouseX * 0.01;
-                    targetCameraY = mouseY * 0.01;
+                    targetCameraX = mouseX * 0.1;
+                    targetCameraY = mouseY * 0.1;
                     
                     isMouseMoving = true;
                     lastMouseMoveTime = Date.now();
@@ -882,8 +882,8 @@
                     const deltaY = touch.clientY - lastTouchY;
                     
                     // Calcola movimento parallasse basato su movimento touch
-                    targetCameraX += deltaX * 0.0001;
-                    targetCameraY += deltaY * 0.0001;
+                    targetCameraX += deltaX * 0.001;
+                    targetCameraY += deltaY * 0.001;
                     
                     // Limita il movimento
                     targetCameraX = Math.max(-1, Math.min(1, targetCameraX));
@@ -911,7 +911,7 @@
 
         function loadPlants() {
             textureLoader.load(
-                'assets/piante4.png',
+                'assets/piante44.png',
                 (texture) => {
                     // Configura la texture per la trasparenza
                     texture.encoding = THREE.sRGBEncoding;
