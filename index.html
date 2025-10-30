@@ -388,23 +388,24 @@
             padding: 0 20px;
         }
 
-        /* Toggle Controls Button - POSIZIONATO INDIPENDENTEMENTE */
+        /* Toggle Controls Button - POSIZIONATO AL CENTRO IN ALTO ALLA SCHEDA */
         .toggle-controls-btn {
-            position: fixed;
-            bottom: 10px;
+            position: absolute;
+            bottom: 180px; /* Metà fuori e metà sopra la scheda */
             left: 50%;
             transform: translateX(-50%);
             width: 100px;
-            height: 30px;
+            height: 25px;
             border-radius: 5px;
             background: rgba(255, 255, 255, 0.15);
             backdrop-filter: blur(20px) saturate(180%);
             -webkit-backdrop-filter: blur(20px) saturate(180%);
             border: 1px solid rgba(255, 255, 255, 0.2);
+            border-bottom: none;
             color: rgba(255, 255, 255, 0.9);
             font-size: 16px;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -418,6 +419,18 @@
 
         .toggle-controls-btn:active {
             transform: translateX(-50%) scale(0.95);
+        }
+
+        /* Stato quando i controlli sono nascosti */
+        #controls.hidden + .toggle-controls-btn {
+            top: auto;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-radius: 5px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            height: 30px;
+            width: 100px;
         }
 
         /* Media Queries per dispositivi mobili */
@@ -486,9 +499,14 @@
 
             .toggle-controls-btn {
                 width: 100px;
-                height: 20px;
+                height: 30px;
                 font-size: 14px;
+            }
+
+            #controls.hidden + .toggle-controls-btn {
                 bottom: 10px;
+                width: 100px;
+                height: 30px;
             }
         }
 
@@ -564,6 +582,11 @@
                 width: 80px;
                 height: 25px;
                 font-size: 12px;
+            }
+
+            #controls.hidden + .toggle-controls-btn {
+                width: 80px;
+                height: 25px;
                 bottom: 10px;
             }
         }
@@ -617,6 +640,10 @@
             }
             
             .toggle-controls-btn {
+                top: -12px;
+            }
+            
+            #controls.hidden + .toggle-controls-btn {
                 bottom: 15px;
             }
         }
@@ -669,11 +696,15 @@
             </div>
         </div>
         
-        <button class="expand-btn" id="expand-btn">▼</button>
+        <button class="expand-btn" id="expand-btn">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                xmlns="http://www.w3.org/2000/svg">
+                <path d="M6 9L12 15L18 9"
+                    stroke="white" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </button>
     </div>
-
-    <!-- Bottone toggle POSIZIONATO INDIPENDENTEMENTE -->
-    <button class="toggle-controls-btn glass-frosted" id="toggle-controls-btn">▼</button>
 
     <div id="controls" class="glass-frosted">
         <div class="slider-container">
@@ -694,12 +725,36 @@
             </div>
 
             <div class="slider-wrapper">
-                <div class="arrow-btn" id="prev-btn">◀</div>
+                <div class="arrow-btn" id="prev-btn">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        xmlns="http://www.w3.org/2000/svg">
+                        <path d="M15 6L9 12L15 18"
+                        stroke="white" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </div>
                 <div class="current-product-name" id="current-product-name">Lampada Cubo</div>
-                <div class="arrow-btn" id="next-btn">▶</div>
+                <div class="arrow-btn" id="next-btn">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        xmlns="http://www.w3.org/2000/svg">
+                        <path d="M9 6L15 12L9 18"
+                        stroke="white" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </div>
             </div>
         </div>
     </div>
+
+    <!-- Bottone toggle POSIZIONATO AL CENTRO IN ALTO ALLA SCHEDA CONTROLS -->
+    <button class="toggle-controls-btn glass-frosted" id="toggle-controls-btn">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+            xmlns="http://www.w3.org/2000/svg">
+            <path d="M6 9L12 15L18 9"
+                stroke="white" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+    </button>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
@@ -707,6 +762,7 @@
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/RGBELoader.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <script>
+        // ... Il resto del codice JavaScript rimane identico ...
         let scene, camera, renderer, currentMesh, envMap, environmentMesh, plantsSprite;
         let isTransitioning = false;
         let loader, textureLoader;
@@ -852,8 +908,8 @@
                     mouseY = -(event.clientY / window.innerHeight) * 2 + 1;
                     
                     // Calcola target position con effetto parallasse più leggero
-                    targetCameraX = mouseX * 0.1;
-                    targetCameraY = mouseY * 0.1;
+                    targetCameraX = mouseX * 0.05;
+                    targetCameraY = mouseY * 0.05;
                     
                     isMouseMoving = true;
                     lastMouseMoveTime = Date.now();
@@ -882,8 +938,8 @@
                     const deltaY = touch.clientY - lastTouchY;
                     
                     // Calcola movimento parallasse basato su movimento touch
-                    targetCameraX += deltaX * 0.001;
-                    targetCameraY += deltaY * 0.001;
+                    targetCameraX += deltaX * 0.0001;
+                    targetCameraY += deltaY * 0.0001;
                     
                     // Limita il movimento
                     targetCameraX = Math.max(-1, Math.min(1, targetCameraX));
@@ -1002,12 +1058,12 @@
             if (controlsVisible) {
                 // Nascondi controlli
                 controls.classList.add('hidden');
-                toggleBtn.textContent = '▲';
+                toggleBtn.innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 15L12 9L18 15" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
                 controlsVisible = false;
             } else {
                 // Mostra controlli
                 controls.classList.remove('hidden');
-                toggleBtn.textContent = '▼';
+                toggleBtn.innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 9L12 15L18 9" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
                 controlsVisible = true;
             }
         }
