@@ -882,8 +882,8 @@
                     const deltaY = touch.clientY - lastTouchY;
                     
                     // Calcola movimento parallasse basato su movimento touch
-                    targetCameraX += deltaX * 0.00001;
-                    targetCameraY += deltaY * 0.00001;
+                    targetCameraX += deltaX * 0.0001;
+                    targetCameraY += deltaY * 0.0001;
                     
                     // Limita il movimento
                     targetCameraX = Math.max(-1, Math.min(1, targetCameraX));
