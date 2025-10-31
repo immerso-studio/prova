@@ -1375,7 +1375,7 @@ function loadEnvironmentWithCamera() {
                         sceneCamera.far = 1000;  // Piano far molto lontano
                         
                         // *** MODIFICA LA LUNGHEZZA FOCALE QUI ***
-                        sceneCamera.fov = 25; // Cambia questo valore (default: 50)
+                        sceneCamera.fov = 28; // Cambia questo valore (default: 50)
                         
                         console.log('Piani di clipping regolati:', sceneCamera.near, sceneCamera.far);
                         console.log('FOV impostato a:', sceneCamera.fov);
@@ -1491,51 +1491,134 @@ function loadEnvironmentWithCamera() {
             });
         }
 
-        function loadProduct(index) {
-            if (isTransitioning) return;
-            isTransitioning = true;
+function loadProduct(index, isLightToggle = false) {
+    if (isTransitioning) return;
+    isTransitioning = true;
+    
+    const previousMesh = currentMesh;
+    currentProductIndex = index;
+
+    // Mostra loading solo per cambio prodotto (non per toggle luce)
+    const loadingEl = document.querySelector('.loading');
+    if (!isLightToggle) {
+        loadingEl.style.display = 'block';
+        loadingEl.textContent = '';
+    }
+
+    createGeometry(index)
+        .then((newMesh) => {
+            // Applica la scala immediatamente
+            const scale = products[index].scale;
+            newMesh.scale.set(scale, scale, scale);
             
-            currentProductIndex = index;
-
-            // Mostra loading
-            const loadingEl = document.querySelector('.loading');
-            loadingEl.style.display = 'block';
-            loadingEl.textContent = '';
-
-            createGeometry(index)
-                .then((newMesh) => {
-                    // Applica la scala immediatamente
-                    const scale = products[index].scale;
-                    newMesh.scale.set(scale, scale, scale);
-                    
-                    // Aggiungi alla scena
-                    scene.add(newMesh);
-
-                    // Rimuovi il vecchio mesh se esiste
-                    if (currentMesh) {
-                        scene.remove(currentMesh);
+            // Se è un toggle luce, usa transizione smooth
+            if (isLightToggle && previousMesh) {
+                // Imposta opacità iniziale a 0 per la dissolvenza
+                newMesh.traverse((child) => {
+                    if (child.isMesh && child.material) {
+                        child.material.transparent = true;
+                        child.material.opacity = 0;
                     }
-
-                    // Imposta immediatamente il nuovo mesh come corrente
-                    currentMesh = newMesh;
-                    isTransitioning = false;
-                    loadingEl.style.display = 'none';
-                    
-                    // Aggiorna UI immediatamente
-                    updateProductInfo(index);
-                    
-                    console.log('Prodotto cambiato immediatamente');
-                })
-                .catch((error) => {
-                    console.error('Errore nel caricamento del prodotto:', error);
-                    isTransitioning = false;
-                    loadingEl.textContent = 'Errore nel caricamento. Verifica che i file GLB siano nella cartella assets/';
-                    setTimeout(() => {
-                        loadingEl.style.display = 'none';
-                    }, 3000);
                 });
-        }
+                
+                // Aggiungi il nuovo mesh alla scena
+                scene.add(newMesh);
 
+                // Timeline per la transizione smooth
+                const transitionTimeline = gsap.timeline({
+                    onComplete: () => {
+                        // Rimuovi il vecchio mesh dopo la transizione
+                        if (previousMesh && scene.getObjectById(previousMesh.id)) {
+                            scene.remove(previousMesh);
+                        }
+                        
+                        // Ripristina le proprietà dei materiali del nuovo mesh
+                        newMesh.traverse((child) => {
+                            if (child.isMesh && child.material) {
+                                child.material.transparent = false;
+                            }
+                        });
+                        
+                        isTransitioning = false;
+                        console.log('Transizione toggle luce completata');
+                    }
+                });
+
+                // Fade out del mesh precedente
+                previousMesh.traverse((child) => {
+                    if (child.isMesh && child.material) {
+                        child.material.transparent = true;
+                        transitionTimeline.to(child.material, {
+                            opacity: 0,
+                            duration: 1,
+                            ease: "power2.in"
+                        }, 0);
+                    }
+                });
+
+                // Fade in del nuovo mesh
+                newMesh.traverse((child) => {
+                    if (child.isMesh && child.material) {
+                        transitionTimeline.to(child.material, {
+                            opacity: 1,
+                            duration: 1,
+                            ease: "power2.out"
+                        }, 0);
+                    }
+                });
+
+            } else {
+                // Transizione originale per cambio prodotto con slider
+                scene.add(newMesh);
+
+                // Rimuovi il vecchio mesh se esiste
+                if (previousMesh) {
+                    scene.remove(previousMesh);
+                }
+
+                isTransitioning = false;
+                loadingEl.style.display = 'none';
+                
+                // Aggiorna UI
+                animateProductChange();
+                
+                console.log('Cambio prodotto completato');
+            }
+
+            // Imposta il nuovo mesh come corrente
+            currentMesh = newMesh;
+        })
+        .catch((error) => {
+            console.error('Errore nel caricamento del prodotto:', error);
+            isTransitioning = false;
+            if (!isLightToggle) {
+                loadingEl.textContent = 'Errore nel caricamento. Verifica che i file GLB siano nella cartella assets/';
+                setTimeout(() => {
+                    loadingEl.style.display = 'none';
+                }, 3000);
+            }
+        });
+}
+
+// Modifica anche l'event listener del toggle luce per passare il parametro isLightToggle
+document.getElementById('light-toggle').addEventListener('change', (e) => {
+    isLightOn = e.target.checked;
+    console.log('Stato luce:', isLightOn ? 'ACCESA' : 'SPENTA');
+    updateLightIndicator();
+    // Ricarica il prodotto corrente con transizione smooth
+    loadProduct(currentProductIndex, true); // true = isLightToggle
+});
+
+// Le funzioni per lo slider rimangono invariate
+document.getElementById('prev-btn').addEventListener('click', () => {
+    const newIndex = currentProductIndex > 0 ? currentProductIndex - 1 : products.length - 1;
+    loadProduct(newIndex, false); // false = cambio prodotto normale
+});
+
+document.getElementById('next-btn').addEventListener('click', () => {
+    const newIndex = currentProductIndex < products.length - 1 ? currentProductIndex + 1 : 0;
+    loadProduct(newIndex, false); // false = cambio prodotto normale
+});
         function animate() {
             requestAnimationFrame(animate);
 
