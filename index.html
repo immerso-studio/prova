@@ -762,7 +762,6 @@
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/RGBELoader.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <script>
-        // ... Il resto del codice JavaScript rimane identico ...
         let scene, camera, renderer, currentMesh, envMap, environmentMesh, plantsSprite;
         let isTransitioning = false;
         let loader, textureLoader;
@@ -806,8 +805,8 @@
                 name: 'Lampada Sfera Elegante', 
                 shortName: 'Lampada Sfera',
                 desc: 'Lampada da tavolo elegante e minimalista', 
-                modelOff: 'assets/1/Prova_export_3_giorno.glb',    // Luce spenta
-                modelOn: 'assets/1/Prova_export_3_sera.glb',     // Luce accesa
+                modelOff: 'assets/1/Prova_export_4_giorno.glb',    // Luce spenta
+                modelOn: 'assets/1/Prova_export_4_sera.glb',     // Luce accesa
                 scale: 15,
                 rotation: { x: 0, y: 0, z: 0 },
                 material: 'Vetro opalino e ottone',
@@ -938,8 +937,8 @@
                     const deltaY = touch.clientY - lastTouchY;
                     
                     // Calcola movimento parallasse basato su movimento touch
-                    targetCameraX += deltaX * 0.0001;
-                    targetCameraY += deltaY * 0.0001;
+                    targetCameraX += deltaX * 0;
+                    targetCameraY += deltaY * 0;
                     
                     // Limita il movimento
                     targetCameraX = Math.max(-1, Math.min(1, targetCameraX));
@@ -1509,35 +1508,23 @@ function loadEnvironmentWithCamera() {
                     const scale = products[index].scale;
                     newMesh.scale.set(scale, scale, scale);
                     
-                    // Aggiungi alla scena ma invisibile inizialmente
-                    newMesh.visible = false;
+                    // Aggiungi alla scena
                     scene.add(newMesh);
 
-                    // Animazione uscita del modello corrente
+                    // Rimuovi il vecchio mesh se esiste
                     if (currentMesh) {
-                        fadeOut(currentMesh, () => {
-                            scene.remove(currentMesh);
-                            // Una volta che il vecchio modello è rimosso, mostra il nuovo
-                            fadeIn(newMesh, () => {
-                                currentMesh = newMesh;
-                                isTransitioning = false;
-                                loadingEl.style.display = 'none';
-                                
-                                // Animazione della scheda informativa
-                                animateProductChange();
-                            });
-                        });
-                    } else {
-                        // Primo caricamento
-                        fadeIn(newMesh, () => {
-                            currentMesh = newMesh;
-                            isTransitioning = false;
-                            loadingEl.style.display = 'none';
-                        });
+                        scene.remove(currentMesh);
                     }
 
+                    // Imposta immediatamente il nuovo mesh come corrente
+                    currentMesh = newMesh;
+                    isTransitioning = false;
+                    loadingEl.style.display = 'none';
+                    
                     // Aggiorna UI immediatamente
                     updateProductInfo(index);
+                    
+                    console.log('Prodotto cambiato immediatamente');
                 })
                 .catch((error) => {
                     console.error('Errore nel caricamento del prodotto:', error);
@@ -1547,86 +1534,6 @@ function loadEnvironmentWithCamera() {
                         loadingEl.style.display = 'none';
                     }, 3000);
                 });
-        }
-
-        function fadeOut(mesh, callback) {
-            const duration = 100;
-            const startTime = Date.now();
-
-            function animate() {
-                const elapsed = Date.now() - startTime;
-                const progress = Math.min(elapsed / duration, 1);
-                
-                // Fade out usando l'opacità dei materiali
-                mesh.traverse((child) => {
-                    if (child.isMesh && child.material) {
-                        if (Array.isArray(child.material)) {
-                            child.material.forEach(mat => {
-                                mat.opacity = 1 - progress;
-                                mat.transparent = true;
-                            });
-                        } else {
-                            child.material.opacity = 1 - progress;
-                            child.material.transparent = true;
-                        }
-                    }
-                });
-
-                if (progress < 1) {
-                    requestAnimationFrame(animate);
-                } else {
-                    callback();
-                }
-            }
-            animate();
-        }
-
-        function fadeIn(mesh, callback) {
-            const duration = 400;
-            const startTime = Date.now();
-            
-            // Rendi il mesh visibile
-            mesh.visible = true;
-
-            // Imposta opacità iniziale a 0
-            mesh.traverse((child) => {
-                if (child.isMesh && child.material) {
-                    if (Array.isArray(child.material)) {
-                        child.material.forEach(mat => {
-                            mat.opacity = 0;
-                            mat.transparent = true;
-                        });
-                    } else {
-                        child.material.opacity = 0;
-                        child.material.transparent = true;
-                    }
-                }
-            });
-
-            function animate() {
-                const elapsed = Date.now() - startTime;
-                const progress = Math.min(elapsed / duration, 1);
-                
-                // Fade in usando l'opacità dei materiali
-                mesh.traverse((child) => {
-                    if (child.isMesh && child.material) {
-                        if (Array.isArray(child.material)) {
-                            child.material.forEach(mat => {
-                                mat.opacity = progress;
-                            });
-                        } else {
-                            child.material.opacity = progress;
-                        }
-                    }
-                });
-
-                if (progress < 1) {
-                    requestAnimationFrame(animate);
-                } else {
-                    callback();
-                }
-            }
-            animate();
         }
 
         function animate() {
