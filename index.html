@@ -25,72 +25,6 @@
             cursor: grabbing;
         }
 
-        /* * STILI PRELOADER
-         * Questo nuovo blocco gestisce il loader iniziale
-         */
-        #preloader {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: #0a0a0a;
-            z-index: 9999;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: opacity 0.5s ease-out, visibility 0s 0.5s;
-            opacity: 1;
-            visibility: visible;
-        }
-
-        #preloader.hidden {
-            opacity: 0;
-            visibility: hidden;
-        }
-
-        .preloader-content {
-            text-align: center;
-            color: #fff;
-        }
-
-        .preloader-spinner {
-            border: 4px solid rgba(255, 255, 255, 0.2);
-            border-top: 4px solid #FFD700;
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 20px auto;
-        }
-
-        .preloader-text {
-            font-size: 16px;
-            letter-spacing: 1px;
-            margin-bottom: 10px;
-            text-transform: uppercase;
-        }
-
-        #preloader-progress {
-            font-size: 18px;
-            font-weight: 500;
-            color: #FFD700;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        /* Fine stili preloader */
-
-
-        /* Nascondi la UI all'inizio */
-        #product-info, #controls, #toggle-controls-btn {
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.5s ease;
-        }
-
         #canvas-container {
             width: 100vw;
             height: 100vh;
@@ -443,7 +377,6 @@
             color: rgba(255, 255, 255, 0.6);
         }
 
-        /* Questo .loading è ora usato solo per il CAMBIO prodotto */
         .loading {
             position: absolute;
             top: 50%;
@@ -453,11 +386,6 @@
             color: rgba(255, 255, 255, 0.9);
             text-align: center;
             padding: 0 20px;
-            background: rgba(0,0,0,0.5);
-            padding: 10px 20px;
-            border-radius: 8px;
-            z-index: 10;
-            display: none; /* Nascosto di default */
         }
 
         /* Toggle Controls Button - POSIZIONATO AL CENTRO IN ALTO ALLA SCHEDA */
@@ -737,14 +665,6 @@
     </style>
 </head>
 <body>
-    <div id="preloader">
-        <div class="preloader-content">
-            <div class="preloader-spinner"></div>
-            <div class="preloader-text">Caricamento Scena</div>
-            <div id="preloader-progress">0%</div>
-        </div>
-    </div>
-
     <div id="canvas-container">
         <div class="loading">Caricamento...</div>
     </div>
@@ -788,11 +708,13 @@
 
     <div id="controls" class="glass-frosted">
         <div class="slider-container">
+            <!-- Indicatore stato luce -->
             <div class="power-indicator">
                 <div class="power-dot" id="power-dot"></div>
                 <span class="toggle-label" id="power-status">LUCE SPENTA</span>
             </div>
 
+            <!-- Toggle per accensione luce -->
             <div class="toggle-container">
                 <span class="toggle-label">OFF</span>
                 <label class="toggle-switch">
@@ -824,6 +746,7 @@
         </div>
     </div>
 
+    <!-- Bottone toggle POSIZIONATO AL CENTRO IN ALTO ALLA SCHEDA CONTROLS -->
     <button class="toggle-controls-btn glass-frosted" id="toggle-controls-btn">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
             xmlns="http://www.w3.org/2000/svg">
@@ -845,11 +768,6 @@
         let currentProductIndex = 0;
         let isLightOn = false; // Stato luce: false = spenta, true = accesa
         let controlsVisible = true; // Stato visibilità controlli
-        
-        // --- NUOVE VARIABILI PER PRELOADING ---
-        let manager;
-        const preloadedModels = {}; // Cache per i modelli GLB
-        // ------------------------------------
         
         // Variabili per effetto parallasse
         let mouseX = 0;
@@ -916,60 +834,15 @@
         function init() {
             const container = document.getElementById('canvas-container');
             
-            // --- GESTIONE PRELOADER ---
-            manager = new THREE.LoadingManager();
-            const preloader = document.getElementById('preloader');
-            const progressElement = document.getElementById('preloader-progress');
-
-            manager.onProgress = (url, itemsLoaded, itemsTotal) => {
-                const progress = Math.round((itemsLoaded / itemsTotal) * 100);
-                progressElement.textContent = `${progress}%`;
-                console.log(`Caricamento: ${itemsLoaded}/${itemsTotal} (${progress}%) - ${url}`);
-            };
-
-            manager.onLoad = () => {
-                console.log('Tutti gli asset sono stati caricati!');
-                
-                // Nascondi il preloader
-                preloader.classList.add('hidden');
-                
-                // Mostra la UI principale con animazione
-                gsap.to(['#product-info', '#controls', '#toggle-controls-btn'], {
-                    duration: 0.8,
-                    opacity: 1,
-                    pointerEvents: 'auto',
-                    ease: 'power2.out',
-                    delay: 0.2
-                });
-
-                // Avvia animazione scheda prodotto
-                animateProductInfo();
-
-                // Aggiorna indicatore luce
-                updateLightIndicator();
-
-                // Setup event listeners
-                setupEventListeners();
-
-                // Nascondi il .loading interno (usato solo per i cambi)
-                document.querySelector('.loading').style.display = 'none';
-
-                // Carica il primo prodotto (ora è istantaneo)
-                loadProduct(0);
-            };
-            // --- FINE GESTIONE PRELOADER ---
-
-            
-            // Inizializza loader CON IL MANAGER
-            loader = new THREE.GLTFLoader(manager);
+            // Inizializza loader CON DRACO
+            loader = new THREE.GLTFLoader();
             
             // CONFIGURA DRACO LOADER
             const dracoLoader = new THREE.DRACOLoader();
             dracoLoader.setDecoderPath('https://www.gstatic.com/draco/v1/decoders/');
             loader.setDRACOLoader(dracoLoader);
             
-            // Inizializza texture loader CON IL MANAGER
-            textureLoader = new THREE.TextureLoader(manager);
+            textureLoader = new THREE.TextureLoader();
             
             // Scena
             scene = new THREE.Scene();
@@ -997,36 +870,43 @@
             // Setup event listeners per parallasse
             setupParallaxEvents();
 
-            // --- AVVIO CARICAMENTI GESTITI DAL MANAGER ---
-            
-            // Carica HDRI (passando il manager)
-            loadHDRI(manager);
+            // Carica HDRI
+            loadHDRI();
 
-            // Carica l'ambiente con la camera dal GLB (usa 'loader', già gestito)
+            // Carica l'ambiente con la camera dal GLB
             loadEnvironmentWithCamera();
 
-            // Carica le piante PNG (usa 'textureLoader', già gestito)
+            // Carica le piante PNG
             loadPlants();
 
-            // PRECARICA TUTTI I PRODOTTI (usa 'loader', già gestito)
-            preloadAllProducts();
+            // Carica primo prodotto
+            loadProduct(0);
 
-            // --- FINE AVVIO CARICAMENTI ---
+            // Nascondi loading
+            document.querySelector('.loading').style.display = 'none';
+
+            // Animazione iniziale della scheda
+            animateProductInfo();
+
+            // Aggiorna indicatore luce
+            updateLightIndicator();
+
+            // Event listeners per UI
+            setupEventListeners();
 
             window.addEventListener('resize', onWindowResize);
 
             animate();
-            
-            // NON caricare/mostrare la UI qui. Sarà gestito da manager.onLoad
         }
 
         function setupParallaxEvents() {
-            // ... (codice invariato)
-             document.addEventListener('mousemove', (event) => {
+            // Desktop - Mouse movement
+            document.addEventListener('mousemove', (event) => {
                 if (!isTransitioning) {
                     mouseX = (event.clientX / window.innerWidth) * 2 - 1;
                     mouseY = -(event.clientY / window.innerHeight) * 2 + 1;
                     
+                    // Calcola target position con effetto parallasse più leggero
                     targetCameraX = mouseX * 0.05;
                     targetCameraY = mouseY * 0.05;
                     
@@ -1034,9 +914,12 @@
                     lastMouseMoveTime = Date.now();
                 }
             });
+
+            // Mobile - Touch movement
             let isTouching = false;
             let lastTouchX = 0;
             let lastTouchY = 0;
+
             document.addEventListener('touchstart', (event) => {
                 if (!isTransitioning) {
                     isTouching = true;
@@ -1046,15 +929,18 @@
                     event.preventDefault();
                 }
             });
+
             document.addEventListener('touchmove', (event) => {
                 if (!isTransitioning && isTouching) {
                     const touch = event.touches[0];
                     const deltaX = touch.clientX - lastTouchX;
                     const deltaY = touch.clientY - lastTouchY;
                     
-                    targetCameraX += deltaX * 0.0;
-                    targetCameraY += deltaY * 0.0;
+                    // Calcola movimento parallasse basato su movimento touch
+                    targetCameraX += deltaX * 0;
+                    targetCameraY += deltaY * 0;
                     
+                    // Limita il movimento
                     targetCameraX = Math.max(-1, Math.min(1, targetCameraX));
                     targetCameraY = Math.max(-0.8, Math.min(0.8, targetCameraY));
                     
@@ -1063,11 +949,15 @@
                     event.preventDefault();
                 }
             });
+
             document.addEventListener('touchend', () => {
                 isTouching = false;
+                // Ritorno graduale alla posizione centrale
                 targetCameraX = 0;
                 targetCameraY = 0;
             });
+
+            // Reset camera quando il mouse esce dalla finestra
             document.addEventListener('mouseleave', () => {
                 targetCameraX = 0;
                 targetCameraY = 0;
@@ -1075,21 +965,32 @@
         }
 
         function loadPlants() {
-            // 'textureLoader' è già gestito dal manager
             textureLoader.load(
                 'assets/piante44.png',
                 (texture) => {
+                    // Configura la texture per la trasparenza
                     texture.encoding = THREE.sRGBEncoding;
+                    
+                    // Crea un materiale con trasparenza
                     const material = new THREE.SpriteMaterial({
                         map: texture,
                         transparent: true,
                         alphaTest: 0.1,
                         opacity: 1
                     });
+                    
+                    // Crea lo sprite
                     plantsSprite = new THREE.Sprite(material);
+                    
+                    // Posiziona le piante dietro i prodotti
                     plantsSprite.position.set(20, 5, 15);
+                    
+                    // Scala lo sprite
                     plantsSprite.scale.set(70, 70, 70);
+                    
+                    // Aggiungi alla scena
                     scene.add(plantsSprite);
+                    
                     console.log('Piante PNG caricate con successo');
                 },
                 undefined,
@@ -1100,33 +1001,45 @@
         }
 
         function setupEventListeners() {
-            // ... (codice invariato)
+            // Frecce
             document.getElementById('prev-btn').addEventListener('click', () => {
                 const newIndex = currentProductIndex > 0 ? currentProductIndex - 1 : products.length - 1;
                 loadProduct(newIndex);
             });
+
             document.getElementById('next-btn').addEventListener('click', () => {
                 const newIndex = currentProductIndex < products.length - 1 ? currentProductIndex + 1 : 0;
                 loadProduct(newIndex);
             });
+
+            // Toggle luce
             document.getElementById('light-toggle').addEventListener('change', (e) => {
                 isLightOn = e.target.checked;
                 console.log('Stato luce:', isLightOn ? 'ACCESA' : 'SPENTA');
                 updateLightIndicator();
+                // Ricarica il prodotto corrente con lo stato luce corretto
                 loadProduct(currentProductIndex);
             });
+
+            // Espandi/contrai scheda info
             const expandBtn = document.getElementById('expand-btn');
             const productInfo = document.getElementById('product-info');
+            
             expandBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 toggleProductInfo();
             });
+
             productInfo.addEventListener('click', (e) => {
                 if (e.target === productInfo) {
                     toggleProductInfo();
                 }
             });
+
+            // Toggle controlli
             document.getElementById('toggle-controls-btn').addEventListener('click', toggleControls);
+
+            // Prevenire zoom su doppio tap
             let lastTouchEnd = 0;
             document.addEventListener('touchend', function (event) {
                 const now = (new Date()).getTime();
@@ -1138,14 +1051,16 @@
         }
 
         function toggleControls() {
-            // ... (codice invariato)
             const controls = document.getElementById('controls');
             const toggleBtn = document.getElementById('toggle-controls-btn');
+            
             if (controlsVisible) {
+                // Nascondi controlli
                 controls.classList.add('hidden');
                 toggleBtn.innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 15L12 9L18 15" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
                 controlsVisible = false;
             } else {
+                // Mostra controlli
                 controls.classList.remove('hidden');
                 toggleBtn.innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 9L12 15L18 9" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
                 controlsVisible = true;
@@ -1153,9 +1068,9 @@
         }
 
         function updateLightIndicator() {
-            // ... (codice invariato)
             const powerDot = document.getElementById('power-dot');
             const powerStatus = document.getElementById('power-status');
+            
             if (isLightOn) {
                 powerDot.classList.add('active');
                 powerStatus.textContent = 'LUCE ACCESA';
@@ -1168,13 +1083,14 @@
         }
 
         function toggleProductInfo() {
-            // ... (codice invariato)
             const expandBtn = document.getElementById('expand-btn');
             const productInfo = document.getElementById('product-info');
             const productDesc = document.querySelector('.product-desc');
             const additionalInfo = document.querySelector('.additional-info');
             const isExpanding = !productInfo.classList.contains('expanded');
+
             if (isExpanding) {
+                // Misuriamo l'altezza reale del contenuto prima di animare
                 productDesc.style.display = "block";
                 additionalInfo.style.display = "block";
                 additionalInfo.style.maxHeight = "none";
@@ -1183,6 +1099,8 @@
                 const descHeight = productDesc.scrollHeight + "px";
                 productDesc.style.maxHeight = "0";
                 additionalInfo.style.maxHeight = "0";
+
+                // Animazione espansione fluida senza "schiacciamento"
                 if (window.innerWidth > 768) {
                     gsap.to(productInfo, {
                         duration: 0.6,
@@ -1194,9 +1112,12 @@
                         }
                     });
                 } else {
+                    // Su mobile, mantieni la larghezza al 100% e aggiungi solo la classe expanded
                     productInfo.classList.add('expanded');
                     expandBtn.classList.add('expanded');
                 }
+
+                // Animazione per mostrare la descrizione del prodotto
                 gsap.to(productDesc, {
                     duration: 0.4,
                     opacity: 1,
@@ -1204,6 +1125,7 @@
                     ease: "power2.out",
                     delay: 0.1
                 });
+
                 gsap.to(additionalInfo, {
                     duration: 0.6,
                     opacity: 1,
@@ -1211,6 +1133,7 @@
                     ease: "power2.out",
                     delay: 0.2
                 });
+
                 gsap.to('.info-row', {
                     duration: 0.5,
                     opacity: 1,
@@ -1219,6 +1142,7 @@
                     ease: "back.out(1.2)",
                     delay: 0.4
                 });
+
                 gsap.to('.price-tag', {
                     duration: 0.5,
                     opacity: 1,
@@ -1226,20 +1150,24 @@
                     ease: "back.out(1.2)",
                     delay: 0.7
                 });
+
             } else {
                 const tl = gsap.timeline({
                     defaults: { ease: "power2.inOut" },
                     onComplete: () => {
                         productInfo.classList.remove('expanded');
                         expandBtn.classList.remove('expanded');
+                        // Nascondi completamente gli elementi dopo l'animazione
                         productDesc.style.display = "none";
                         additionalInfo.style.display = "none";
                     }
                 });
+
                 tl.to('.price-tag', { opacity: 0, y: 10, duration: 0.3 }, 0)
-                    .to('.info-row', { opacity: 0, y: 10, stagger: 0.05, duration: 0.3 }, 0)
-                    .to('.additional-info', { opacity: 0, maxHeight: 0, duration: 0.4 }, 0.1)
-                    .to('.product-desc', { opacity: 0, maxHeight: 0, duration: 0.3 }, 0);
+                  .to('.info-row', { opacity: 0, y: 10, stagger: 0.05, duration: 0.3 }, 0)
+                  .to('.additional-info', { opacity: 0, maxHeight: 0, duration: 0.4 }, 0.1)
+                  .to('.product-desc', { opacity: 0, maxHeight: 0, duration: 0.3 }, 0);
+                
                 if (window.innerWidth > 768) {
                     tl.to(productInfo, {
                         width: '320px',
@@ -1250,33 +1178,72 @@
         }
 
         function animateProductInfo() {
-            // ... (codice invariato)
-            gsap.fromTo('#product-info h1', 
-                { y: -20, opacity: 0 },
-                { y: 0, opacity: 1, duration: 0.6 }
+            // Animazione di entrata della scheda prodotto
+            gsap.fromTo('#product-info', 
+                {
+                    y: -50,
+                    opacity: 0
+                },
+                {
+                    y: 0,
+                    opacity: 1,
+                    duration: 0.8,
+                    ease: "back.out(1.2)",
+                    delay: 0.5
+                }
             );
-            gsap.fromTo('.product-name', 
-                { y: -20, opacity: 0 },
-                { y: 0, opacity: 1, duration: 0.6, delay: 0.2 }
+            
+            // Animazione a scaglioni per il contenuto
+            const timeline = gsap.timeline({ delay: 0.8 });
+            
+            timeline.fromTo('#product-info h1', 
+                {
+                    y: -20,
+                    opacity: 0
+                },
+                {
+                    y: 0,
+                    opacity: 1,
+                    duration: 0.6
+                }
+            )
+            .fromTo('.product-name', 
+                {
+                    y: -20,
+                    opacity: 0
+                },
+                {
+                    y: 0,
+                    opacity: 1,
+                    duration: 0.6
+                },
+                "-=0.4"
             );
         }
 
         function animateProductChange() {
-            // ... (codice invariato)
             const productName = document.getElementById('product-name');
             const productDesc = document.getElementById('product-desc');
             const productInfo = document.getElementById('product-info');
             const isExpanded = productInfo.classList.contains('expanded');
+            
+            // Prepara le additional-info se la scheda è espansa
             if (isExpanded) {
                 const infoRows = document.querySelectorAll('.info-row');
                 const priceTag = document.querySelector('.price-tag');
+                
                 gsap.set([...infoRows, priceTag], {
                     opacity: 0,
                     y: 10
                 });
             }
+            
+            // Aggiorna immediatamente il contenuto
             updateProductInfo(currentProductIndex);
+            
+            // Crea una timeline per l'animazione
             const changeTimeline = gsap.timeline();
+            
             changeTimeline.to([productName, productDesc], {
                 duration: 0.15,
                 opacity: 0,
@@ -1290,9 +1257,12 @@
                 ease: "back.out(1.2)",
                 stagger: 0.05
             });
+
+            // Se la scheda è espansa, anima le additional-info
             if (isExpanded) {
                 const infoRows = document.querySelectorAll('.info-row');
                 const priceTag = document.querySelector('.price-tag');
+                
                 changeTimeline
                     .to(infoRows, {
                         duration: 0.5,
@@ -1311,11 +1281,13 @@
         }
 
         function updateProductInfo(index) {
-            // ... (codice invariato)
             const product = products[index];
+            
             document.getElementById('product-name').textContent = product.name;
             document.getElementById('product-desc').textContent = product.desc;
             document.getElementById('current-product-name').textContent = product.shortName;
+            
+            // Aggiorna informazioni aggiuntive
             document.getElementById('material-value').textContent = product.material;
             document.getElementById('dimensions-value').textContent = product.dimensions;
             document.getElementById('power-value').textContent = product.power;
@@ -1323,94 +1295,123 @@
             document.getElementById('price-value').textContent = product.price;
         }
 
-        // --- MODIFICATA ---: Accetta il manager
-        function loadHDRI(manager) {
-            // Usa il manager passato
-            const rgbeLoader = new THREE.RGBELoader(manager);
+        function loadHDRI() {
+            const rgbeLoader = new THREE.RGBELoader();
             rgbeLoader.setDataType(THREE.HalfFloatType);
             
             rgbeLoader.load(
                 'https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/industrial_sunset_puresky_1k.hdr',
                 function(texture) {
+                    
                     texture.mapping = THREE.EquirectangularReflectionMapping;
+                    
+                    // Crea environment map
                     const pmremGenerator = new THREE.PMREMGenerator(renderer);
                     pmremGenerator.compileEquirectangularShader();
+                    
                     envMap = pmremGenerator.fromEquirectangular(texture).texture;
+                    
+                    // Applica l'envMap alla scena
                     scene.environment = envMap;
                     scene.background = envMap;
+                    
+                    // Pulisci
                     texture.dispose();
                     pmremGenerator.dispose();
+                    
                     console.log('HDRI caricato con successo');
                 },
                 undefined,
                 function(error) {
                     console.error('Errore nel caricamento HDRI:', error);
-                    // createFallbackEnvironment(); // Questa funzione usa un loader non gestito,
-                                                   // per ora la commentiamo per non bloccare il manager
+                    createFallbackEnvironment();
                 }
             );
         }
 
         function createFallbackEnvironment() {
-            // ... (codice invariato)
             const cubeTextureLoader = new THREE.CubeTextureLoader();
-            const urls = [ '...', '...', '...', '...', '...', '...' ];
+            const urls = [
+                'https://threejs.org/examples/textures/cube/pisa/px.png',
+                'https://threejs.org/examples/textures/cube/pisa/nx.png',
+                'https://threejs.org/examples/textures/cube/pisa/py.png',
+                'https://threejs.org/examples/textures/cube/pisa/ny.png',
+                'https://threejs.org/examples/textures/cube/pisa/pz.png',
+                'https://threejs.org/examples/textures/cube/pisa/nz.png'
+            ];
+            
             envMap = cubeTextureLoader.load(urls);
             envMap.encoding = THREE.sRGBEncoding;
+            
             scene.environment = envMap;
             scene.background = envMap;
         }
 
-        function loadEnvironmentWithCamera() {
-            // 'loader' è già gestito dal manager
-            loader.load(
-                'assets/camera.glb', 
-                (gltf) => {
-                    environmentMesh = gltf.scene;
-                    environmentMesh.position.set(0, -14, 6)
-                    environmentMesh.scale.set(18, 18, 18)
+function loadEnvironmentWithCamera() {
+    // Carica il GLB che contiene la camera
+    loader.load(
+        'assets/camera.glb', // Usa il primo GLB che contiene la camera
+        (gltf) => {
+            environmentMesh = gltf.scene;
+            
+            // Configura l'ambiente
+            environmentMesh.position.set(0, -14, 6)
+            environmentMesh.scale.set(18, 18, 18)
+            
+            // Cerca una camera nel GLB
+            let cameraFound = false;
+            gltf.scene.traverse((child) => {
+                if (child.isCamera) {
+                    console.log('Camera trovata nel GLB:', child);
+                    sceneCamera = child;
                     
-                    let cameraFound = false;
-                    gltf.scene.traverse((child) => {
-                        if (child.isCamera) {
-                            console.log('Camera trovata nel GLB:', child);
-                            sceneCamera = child;
-                            originalCameraPosition.copy(sceneCamera.position);
-                            originalCameraRotation.copy(sceneCamera.rotation);
-                            if (sceneCamera.isPerspectiveCamera) {
-                                sceneCamera.near = 0.1;
-                                sceneCamera.far = 1000;
-                                sceneCamera.fov = 25; 
-                                console.log('Piani di clipping regolati:', sceneCamera.near, sceneCamera.far);
-                                console.log('FOV impostato a:', sceneCamera.fov);
-                            }
-                            camera = sceneCamera;
-                            useSceneCamera = true;
-                            cameraFound = true;
-                            camera.aspect = window.innerWidth / window.innerHeight;
-                            camera.updateProjectionMatrix();
-                            console.log('Camera del GLB impostata come camera principale');
-                        }
-                    });
+                    // Salva la posizione e rotazione originale della camera
+                    originalCameraPosition.copy(sceneCamera.position);
+                    originalCameraRotation.copy(sceneCamera.rotation);
                     
-                    if (!cameraFound) {
-                        console.warn('Nessuna camera trovata nel GLB, uso camera di default');
-                        createBasicEnvironment();
-                    } else {
-                        scene.add(environmentMesh);
-                        console.log('Ambiente con camera GLB caricato con successo');
+                    // Regola i piani di clipping per evitare problemi
+                    if (sceneCamera.isPerspectiveCamera) {
+                        sceneCamera.near = 0.1;  // Piano near molto vicino
+                        sceneCamera.far = 1000;  // Piano far molto lontano
+                        
+                        // *** MODIFICA LA LUNGHEZZA FOCALE QUI ***
+                        sceneCamera.fov = 25; // Cambia questo valore (default: 50)
+                        
+                        console.log('Piani di clipping regolati:', sceneCamera.near, sceneCamera.far);
+                        console.log('FOV impostato a:', sceneCamera.fov);
                     }
-                },
-                undefined,
-                (error) => {
-                    console.error('Errore nel caricamento dell\'ambiente con camera:', error);
-                    createBasicEnvironment();
+                    
+                    // Usa la camera del GLB invece di quella creata
+                    camera = sceneCamera;
+                    useSceneCamera = true;
+                    cameraFound = true;
+                    
+                    // Aggiorna il rapporto d'aspetto
+                    camera.aspect = window.innerWidth / window.innerHeight;
+                    camera.updateProjectionMatrix();
+                    
+                    console.log('Camera del GLB impostata come camera principale');
                 }
-            );
+            });
+            
+            if (!cameraFound) {
+                console.warn('Nessuna camera trovata nel GLB, uso camera di default');
+                createBasicEnvironment();
+            } else {
+                scene.add(environmentMesh);
+                console.log('Ambiente con camera GLB caricato con successo');
+            }
+        },
+        undefined,
+        (error) => {
+            console.error('Errore nel caricamento dell\'ambiente con camera:', error);
+            createBasicEnvironment();
         }
+    );
+}
 
         function createBasicEnvironment() {
-            // ... (codice invariato)
+            // Pavimento riflettente di fallback
             const floorGeometry = new THREE.CircleGeometry(15, 32);
             const floorMaterial = new THREE.MeshStandardMaterial({ 
                 color: 0x1a1a1a,
@@ -1423,153 +1424,144 @@
             floor.receiveShadow = true;
             floor.position.y = -1;
             scene.add(floor);
+
             environmentMesh = floor;
             console.log('Ambiente base creato con successo');
         }
 
-        // --- NUOVA FUNZIONE ---
-        // Precarica tutti i modelli (On e Off) e li salva nella cache 'preloadedModels'
-        function preloadAllProducts() {
-            console.log('Avvio precaricamento di tutti i modelli...');
-            
-            products.forEach((product, index) => {
-                const paths = [product.modelOff, product.modelOn];
-                
-                paths.forEach(modelPath => {
-                    if (modelPath && !preloadedModels[modelPath]) {
-                        // 'loader' è già gestito dal manager
-                        loader.load(modelPath, (gltf) => {
-                            // Salva l'intera scena del GLB nella cache
-                            preloadedModels[modelPath] = gltf.scene; 
-                            console.log(`Precaricato: ${modelPath}`);
-                        }, undefined, (error) => {
-                             console.error(`Errore precaricamento ${modelPath}:`, error);
-                        });
-                    }
-                });
-            });
-        }
-
-
-        // --- MODIFICATA (INP) ---: Ora è Sincrona e usa la cache, rimosso material.clone()
-        // Prende il modello dalla cache, lo clona e lo configura
         function createGeometry(index) {
-            const product = products[index];
-            const modelPath = isLightOn ? product.modelOn : product.modelOff;
-            
-            console.log(`Creazione geometria per ${index}: ${isLightOn ? 'LUCE ACCESA' : 'LUCE SPENTA'}`);
-            
-            const originalModel = preloadedModels[modelPath];
-
-            if (!originalModel) {
-                console.error(`Modello non trovato in cache: ${modelPath}. Assicurati che il percorso sia corretto e che sia in /assets/`);
-                // Ritorna un cubo rosso come fallback visivo
-                return new THREE.Mesh(new THREE.BoxGeometry(), new THREE.MeshBasicMaterial({ color: 0xff0000 }));
-            }
-
-            // Clona il modello dalla cache per creare una nuova istanza
-            const model = originalModel.clone(); 
-            
-            // Abilita ombre per tutti i mesh
-            model.traverse((child) => {
-                if (child.isMesh) {
-                    child.castShadow = true;
-                    child.receiveShadow = true;
-                    
-                    // --- MODIFICA INP ---
-                    // Rimuoviamo il clone del materiale, che è molto costoso
-                    // child.material = child.material.clone(); // <-- RIMOSSO
-                    
-                    // Applica l'envMap direttamente al materiale condiviso
-                    if (child.material) {
-                        child.material.envMap = envMap;
-                        child.material.envMapIntensity = 1.0;
+            return new Promise((resolve, reject) => {
+                const product = products[index];
+                const modelPath = isLightOn ? product.modelOn : product.modelOff;
+                
+                console.log(`Caricamento prodotto ${index}: ${isLightOn ? 'LUCE ACCESA' : 'LUCE SPENTA'}`);
+                console.log(`Percorso modello: ${modelPath}`);
+                
+                loader.load(
+                    modelPath,
+                    (gltf) => {
+                        const model = gltf.scene;
                         
-                        if (child.material.metalness > 0) {
-                            child.material.roughness = 0.1;
-                        }
+                        // Abilita ombre per tutti i mesh
+                        model.traverse((child) => {
+                            if (child.isMesh) {
+                                child.castShadow = true;
+                                child.receiveShadow = true;
+                                
+                                // Migliora i materiali con envMap
+                                if (child.material) {
+                                    child.material.envMap = envMap;
+                                    child.material.envMapIntensity = 1.0;
+                                    child.material.needsUpdate = true;
+                                    
+                                    if (child.material.metalness > 0) {
+                                        child.material.roughness = 0.1;
+                                    }
+                                }
+                            }
+                        });
+                        
+                        // Centra il modello
+                        const box = new THREE.Box3().setFromObject(model);
+                        const center = box.getCenter(new THREE.Vector3());
+                        model.position.sub(center);
+                        
+                        // Posiziona sopra il pavimento
+                        model.position.y = 0;
+                        
+                        // Applica la scala fissa per questo prodotto
+                        const scale = product.scale;
+                        model.scale.set(scale, scale, scale);
+                        
+                        // Applica la rotazione personalizzata
+                        const rotation = product.rotation;
+                        model.rotation.set(rotation.x, rotation.y, rotation.z);
+                        
+                        resolve(model);
+                    },
+                    (xhr) => {
+                        const percentComplete = (xhr.loaded / xhr.total) * 100;
+                        console.log(modelPath + ' ' + percentComplete.toFixed(0) + '% caricato');
+                    },
+                    (error) => {
+                        console.error('Errore nel caricamento del modello:', error);
+                        reject(error);
                     }
-                }
+                );
             });
-            
-            // Centra il modello
-            const box = new THREE.Box3().setFromObject(model);
-            const center = box.getCenter(new THREE.Vector3());
-            model.position.sub(center);
-            
-            // Posiziona sopra il pavimento
-            model.position.y = 0;
-            
-            // Applica la scala fissa per questo prodotto
-            const scale = product.scale;
-            model.scale.set(scale, scale, scale);
-            
-            // Applica la rotazione personalizzata
-            const rotation = product.rotation;
-            model.rotation.set(rotation.x, rotation.y, rotation.z);
-            
-            return model; // Ritorna il mesh (sincrono)
         }
 
-
-        // --- MODIFICATA (INP) ---: Rimanda il lavoro pesante con setTimeout
         function loadProduct(index) {
             if (isTransitioning) return;
             isTransitioning = true;
             
             currentProductIndex = index;
 
-            // 1. Mostra il loading spinner (FEEDBACK IMMEDIATO)
+            // Mostra loading
             const loadingEl = document.querySelector('.loading');
             loadingEl.style.display = 'block';
-            loadingEl.textContent = 'Caricamento...';
+            loadingEl.textContent = '';
 
-            // 2. Avvia l'animazione di "uscita" della UI (veloce)
-            animateProductChange();
+            createGeometry(index)
+                .then((newMesh) => {
+                    // Applica la scala immediatamente
+                    const scale = products[index].scale;
+                    newMesh.scale.set(scale, scale, scale);
+                    
+                    // Aggiungi alla scena
+                    scene.add(newMesh);
 
-            // 3. Rimanda il lavoro pesante al prossimo tick del browser
-            // Questo permette al browser di MOSTRARE lo spinner (Passo 1)
-            // prima di bloccarsi con il lavoro pesante (Passo 4)
-            setTimeout(() => {
-                // 4. ESEGUI IL LAVORO PESANTE ORA
-                
-                // Rimuovi il vecchio mesh se esiste
-                if (currentMesh) {
-                    scene.remove(currentMesh);
-                    // TODO: Esegui il dispose() di geometrie e materiali qui per liberare memoria
-                }
+                    // Rimuovi il vecchio mesh se esiste
+                    if (currentMesh) {
+                        scene.remove(currentMesh);
+                    }
 
-                // Crea e aggiungi il nuovo mesh (lavoro pesante di clonazione e traverse)
-                currentMesh = createGeometry(index);
-                scene.add(currentMesh);
-                
-                // 5. Nascondi il loading e sblocca la transizione
-                loadingEl.style.display = 'none';
-                isTransitioning = false;
-                console.log('Prodotto cambiato (da cache)');
-                
-            }, 10); // Un timeout di 0 o 10ms è sufficiente
+                    // Imposta immediatamente il nuovo mesh come corrente
+                    currentMesh = newMesh;
+                    isTransitioning = false;
+                    loadingEl.style.display = 'none';
+                    
+                    // Aggiorna UI immediatamente
+                    updateProductInfo(index);
+                    
+                    console.log('Prodotto cambiato immediatamente');
+                })
+                .catch((error) => {
+                    console.error('Errore nel caricamento del prodotto:', error);
+                    isTransitioning = false;
+                    loadingEl.textContent = 'Errore nel caricamento. Verifica che i file GLB siano nella cartella assets/';
+                    setTimeout(() => {
+                        loadingEl.style.display = 'none';
+                    }, 3000);
+                });
         }
 
         function animate() {
-            // ... (codice invariato)
             requestAnimationFrame(animate);
+
+            // Smooth camera movement per effetto parallasse
             if (!isTransitioning && useSceneCamera) {
+                // Interpolazione smooth della posizione camera
                 currentCameraX += (targetCameraX - currentCameraX) * 0.1;
                 currentCameraY += (targetCameraY - currentCameraY) * 0.1;
                 
+                // Applica movimento parallasse alla camera del GLB
+                // Usiamo la posizione originale come base e aggiungiamo l'offset parallasse
                 camera.position.x = originalCameraPosition.x + currentCameraX;
                 camera.position.y = originalCameraPosition.y + currentCameraY;
                 camera.position.z = originalCameraPosition.z;
                 
+                // Manteniamo la rotazione originale della camera del GLB
                 camera.rotation.copy(originalCameraRotation);
                 
+                // Reset graduale se il mouse non si muove da un po'
                 if (isMouseMoving && Date.now() - lastMouseMoveTime > 1000) {
                     isMouseMoving = false;
                     targetCameraX = 0;
                     targetCameraY = 0;
                 }
             } else if (!isTransitioning) {
+                // Fallback per quando non c'è camera nel GLB
                 currentCameraX += (targetCameraX - currentCameraX) * 0.1;
                 currentCameraY += (targetCameraY - currentCameraY) * 0.1;
                 
@@ -1583,11 +1575,11 @@
                     targetCameraY = 0;
                 }
             }
+
             renderer.render(scene, camera);
         }
 
         function onWindowResize() {
-            // ... (codice invariato)
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
