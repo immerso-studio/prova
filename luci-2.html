@@ -53,7 +53,13 @@
             display: flex;
             flex-direction: column;
             gap: 16px;
-            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+        }
+
+        #controls.hidden {
+            transform: translateX(-50%) translateY(100px);
+            opacity: 0;
+            pointer-events: none;
         }
 
         .controls-section {
@@ -80,7 +86,7 @@
             border-radius: 5px;
             max-width: 320px;
             width: calc(100% - 40px);
-            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: border-radius 0.4s ease;
             overflow: hidden;
             cursor: pointer;
             z-index: 100;
@@ -143,6 +149,10 @@
             line-height: 1.5;
             margin-bottom: 15px;
             font-weight: 400;
+            opacity: 0;
+            max-height: 0;
+            overflow: hidden;
+            transition: opacity 0.3s ease, max-height 0.4s ease;
         }
 
         .additional-info {
@@ -281,6 +291,21 @@
             box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
         }
 
+        .toggle-slider.disabled {
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .toggle-switch input:disabled {
+            cursor: not-allowed;
+        }
+
+        /* Previene completamente l'interazione quando disabilitato */
+        .toggle-switch input:disabled + .toggle-slider {
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
         .toggle-slider:before {
             position: absolute;
             content: "";
@@ -378,125 +403,280 @@
             padding: 0 20px;
         }
 
-/* Pulsanti per nascondere/mostrare le singole schede - CORRETTI */
-.toggle-ui-btn {
-    position: fixed;
-    width: 44px;
-    height: 22px;
-    background: rgba(255, 255, 255, 0.15);
-    backdrop-filter: blur(20px) saturate(180%);
-    -webkit-backdrop-filter: blur(20px) saturate(180%);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    color: rgba(255, 255, 255, 0.9);
-    font-size: 12px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 102;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
-}
+        /* Toggle Controls Button - POSIZIONATO AL CENTRO IN ALTO ALLA SCHEDA */
+        .toggle-controls-btn {
+            position: absolute;
+            bottom: 180px; /* Metà fuori e metà sopra la scheda */
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 25px;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-bottom: none;
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 102;
+        }
 
-/* Pulsante per product-info (in alto, centrale) */
-#toggle-product-btn {
-    top: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    border-radius: 0 0 22px 22px;
-    border-top: none;
-}
+        .toggle-controls-btn:hover {
+            background: rgba(255, 255, 255, 0.25);
+            transform: translateX(-50%) scale(1.1);
+        }
 
-/* Pulsante per controls (in basso, centrale) */
-#toggle-controls-btn {
-    bottom: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    border-radius: 22px 22px 0 0;
-    border-bottom: none;
-}
+        .toggle-controls-btn:active {
+            transform: translateX(-50%) scale(0.95);
+        }
 
-/* Hover effects */
-.toggle-ui-btn:hover {
-    background: rgba(255, 255, 255, 0.25);
-}
+        /* Stato quando i controlli sono nascosti */
+        #controls.hidden + .toggle-controls-btn {
+            top: auto;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-radius: 5px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            height: 30px;
+            width: 100px;
+        }
 
-#toggle-product-btn:hover {
-    height: 26px;
-}
+        /* Media Queries per dispositivi mobili */
+        @media (max-width: 768px) {
+            #controls {
+                bottom: 15px;
+                padding: 16px 20px;
+                width: 95%;
+                border-radius: 14px;
+                gap: 14px;
+            }
+            
+            #product-info {
+                top: 15px;
+                left: 15px;
+                right: 15px;
+                padding: 15px;
+                max-width: none;
+                width: calc(100% - 30px);
+            }
+            
+            h1 {
+                font-size: 12px;
+            }
+            
+            .product-name {
+                font-size: 22px;
+            }
+            
+            .product-desc {
+                font-size: 13px;
+            }
+            
+            .section-title {
+                font-size: 11px;
+            }
+            
+            .arrow-btn {
+                width: 50px;
+                height: 50px;
+                font-size: 16px;
+            }
+            
+            .current-product-name {
+                font-size: 20px;
+            }
+            
+            #product-info.expanded {
+                width: calc(100% - 30px) !important;
+                max-width: none !important;
+            }
 
-#toggle-controls-btn:hover {
-    height: 26px;
-}
+            .toggle-switch {
+                width: 65px;
+                height: 32px;
+            }
 
-/* Stati nascosti per le schede */
-#product-info.hidden {
-    transform: translateY(calc(-100% - 20px));
-    opacity: 0;
-    pointer-events: none;
-}
+            .toggle-slider:before {
+                height: 24px;
+                width: 24px;
+            }
 
-#controls.hidden {
-    transform: translateX(-50%) translateY(calc(100% + 20px));
-    opacity: 0;
-    pointer-events: none;
-}
+            input:checked + .toggle-slider:before {
+                transform: translateX(33px);
+            }
 
-/* Media Queries aggiornate per mobile */
-@media (max-width: 768px) {
-    .toggle-ui-btn {
-        width: 40px;
-        height: 20px;
-        font-size: 11px;
-    }
-    
-    #toggle-product-btn:hover,
-    #toggle-controls-btn:hover {
-        height: 24px;
-    }
-}
+            .toggle-controls-btn {
+                width: 100px;
+                height: 30px;
+                font-size: 14px;
+            }
 
-@media (max-width: 480px) {
-    .toggle-ui-btn {
-        width: 36px;
-        height: 18px;
-        font-size: 10px;
-    }
-    
-    #toggle-product-btn:hover,
-    #toggle-controls-btn:hover {
-        height: 22px;
-    }
-}
+            #controls.hidden + .toggle-controls-btn {
+                bottom: 10px;
+                width: 100px;
+                height: 30px;
+            }
+        }
 
-@media (max-width: 360px) {
-    .toggle-ui-btn {
-        width: 32px;
-        height: 16px;
-        font-size: 9px;
-    }
-    
-    #toggle-product-btn:hover,
-    #toggle-controls-btn:hover {
-        height: 20px;
-    }
-}
+        @media (max-width: 480px) {
+            #controls {
+                padding: 14px 16px;
+                bottom: 20px;
+                border-radius: 12px;
+                gap: 12px;
+            }
+            
+            #product-info {
+                top: 10px;
+                left: 10px;
+                right: 10px;
+                padding: 12px;
+                max-width: none;
+                width: calc(100% - 20px);
+            }
+            
+            h1 {
+                font-size: 11px;
+            }
+            
+            .product-name {
+                font-size: 20px;
+                margin-bottom: 8px;
+            }
+            
+            .product-desc {
+                font-size: 12px;
+                line-height: 1.4;
+            }
+            
+            .slider-wrapper {
+                gap: 12px;
+            }
+            
+            .arrow-btn {
+                width: 44px;
+                height: 44px;
+                font-size: 14px;
+            }
+            
+            .current-product-name {
+                font-size: 16px;
+            }
+            
+            .section-title {
+                font-size: 10px;
+            }
+            
+            #product-info.expanded {
+                width: calc(100% - 20px) !important;
+                max-width: none !important;
+            }
 
-/* Supporto per touch devices */
-@media (hover: none) and (pointer: coarse) {
-    .toggle-ui-btn:hover {
-        transform: translateX(-50%);
-        height: 22px;
-    }
-    
-    #toggle-product-btn:hover {
-        top: 0;
-    }
-    
-    #toggle-controls-btn:hover {
-        bottom: 0;
-    }
-}
+            .toggle-switch {
+                width: 60px;
+                height: 30px;
+            }
+
+            .toggle-slider:before {
+                height: 22px;
+                width: 22px;
+            }
+
+            input:checked + .toggle-slider:before {
+                transform: translateX(30px);
+            }
+
+            .toggle-controls-btn {
+                width: 80px;
+                height: 25px;
+                font-size: 12px;
+            }
+
+            #controls.hidden + .toggle-controls-btn {
+                width: 80px;
+                height: 25px;
+                bottom: 10px;
+            }
+        }
+
+        @media (max-width: 360px) {
+            .slider-wrapper {
+                gap: 10px;
+            }
+            
+            .current-product-name {
+                font-size: 15px;
+            }
+            
+            .product-name {
+                font-size: 18px;
+            }
+            
+            .arrow-btn {
+                width: 40px;
+                height: 40px;
+            }
+        }
+
+        /* Orientamento landscape per mobile */
+        @media (max-height: 500px) and (orientation: landscape) {
+            #product-info {
+                top: 10px;
+                left: 10px;
+                right: 10px;
+                padding: 10px;
+                max-width: none;
+                width: calc(100% - 20px);
+            }
+            
+            #controls {
+                bottom: 20px;
+                padding: 12px 15px;
+                gap: 10px;
+            }
+            
+            .product-desc {
+                display: none;
+            }
+            
+            .product-name {
+                font-size: 16px;
+            }
+            
+            .section-title {
+                margin-bottom: 2px;
+            }
+            
+            .toggle-controls-btn {
+                top: -12px;
+            }
+            
+            #controls.hidden + .toggle-controls-btn {
+                bottom: 15px;
+            }
+        }
+
+        /* Supporto per touch devices */
+        @media (hover: none) and (pointer: coarse) {
+            .arrow-btn:hover {
+                transform: none;
+            }
+            
+            .arrow-btn:active {
+                transform: scale(0.95);
+            }
+            
+            body {
+                cursor: default;
+            }
+        }
     </style>
 </head>
 <body>
@@ -531,17 +711,17 @@
             </div>
         </div>
         
-        <button class="expand-btn" id="expand-btn">▼</button>
-        
-        <!-- Pulsante per nascondere product-info -->
-        
+        <button class="expand-btn" id="expand-btn">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                xmlns="http://www.w3.org/2000/svg">
+                <path d="M6 9L12 15L18 9"
+                    stroke="white" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </button>
     </div>
 
-    <button class="toggle-ui-btn" id="toggle-product-btn" title="Nascondi scheda prodotto">▲</button>
-    <button class="toggle-ui-btn" id="toggle-controls-btn" title="Nascondi controlli">▼</button>
-
     <div id="controls" class="glass-frosted">
-        
         <div class="slider-container">
             <!-- Indicatore stato luce -->
             <div class="power-indicator">
@@ -554,18 +734,42 @@
                 <span class="toggle-label">OFF</span>
                 <label class="toggle-switch">
                     <input type="checkbox" id="light-toggle">
-                    <span class="toggle-slider"></span>
+                    <span class="toggle-slider" id="toggle-slider"></span>
                 </label>
                 <span class="toggle-label">ON</span>
             </div>
 
             <div class="slider-wrapper">
-                <div class="arrow-btn" id="prev-btn">◀</div>
+                <div class="arrow-btn" id="prev-btn">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        xmlns="http://www.w3.org/2000/svg">
+                        <path d="M15 6L9 12L15 18"
+                        stroke="white" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </div>
                 <div class="current-product-name" id="current-product-name">Lampada Cubo</div>
-                <div class="arrow-btn" id="next-btn">▶</div>
+                <div class="arrow-btn" id="next-btn">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        xmlns="http://www.w3.org/2000/svg">
+                        <path d="M9 6L15 12L9 18"
+                        stroke="white" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </div>
             </div>
         </div>
     </div>
+
+    <!-- Bottone toggle POSIZIONATO AL CENTRO IN ALTO ALLA SCHEDA CONTROLS -->
+    <button class="toggle-controls-btn glass-frosted" id="toggle-controls-btn">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+            xmlns="http://www.w3.org/2000/svg">
+            <path d="M6 9L12 15L18 9"
+                stroke="white" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+    </button>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
@@ -578,6 +782,8 @@
         let loader, textureLoader;
         let currentProductIndex = 0;
         let isLightOn = false; // Stato luce: false = spenta, true = accesa
+        let controlsVisible = true; // Stato visibilità controlli
+        let toggleCooldown = false; // Nuova variabile per prevenire click rapidi
         
         // Variabili per effetto parallasse
         let mouseX = 0;
@@ -601,8 +807,8 @@
                 name: 'Team Round', 
                 shortName: 'Lampada Cubo',
                 desc: 'Segnapasso da parete di grande eleganza e capacità di giocare con la luce d\'ambiente quando spento', 
-                modelOff: 'assets/Prova_export_1.glb',    // Luce spenta
-                modelOn: 'assets/Prova_export_2.glb',     // Luce accesa
+                modelOff: 'assets/1/Prova_export_3_giorno.glb',    // Luce spenta
+                modelOn: 'assets/1/Prova_export_3_sera.glb',     // Luce accesa
                 scale: 15,
                 rotation: { x: 0, y: 0, z: 0 },
                 material: 'Alluminio anodizzato',
@@ -615,10 +821,10 @@
                 name: 'Lampada Sfera Elegante', 
                 shortName: 'Lampada Sfera',
                 desc: 'Lampada da tavolo elegante e minimalista', 
-                modelOff: 'assets/Prova_export_3.glb',    // Luce spenta
-                modelOn: 'assets/Prova_export_4.glb',     // Luce accesa
-                scale: 0.08,
-                rotation: { x: 0, y: Math.PI / 1, z: 0 },
+                modelOff: 'assets/1/Prova_export_4_giorno.glb',    // Luce spenta
+                modelOn: 'assets/1/Prova_export_4_sera.glb',     // Luce accesa
+                scale: 15,
+                rotation: { x: 0, y: 0, z: 0 },
                 material: 'Vetro opalino e ottone',
                 dimensions: 'Ø 25 cm',
                 power: '12W LED',
@@ -631,8 +837,8 @@
                 desc: 'Faretto direzionale per illuminazione d\'accento', 
                 modelOff: 'assets/Prova_export_5.glb',    // Luce spenta
                 modelOn: 'assets/Prova_export_6.glb',     // Luce accesa
-                scale: 0.2,
-                rotation: { x: 0, y: Math.PI / 6, z: 0 },
+                scale: 15,
+                rotation: { x: 0, y: 0, z: 0 },
                 material: 'Acciaio inox satinato',
                 dimensions: '15x8x8 cm',
                 power: '7W LED',
@@ -703,79 +909,11 @@
 
             // Event listeners per UI
             setupEventListeners();
-            setupUIToggle();
 
             window.addEventListener('resize', onWindowResize);
 
             animate();
         }
-
-function setupUIToggle() {
-    const toggleProductBtn = document.getElementById('toggle-product-btn');
-    const toggleControlsBtn = document.getElementById('toggle-controls-btn');
-    const productInfo = document.getElementById('product-info');
-    const controls = document.getElementById('controls');
-    
-    let productVisible = true;
-    let controlsVisible = true;
-    
-    // Toggle per product-info (in alto)
-    toggleProductBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        productVisible = !productVisible;
-        
-        if (productVisible) {
-            // Mostra la scheda prodotto
-            productInfo.classList.remove('hidden');
-            toggleProductBtn.innerHTML = '▲';
-            toggleProductBtn.title = 'Nascondi scheda prodotto';
-            // Ripristina posizione normale
-            toggleProductBtn.style.top = '0';
-        } else {
-            // Nascondi la scheda prodotto
-            productInfo.classList.add('hidden');
-            toggleProductBtn.innerHTML = '▼';
-            toggleProductBtn.title = 'Mostra scheda prodotto';
-            // Sposta il pulsante verso il basso quando nascosto
-            toggleProductBtn.style.top = '22px';
-        }
-    });
-    
-    // Toggle per controls (in basso)
-    toggleControlsBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        controlsVisible = !controlsVisible;
-        
-        if (controlsVisible) {
-            // Mostra i controlli
-            controls.classList.remove('hidden');
-            toggleControlsBtn.innerHTML = '▼';
-            toggleControlsBtn.title = 'Nascondi controlli';
-            // Ripristina posizione normale
-            toggleControlsBtn.style.bottom = '0';
-        } else {
-            // Nascondi i controlli
-            controls.classList.add('hidden');
-            toggleControlsBtn.innerHTML = '▲';
-            toggleControlsBtn.title = 'Mostra controlli';
-            // Sposta il pulsante verso l'alto quando nascosto
-            toggleControlsBtn.style.bottom = '22px';
-        }
-    });
-    
-    // Previeni che il click sulle schede triggeri il toggle quando sono nascoste
-    productInfo.addEventListener('click', (e) => {
-        if (productInfo.classList.contains('hidden')) {
-            e.stopPropagation();
-        }
-    });
-    
-    controls.addEventListener('click', (e) => {
-        if (controls.classList.contains('hidden')) {
-            e.stopPropagation();
-        }
-    });
-}
 
         function setupParallaxEvents() {
             // Desktop - Mouse movement
@@ -785,8 +923,8 @@ function setupUIToggle() {
                     mouseY = -(event.clientY / window.innerHeight) * 2 + 1;
                     
                     // Calcola target position con effetto parallasse più leggero
-                    targetCameraX = mouseX * 0.01;
-                    targetCameraY = mouseY * 0.01;
+                    targetCameraX = mouseX * 0.05;
+                    targetCameraY = mouseY * 0.05;
                     
                     isMouseMoving = true;
                     lastMouseMoveTime = Date.now();
@@ -815,8 +953,8 @@ function setupUIToggle() {
                     const deltaY = touch.clientY - lastTouchY;
                     
                     // Calcola movimento parallasse basato su movimento touch
-                    targetCameraX += deltaX * 0.00001;
-                    targetCameraY += deltaY * 0.00001;
+                    targetCameraX += deltaX * 0;
+                    targetCameraY += deltaY * 0;
                     
                     // Limita il movimento
                     targetCameraX = Math.max(-1, Math.min(1, targetCameraX));
@@ -844,7 +982,7 @@ function setupUIToggle() {
 
         function loadPlants() {
             textureLoader.load(
-                'assets/piante4.png',
+                'assets/piante44.png',
                 (texture) => {
                     // Configura la texture per la trasparenza
                     texture.encoding = THREE.sRGBEncoding;
@@ -861,10 +999,10 @@ function setupUIToggle() {
                     plantsSprite = new THREE.Sprite(material);
                     
                     // Posiziona le piante dietro i prodotti
-                    plantsSprite.position.set(2, -1, 3);
+                    plantsSprite.position.set(20, 5, 15);
                     
                     // Scala lo sprite
-                    plantsSprite.scale.set(6, 6, 6);
+                    plantsSprite.scale.set(70, 70, 70);
                     
                     // Aggiungi alla scena
                     scene.add(plantsSprite);
@@ -890,14 +1028,39 @@ function setupUIToggle() {
                 loadProduct(newIndex);
             });
 
-            // Toggle luce
-            document.getElementById('light-toggle').addEventListener('change', (e) => {
-                isLightOn = e.target.checked;
-                console.log('Stato luce:', isLightOn ? 'ACCESA' : 'SPENTA');
-                updateLightIndicator();
-                // Ricarica il prodotto corrente con lo stato luce corretto
-                loadProduct(currentProductIndex);
-            });
+// Toggle luce
+document.getElementById('light-toggle').addEventListener('change', (e) => {
+    // Se il toggle è in cooldown, previeni completamente l'azione
+    if (toggleCooldown) {
+        e.preventDefault();
+        // Forza il checkbox a mantenere lo stato corrente
+        e.target.checked = isLightOn;
+        return;
+    }
+    
+    // Attiva il cooldown
+    toggleCooldown = true;
+    const toggleSlider = document.getElementById('toggle-slider');
+    const toggleInput = document.getElementById('light-toggle');
+    
+    toggleSlider.classList.add('disabled');
+    toggleInput.disabled = true;
+    
+    isLightOn = e.target.checked;
+    console.log('Stato luce:', isLightOn ? 'ACCESA' : 'SPENTA');
+    updateLightIndicator();
+    
+    // Ricarica il prodotto corrente con lo stato luce corretto
+    loadProduct(currentProductIndex, true);
+    
+    // Riabilita il toggle dopo 1 secondo
+    setTimeout(() => {
+        toggleCooldown = false;
+        toggleSlider.classList.remove('disabled');
+        toggleInput.disabled = false;
+        console.log('Toggle riabilitato');
+    }, 1000);
+});
 
             // Espandi/contrai scheda info
             const expandBtn = document.getElementById('expand-btn');
@@ -914,6 +1077,9 @@ function setupUIToggle() {
                 }
             });
 
+            // Toggle controlli
+            document.getElementById('toggle-controls-btn').addEventListener('click', toggleControls);
+
             // Prevenire zoom su doppio tap
             let lastTouchEnd = 0;
             document.addEventListener('touchend', function (event) {
@@ -923,6 +1089,23 @@ function setupUIToggle() {
                 }
                 lastTouchEnd = now;
             }, false);
+        }
+
+        function toggleControls() {
+            const controls = document.getElementById('controls');
+            const toggleBtn = document.getElementById('toggle-controls-btn');
+            
+            if (controlsVisible) {
+                // Nascondi controlli
+                controls.classList.add('hidden');
+                toggleBtn.innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 15L12 9L18 15" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+                controlsVisible = false;
+            } else {
+                // Mostra controlli
+                controls.classList.remove('hidden');
+                toggleBtn.innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 9L12 15L18 9" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+                controlsVisible = true;
+            }
         }
 
         function updateLightIndicator() {
@@ -943,14 +1126,19 @@ function setupUIToggle() {
         function toggleProductInfo() {
             const expandBtn = document.getElementById('expand-btn');
             const productInfo = document.getElementById('product-info');
+            const productDesc = document.querySelector('.product-desc');
             const additionalInfo = document.querySelector('.additional-info');
             const isExpanding = !productInfo.classList.contains('expanded');
 
             if (isExpanding) {
                 // Misuriamo l'altezza reale del contenuto prima di animare
+                productDesc.style.display = "block";
                 additionalInfo.style.display = "block";
                 additionalInfo.style.maxHeight = "none";
                 const fullHeight = additionalInfo.scrollHeight + "px";
+                productDesc.style.maxHeight = "none";
+                const descHeight = productDesc.scrollHeight + "px";
+                productDesc.style.maxHeight = "0";
                 additionalInfo.style.maxHeight = "0";
 
                 // Animazione espansione fluida senza "schiacciamento"
@@ -970,12 +1158,21 @@ function setupUIToggle() {
                     expandBtn.classList.add('expanded');
                 }
 
+                // Animazione per mostrare la descrizione del prodotto
+                gsap.to(productDesc, {
+                    duration: 0.4,
+                    opacity: 1,
+                    maxHeight: descHeight,
+                    ease: "power2.out",
+                    delay: 0.1
+                });
+
                 gsap.to(additionalInfo, {
                     duration: 0.6,
                     opacity: 1,
                     maxHeight: fullHeight,
                     ease: "power2.out",
-                    delay: 0.1
+                    delay: 0.2
                 });
 
                 gsap.to('.info-row', {
@@ -984,7 +1181,7 @@ function setupUIToggle() {
                     y: 0,
                     stagger: 0.1,
                     ease: "back.out(1.2)",
-                    delay: 0.3
+                    delay: 0.4
                 });
 
                 gsap.to('.price-tag', {
@@ -992,7 +1189,7 @@ function setupUIToggle() {
                     opacity: 1,
                     y: 0,
                     ease: "back.out(1.2)",
-                    delay: 0.6
+                    delay: 0.7
                 });
 
             } else {
@@ -1001,12 +1198,16 @@ function setupUIToggle() {
                     onComplete: () => {
                         productInfo.classList.remove('expanded');
                         expandBtn.classList.remove('expanded');
+                        // Nascondi completamente gli elementi dopo l'animazione
+                        productDesc.style.display = "none";
+                        additionalInfo.style.display = "none";
                     }
                 });
 
                 tl.to('.price-tag', { opacity: 0, y: 10, duration: 0.3 }, 0)
                   .to('.info-row', { opacity: 0, y: 10, stagger: 0.05, duration: 0.3 }, 0)
-                  .to('.additional-info', { opacity: 0, maxHeight: 0, duration: 0.4 }, 0.1);
+                  .to('.additional-info', { opacity: 0, maxHeight: 0, duration: 0.4 }, 0.1)
+                  .to('.product-desc', { opacity: 0, maxHeight: 0, duration: 0.3 }, 0);
                 
                 if (window.innerWidth > 768) {
                     tl.to(productInfo, {
@@ -1050,18 +1251,6 @@ function setupUIToggle() {
             .fromTo('.product-name', 
                 {
                     y: -20,
-                    opacity: 0
-                },
-                {
-                    y: 0,
-                    opacity: 1,
-                    duration: 0.6
-                },
-                "-=0.4"
-            )
-            .fromTo('.product-desc', 
-                {
-                    y: -10,
                     opacity: 0
                 },
                 {
@@ -1207,8 +1396,8 @@ function loadEnvironmentWithCamera() {
             environmentMesh = gltf.scene;
             
             // Configura l'ambiente
-            environmentMesh.position.set(0, 2, 0);
-            environmentMesh.scale.set(14, 14, 14);
+            environmentMesh.position.set(0, -14, 6)
+            environmentMesh.scale.set(18, 18, 18)
             
             // Cerca una camera nel GLB
             let cameraFound = false;
@@ -1227,7 +1416,7 @@ function loadEnvironmentWithCamera() {
                         sceneCamera.far = 1000;  // Piano far molto lontano
                         
                         // *** MODIFICA LA LUNGHEZZA FOCALE QUI ***
-                        sceneCamera.fov = 25; // Cambia questo valore (default: 50)
+                        sceneCamera.fov = 28; // Cambia questo valore (default: 50)
                         
                         console.log('Piani di clipping regolati:', sceneCamera.near, sceneCamera.far);
                         console.log('FOV impostato a:', sceneCamera.fov);
@@ -1343,142 +1532,114 @@ function loadEnvironmentWithCamera() {
             });
         }
 
-        function loadProduct(index) {
-            if (isTransitioning) return;
-            isTransitioning = true;
+function loadProduct(index, isLightToggle = false) {
+    if (isTransitioning) return;
+    isTransitioning = true;
+    
+    const previousMesh = currentMesh;
+    currentProductIndex = index;
+
+    // Mostra loading solo per cambio prodotto (non per toggle luce)
+    const loadingEl = document.querySelector('.loading');
+    if (!isLightToggle) {
+        loadingEl.style.display = 'block';
+        loadingEl.textContent = '';
+    }
+
+    createGeometry(index)
+        .then((newMesh) => {
+            // Applica la scala immediatamente
+            const scale = products[index].scale;
+            newMesh.scale.set(scale, scale, scale);
             
-            currentProductIndex = index;
-
-            // Mostra loading
-            const loadingEl = document.querySelector('.loading');
-            loadingEl.style.display = 'block';
-            loadingEl.textContent = 'Caricamento modello...';
-
-            createGeometry(index)
-                .then((newMesh) => {
-                    // Applica la scala immediatamente
-                    const scale = products[index].scale;
-                    newMesh.scale.set(scale, scale, scale);
-                    
-                    // Aggiungi alla scena ma invisibile inizialmente
-                    newMesh.visible = false;
-                    scene.add(newMesh);
-
-                    // Animazione uscita del modello corrente
-                    if (currentMesh) {
-                        fadeOut(currentMesh, () => {
-                            scene.remove(currentMesh);
-                            // Una volta che il vecchio modello è rimosso, mostra il nuovo
-                            fadeIn(newMesh, () => {
-                                currentMesh = newMesh;
-                                isTransitioning = false;
-                                loadingEl.style.display = 'none';
-                                
-                                // Animazione della scheda informativa
-                                animateProductChange();
-                            });
-                        });
-                    } else {
-                        // Primo caricamento
-                        fadeIn(newMesh, () => {
-                            currentMesh = newMesh;
-                            isTransitioning = false;
-                            loadingEl.style.display = 'none';
-                        });
-                    }
-
-                    // Aggiorna UI immediatamente
-                    updateProductInfo(index);
-                })
-                .catch((error) => {
-                    console.error('Errore nel caricamento del prodotto:', error);
-                    isTransitioning = false;
-                    loadingEl.textContent = 'Errore nel caricamento. Verifica che i file GLB siano nella cartella assets/';
-                    setTimeout(() => {
-                        loadingEl.style.display = 'none';
-                    }, 3000);
-                });
-        }
-
-        function fadeOut(mesh, callback) {
-            const duration = 100;
-            const startTime = Date.now();
-
-            function animate() {
-                const elapsed = Date.now() - startTime;
-                const progress = Math.min(elapsed / duration, 1);
-                
-                // Fade out usando l'opacità dei materiali
-                mesh.traverse((child) => {
+            // Se è un toggle luce, usa transizione smooth
+            if (isLightToggle && previousMesh) {
+                // Imposta opacità iniziale a 0 per la dissolvenza
+                newMesh.traverse((child) => {
                     if (child.isMesh && child.material) {
-                        if (Array.isArray(child.material)) {
-                            child.material.forEach(mat => {
-                                mat.opacity = 1 - progress;
-                                mat.transparent = true;
-                            });
-                        } else {
-                            child.material.opacity = 1 - progress;
-                            child.material.transparent = true;
-                        }
-                    }
-                });
-
-                if (progress < 1) {
-                    requestAnimationFrame(animate);
-                } else {
-                    callback();
-                }
-            }
-            animate();
-        }
-
-        function fadeIn(mesh, callback) {
-            const duration = 400;
-            const startTime = Date.now();
-            
-            // Rendi il mesh visibile
-            mesh.visible = true;
-
-            // Imposta opacità iniziale a 0
-            mesh.traverse((child) => {
-                if (child.isMesh && child.material) {
-                    if (Array.isArray(child.material)) {
-                        child.material.forEach(mat => {
-                            mat.opacity = 0;
-                            mat.transparent = true;
-                        });
-                    } else {
-                        child.material.opacity = 0;
                         child.material.transparent = true;
+                        child.material.opacity = 0;
                     }
-                }
-            });
-
-            function animate() {
-                const elapsed = Date.now() - startTime;
-                const progress = Math.min(elapsed / duration, 1);
+                });
                 
-                // Fade in usando l'opacità dei materiali
-                mesh.traverse((child) => {
-                    if (child.isMesh && child.material) {
-                        if (Array.isArray(child.material)) {
-                            child.material.forEach(mat => {
-                                mat.opacity = progress;
-                            });
-                        } else {
-                            child.material.opacity = progress;
+                // Aggiungi il nuovo mesh alla scena
+                scene.add(newMesh);
+
+                // Timeline per la transizione smooth
+                const transitionTimeline = gsap.timeline({
+                    onComplete: () => {
+                        // Rimuovi il vecchio mesh dopo la transizione
+                        if (previousMesh && scene.getObjectById(previousMesh.id)) {
+                            scene.remove(previousMesh);
                         }
+                        
+                        // Ripristina le proprietà dei materiali del nuovo mesh
+                        newMesh.traverse((child) => {
+                            if (child.isMesh && child.material) {
+                                child.material.transparent = false;
+                            }
+                        });
+                        
+                        isTransitioning = false;
+                        console.log('Transizione toggle luce completata');
                     }
                 });
 
-                if (progress < 1) {
-                    requestAnimationFrame(animate);
-                } else {
-                    callback();
+                // Fade out del mesh precedente
+                previousMesh.traverse((child) => {
+                    if (child.isMesh && child.material) {
+                        child.material.transparent = true;
+                        transitionTimeline.to(child.material, {
+                            opacity: 0,
+                            duration: 1,
+                            ease: "power2.in"
+                        }, 0);
+                    }
+                });
+
+                // Fade in del nuovo mesh
+                newMesh.traverse((child) => {
+                    if (child.isMesh && child.material) {
+                        transitionTimeline.to(child.material, {
+                            opacity: 1,
+                            duration: 1,
+                            ease: "power2.out"
+                        }, 0);
+                    }
+                });
+
+            } else {
+                // Transizione originale per cambio prodotto con slider
+                scene.add(newMesh);
+
+                // Rimuovi il vecchio mesh se esiste
+                if (previousMesh) {
+                    scene.remove(previousMesh);
                 }
+
+                isTransitioning = false;
+                loadingEl.style.display = 'none';
+                
+                // Aggiorna UI
+                animateProductChange();
+                
+                console.log('Cambio prodotto completato');
             }
-            animate();
-        }
+
+            // Imposta il nuovo mesh come corrente
+            currentMesh = newMesh;
+        })
+        .catch((error) => {
+            console.error('Errore nel caricamento del prodotto:', error);
+            isTransitioning = false;
+            if (!isLightToggle) {
+                loadingEl.textContent = 'Errore nel caricamento. Verifica che i file GLB siano nella cartella assets/';
+                setTimeout(() => {
+                    loadingEl.style.display = 'none';
+                }, 3000);
+            }
+        });
+}
 
         function animate() {
             requestAnimationFrame(animate);
