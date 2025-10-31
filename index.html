@@ -291,6 +291,21 @@
             box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
         }
 
+        .toggle-slider.disabled {
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .toggle-switch input:disabled {
+            cursor: not-allowed;
+        }
+
+        /* Previene completamente l'interazione quando disabilitato */
+        .toggle-switch input:disabled + .toggle-slider {
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
         .toggle-slider:before {
             position: absolute;
             content: "";
@@ -719,7 +734,7 @@
                 <span class="toggle-label">OFF</span>
                 <label class="toggle-switch">
                     <input type="checkbox" id="light-toggle">
-                    <span class="toggle-slider"></span>
+                    <span class="toggle-slider" id="toggle-slider"></span>
                 </label>
                 <span class="toggle-label">ON</span>
             </div>
@@ -768,6 +783,7 @@
         let currentProductIndex = 0;
         let isLightOn = false; // Stato luce: false = spenta, true = accesa
         let controlsVisible = true; // Stato visibilità controlli
+        let toggleCooldown = false; // Nuova variabile per prevenire click rapidi
         
         // Variabili per effetto parallasse
         let mouseX = 0;
@@ -1012,14 +1028,39 @@
                 loadProduct(newIndex);
             });
 
-            // Toggle luce
-            document.getElementById('light-toggle').addEventListener('change', (e) => {
-                isLightOn = e.target.checked;
-                console.log('Stato luce:', isLightOn ? 'ACCESA' : 'SPENTA');
-                updateLightIndicator();
-                // Ricarica il prodotto corrente con lo stato luce corretto
-                loadProduct(currentProductIndex);
-            });
+// Toggle luce
+document.getElementById('light-toggle').addEventListener('change', (e) => {
+    // Se il toggle è in cooldown, previeni completamente l'azione
+    if (toggleCooldown) {
+        e.preventDefault();
+        // Forza il checkbox a mantenere lo stato corrente
+        e.target.checked = isLightOn;
+        return;
+    }
+    
+    // Attiva il cooldown
+    toggleCooldown = true;
+    const toggleSlider = document.getElementById('toggle-slider');
+    const toggleInput = document.getElementById('light-toggle');
+    
+    toggleSlider.classList.add('disabled');
+    toggleInput.disabled = true;
+    
+    isLightOn = e.target.checked;
+    console.log('Stato luce:', isLightOn ? 'ACCESA' : 'SPENTA');
+    updateLightIndicator();
+    
+    // Ricarica il prodotto corrente con lo stato luce corretto
+    loadProduct(currentProductIndex, true);
+    
+    // Riabilita il toggle dopo 1 secondo
+    setTimeout(() => {
+        toggleCooldown = false;
+        toggleSlider.classList.remove('disabled');
+        toggleInput.disabled = false;
+        console.log('Toggle riabilitato');
+    }, 1000);
+});
 
             // Espandi/contrai scheda info
             const expandBtn = document.getElementById('expand-btn');
@@ -1600,25 +1641,6 @@ function loadProduct(index, isLightToggle = false) {
         });
 }
 
-// Modifica anche l'event listener del toggle luce per passare il parametro isLightToggle
-document.getElementById('light-toggle').addEventListener('change', (e) => {
-    isLightOn = e.target.checked;
-    console.log('Stato luce:', isLightOn ? 'ACCESA' : 'SPENTA');
-    updateLightIndicator();
-    // Ricarica il prodotto corrente con transizione smooth
-    loadProduct(currentProductIndex, true); // true = isLightToggle
-});
-
-// Le funzioni per lo slider rimangono invariate
-document.getElementById('prev-btn').addEventListener('click', () => {
-    const newIndex = currentProductIndex > 0 ? currentProductIndex - 1 : products.length - 1;
-    loadProduct(newIndex, false); // false = cambio prodotto normale
-});
-
-document.getElementById('next-btn').addEventListener('click', () => {
-    const newIndex = currentProductIndex < products.length - 1 ? currentProductIndex + 1 : 0;
-    loadProduct(newIndex, false); // false = cambio prodotto normale
-});
         function animate() {
             requestAnimationFrame(animate);
 
