@@ -807,8 +807,8 @@
                 name: 'Team Round', 
                 shortName: 'Lampada Cubo',
                 desc: 'Segnapasso da parete di grande eleganza e capacità di giocare con la luce d\'ambiente quando spento', 
-                modelOff: 'assets/1/Prova_export_3_giorno.glb',    // Luce spenta
-                modelOn: 'assets/1/Prova_export_3_sera.glb',     // Luce accesa
+                modelOff: 'assets/1/Prova_export_6_circle_giorno.glb',    // Luce spenta
+                modelOn: 'assets/1/Prova_export_6_circle_sera.glb',     // Luce accesa
                 scale: 15,
                 rotation: { x: 0, y: 0, z: 0 },
                 material: 'Alluminio anodizzato',
@@ -821,8 +821,8 @@
                 name: 'Lampada Sfera Elegante', 
                 shortName: 'Lampada Sfera',
                 desc: 'Lampada da tavolo elegante e minimalista', 
-                modelOff: 'assets/1/Prova_export_4_giorno.glb',    // Luce spenta
-                modelOn: 'assets/1/Prova_export_4_sera.glb',     // Luce accesa
+                modelOff: 'assets/1/Prova_export_6_square_giorno.glb',    // Luce spenta
+                modelOn: 'assets/1/Prova_export_6_square_sera.glb',     // Luce accesa
                 scale: 15,
                 rotation: { x: 0, y: 0, z: 0 },
                 material: 'Vetro opalino e ottone',
@@ -835,8 +835,8 @@
                 name: 'Faretto Direzionale', 
                 shortName: 'Faretto',
                 desc: 'Faretto direzionale per illuminazione d\'accento', 
-                modelOff: 'assets/Prova_export_5.glb',    // Luce spenta
-                modelOn: 'assets/Prova_export_6.glb',     // Luce accesa
+                modelOff: 'assets/1/Prova_export_6_rettangular_giorno.glb',    // Luce spenta
+                modelOn: 'assets/1/Prova_export_6_rettangular_sera.glb',     // Luce accesa
                 scale: 15,
                 rotation: { x: 0, y: 0, z: 0 },
                 material: 'Acciaio inox satinato',
@@ -846,6 +846,7 @@
                 price: '€ 79,00'
             }
         ];
+
 
         function init() {
             const container = document.getElementById('canvas-container');
@@ -1396,7 +1397,7 @@ function loadEnvironmentWithCamera() {
             environmentMesh = gltf.scene;
             
             // Configura l'ambiente
-            environmentMesh.position.set(0, -14, 6)
+            environmentMesh.position.set(0, 1, 6)
             environmentMesh.scale.set(18, 18, 18)
             
             // Cerca una camera nel GLB
@@ -1416,7 +1417,7 @@ function loadEnvironmentWithCamera() {
                         sceneCamera.far = 1000;  // Piano far molto lontano
                         
                         // *** MODIFICA LA LUNGHEZZA FOCALE QUI ***
-                        sceneCamera.fov = 28; // Cambia questo valore (default: 50)
+                        sceneCamera.fov = 25; // Cambia questo valore (default: 50)
                         
                         console.log('Piani di clipping regolati:', sceneCamera.near, sceneCamera.far);
                         console.log('FOV impostato a:', sceneCamera.fov);
