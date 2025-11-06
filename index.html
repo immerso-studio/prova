@@ -291,21 +291,6 @@
             box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
         }
 
-        .toggle-slider.disabled {
-            cursor: not-allowed;
-            opacity: 0.6;
-        }
-
-        .toggle-switch input:disabled {
-            cursor: not-allowed;
-        }
-
-        /* Previene completamente l'interazione quando disabilitato */
-        .toggle-switch input:disabled + .toggle-slider {
-            cursor: not-allowed;
-            pointer-events: none;
-        }
-
         .toggle-slider:before {
             position: absolute;
             content: "";
@@ -734,7 +719,7 @@
                 <span class="toggle-label">OFF</span>
                 <label class="toggle-switch">
                     <input type="checkbox" id="light-toggle">
-                    <span class="toggle-slider" id="toggle-slider"></span>
+                    <span class="toggle-slider"></span>
                 </label>
                 <span class="toggle-label">ON</span>
             </div>
@@ -783,7 +768,6 @@
         let currentProductIndex = 0;
         let isLightOn = false; // Stato luce: false = spenta, true = accesa
         let controlsVisible = true; // Stato visibilità controlli
-        let toggleCooldown = false; // Nuova variabile per prevenire click rapidi
         
         // Variabili per effetto parallasse
         let mouseX = 0;
@@ -846,7 +830,6 @@
                 price: '€ 79,00'
             }
         ];
-
 
         function init() {
             const container = document.getElementById('canvas-container');
@@ -954,8 +937,8 @@
                     const deltaY = touch.clientY - lastTouchY;
                     
                     // Calcola movimento parallasse basato su movimento touch
-                    targetCameraX += deltaX * 0;
-                    targetCameraY += deltaY * 0;
+                    targetCameraX += deltaX * 0.0001;
+                    targetCameraY += deltaY * 0.0001;
                     
                     // Limita il movimento
                     targetCameraX = Math.max(-1, Math.min(1, targetCameraX));
@@ -1029,39 +1012,14 @@
                 loadProduct(newIndex);
             });
 
-// Toggle luce
-document.getElementById('light-toggle').addEventListener('change', (e) => {
-    // Se il toggle è in cooldown, previeni completamente l'azione
-    if (toggleCooldown) {
-        e.preventDefault();
-        // Forza il checkbox a mantenere lo stato corrente
-        e.target.checked = isLightOn;
-        return;
-    }
-    
-    // Attiva il cooldown
-    toggleCooldown = true;
-    const toggleSlider = document.getElementById('toggle-slider');
-    const toggleInput = document.getElementById('light-toggle');
-    
-    toggleSlider.classList.add('disabled');
-    toggleInput.disabled = true;
-    
-    isLightOn = e.target.checked;
-    console.log('Stato luce:', isLightOn ? 'ACCESA' : 'SPENTA');
-    updateLightIndicator();
-    
-    // Ricarica il prodotto corrente con lo stato luce corretto
-    loadProduct(currentProductIndex, true);
-    
-    // Riabilita il toggle dopo 1 secondo
-    setTimeout(() => {
-        toggleCooldown = false;
-        toggleSlider.classList.remove('disabled');
-        toggleInput.disabled = false;
-        console.log('Toggle riabilitato');
-    }, 1000);
-});
+            // Toggle luce
+            document.getElementById('light-toggle').addEventListener('change', (e) => {
+                isLightOn = e.target.checked;
+                console.log('Stato luce:', isLightOn ? 'ACCESA' : 'SPENTA');
+                updateLightIndicator();
+                // Ricarica il prodotto corrente con lo stato luce corretto
+                loadProduct(currentProductIndex);
+            });
 
             // Espandi/contrai scheda info
             const expandBtn = document.getElementById('expand-btn');
@@ -1533,114 +1491,50 @@ function loadEnvironmentWithCamera() {
             });
         }
 
-function loadProduct(index, isLightToggle = false) {
-    if (isTransitioning) return;
-    isTransitioning = true;
-    
-    const previousMesh = currentMesh;
-    currentProductIndex = index;
-
-    // Mostra loading solo per cambio prodotto (non per toggle luce)
-    const loadingEl = document.querySelector('.loading');
-    if (!isLightToggle) {
-        loadingEl.style.display = 'block';
-        loadingEl.textContent = '';
-    }
-
-    createGeometry(index)
-        .then((newMesh) => {
-            // Applica la scala immediatamente
-            const scale = products[index].scale;
-            newMesh.scale.set(scale, scale, scale);
+        function loadProduct(index) {
+            if (isTransitioning) return;
+            isTransitioning = true;
             
-            // Se è un toggle luce, usa transizione smooth
-            if (isLightToggle && previousMesh) {
-                // Imposta opacità iniziale a 0 per la dissolvenza
-                newMesh.traverse((child) => {
-                    if (child.isMesh && child.material) {
-                        child.material.transparent = true;
-                        child.material.opacity = 0;
+            currentProductIndex = index;
+
+            // Mostra loading
+            const loadingEl = document.querySelector('.loading');
+            loadingEl.style.display = 'block';
+            loadingEl.textContent = 'Caricamento modello...';
+
+            createGeometry(index)
+                .then((newMesh) => {
+                    // Applica la scala immediatamente
+                    const scale = products[index].scale;
+                    newMesh.scale.set(scale, scale, scale);
+                    
+                    // Aggiungi alla scena
+                    scene.add(newMesh);
+
+                    // Rimuovi il vecchio mesh se esiste
+                    if (currentMesh) {
+                        scene.remove(currentMesh);
                     }
-                });
-                
-                // Aggiungi il nuovo mesh alla scena
-                scene.add(newMesh);
 
-                // Timeline per la transizione smooth
-                const transitionTimeline = gsap.timeline({
-                    onComplete: () => {
-                        // Rimuovi il vecchio mesh dopo la transizione
-                        if (previousMesh && scene.getObjectById(previousMesh.id)) {
-                            scene.remove(previousMesh);
-                        }
-                        
-                        // Ripristina le proprietà dei materiali del nuovo mesh
-                        newMesh.traverse((child) => {
-                            if (child.isMesh && child.material) {
-                                child.material.transparent = false;
-                            }
-                        });
-                        
-                        isTransitioning = false;
-                        console.log('Transizione toggle luce completata');
-                    }
-                });
-
-                // Fade out del mesh precedente
-                previousMesh.traverse((child) => {
-                    if (child.isMesh && child.material) {
-                        child.material.transparent = true;
-                        transitionTimeline.to(child.material, {
-                            opacity: 0,
-                            duration: 1,
-                            ease: "power2.in"
-                        }, 0);
-                    }
-                });
-
-                // Fade in del nuovo mesh
-                newMesh.traverse((child) => {
-                    if (child.isMesh && child.material) {
-                        transitionTimeline.to(child.material, {
-                            opacity: 1,
-                            duration: 1,
-                            ease: "power2.out"
-                        }, 0);
-                    }
-                });
-
-            } else {
-                // Transizione originale per cambio prodotto con slider
-                scene.add(newMesh);
-
-                // Rimuovi il vecchio mesh se esiste
-                if (previousMesh) {
-                    scene.remove(previousMesh);
-                }
-
-                isTransitioning = false;
-                loadingEl.style.display = 'none';
-                
-                // Aggiorna UI
-                animateProductChange();
-                
-                console.log('Cambio prodotto completato');
-            }
-
-            // Imposta il nuovo mesh come corrente
-            currentMesh = newMesh;
-        })
-        .catch((error) => {
-            console.error('Errore nel caricamento del prodotto:', error);
-            isTransitioning = false;
-            if (!isLightToggle) {
-                loadingEl.textContent = 'Errore nel caricamento. Verifica che i file GLB siano nella cartella assets/';
-                setTimeout(() => {
+                    // Imposta immediatamente il nuovo mesh come corrente
+                    currentMesh = newMesh;
+                    isTransitioning = false;
                     loadingEl.style.display = 'none';
-                }, 3000);
-            }
-        });
-}
+                    
+                    // Aggiorna UI immediatamente
+                    updateProductInfo(index);
+                    
+                    console.log('Prodotto cambiato immediatamente');
+                })
+                .catch((error) => {
+                    console.error('Errore nel caricamento del prodotto:', error);
+                    isTransitioning = false;
+                    loadingEl.textContent = 'Errore nel caricamento. Verifica che i file GLB siano nella cartella assets/';
+                    setTimeout(() => {
+                        loadingEl.style.display = 'none';
+                    }, 3000);
+                });
+        }
 
         function animate() {
             requestAnimationFrame(animate);
