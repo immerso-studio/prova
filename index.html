@@ -45,16 +45,24 @@
             align-items: center;
             z-index: 1000;
             transition: opacity 0.8s ease, visibility 0.8s ease;
+            /* Aggiungi queste proprietà per performance */
+            will-change: opacity;
+            transform: translateZ(0);
         }
 
         #loader.fade-out {
             opacity: 0;
             visibility: hidden;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
         }
 
         .loader-content {
             text-align: center;
             padding: 0 20px;
+            /* Aggiungi transizione smooth */
+            transition: all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            will-change: transform, opacity;
         }
 
         .loader-logo {
@@ -77,12 +85,13 @@
             position: relative;
         }
 
+        /* Migliora l'animazione della progress bar */
         .loader-progress-bar {
             height: 100%;
             width: 0%;
             background: linear-gradient(90deg, #FFD700, #FFA500);
             border-radius: 4px;
-            transition: width 0.4s ease;
+            transition: width 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
             position: relative;
             overflow: hidden;
         }
@@ -819,7 +828,7 @@
     <!-- Loader Elegante -->
     <div id="loader">
         <div class="loader-content">
-            <div class="loader-logo">PLATEK</div>
+            <div class="loader-logo"><img src="assets/platek.png" width="50%"></div>
             <div class="loader-progress-container">
                 <div class="loader-progress-bar" id="loader-progress"></div>
             </div>
@@ -1074,54 +1083,61 @@
             }
         };
 
-        function init() {
-            // Setup asset manager
-            setupAssetLoading();
-            
-            const container = document.getElementById('canvas-container');
-            
-            // Inizializza loader CON DRACO
-            loader = new THREE.GLTFLoader();
-            
-            // CONFIGURA DRACO LOADER
-            const dracoLoader = new THREE.DRACOLoader();
-            dracoLoader.setDecoderPath('https://www.gstatic.com/draco/v1/decoders/');
-            loader.setDRACOLoader(dracoLoader);
-            
-            textureLoader = new THREE.TextureLoader();
-            
-            // Scena
-            scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x0a0a0a);
+function init() {
+    // Setup asset manager
+    setupAssetLoading();
+    
+    const container = document.getElementById('canvas-container');
+    
+    // Inizializza loader CON DRACO
+    loader = new THREE.GLTFLoader();
+    
+    // CONFIGURA DRACO LOADER
+    const dracoLoader = new THREE.DRACOLoader();
+    dracoLoader.setDecoderPath('https://www.gstatic.com/draco/v1/decoders/');
+    loader.setDRACOLoader(dracoLoader);
+    
+    textureLoader = new THREE.TextureLoader();
+    
+    // Scena
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x0a0a0a);
 
-            // Camera temporanea - sarà sostituita dalla camera del GLB
-            camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.set(0, 2, 6);
+    // Camera temporanea - sarà sostituita dalla camera del GLB
+    camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 2, 6);
 
-            // Renderer
-            renderer = new THREE.WebGLRenderer({ 
-                antialias: true,
-                alpha: true,
-                powerPreference: "high-performance"
-            });
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-            renderer.shadowMap.enabled = true;
-            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-            renderer.toneMapping = THREE.ACESFilmicToneMapping;
-            renderer.toneMappingExposure = 1;
-            renderer.outputEncoding = THREE.sRGBEncoding;
-            container.appendChild(renderer.domElement);
+    // Renderer
+    renderer = new THREE.WebGLRenderer({ 
+        antialias: true,
+        alpha: true,
+        powerPreference: "high-performance"
+    });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1;
+    renderer.outputEncoding = THREE.sRGBEncoding;
+    container.appendChild(renderer.domElement);
 
-            // Setup event listeners per parallasse
-            setupParallaxEvents();
+    // Setup event listeners per parallasse
+    setupParallaxEvents();
 
-            // Inizia il caricamento degli asset
-            startAssetLoading();
+    // Inizia il caricamento degli asset
+    startAssetLoading();
 
-            window.addEventListener('resize', onWindowResize);
+    // FALLBACK: se dopo 10 secondi non è ancora tutto caricato, procedi comunque
+    setTimeout(() => {
+        if (isInitialLoad) {
+            console.warn('Timeout caricamento, procedo comunque');
+            completeInitialization();
         }
+    }, 10000);
 
+    window.addEventListener('resize', onWindowResize);
+}
         function setupAssetLoading() {
             // Aggiungi asset essenziali
             assetManager.addAsset('environment', 'assets/camera.glb', 10);
@@ -1137,99 +1153,146 @@
             assetManager.initialize();
         }
 
-        function startAssetLoading() {
-            // Carica asset in ordine di priorità
-            const sortedAssets = [...assetManager.assets].sort((a, b) => b.priority - a.priority);
+function startAssetLoading() {
+    // Carica asset in ordine di priorità
+    const sortedAssets = [...assetManager.assets].sort((a, b) => b.priority - a.priority);
+    
+    let loadedCount = 0;
+    const totalAssets = sortedAssets.length;
+    
+    sortedAssets.forEach(asset => {
+        switch(asset.type) {
+            case 'environment':
+                loadEnvironmentWithCamera(asset.url);
+                break;
+            case 'hdri':
+                loadHDRI(asset.url);
+                break;
+            case 'plants':
+                loadPlants(asset.url);
+                break;
+            default:
+                if (asset.type.startsWith('product_')) {
+                    // I modelli dei prodotti vengono precaricati
+                    preloadProductModel(asset.url);
+                }
+                break;
+        }
+    });
+    
+    // Avvia il controllo per il completamento
+    setTimeout(completeInitialization, 500);
+}
+
+function updateAssetProgress(url, loaded = true) {
+    const asset = assetManager.assets.find(a => a.url === url);
+    if (asset) {
+        asset.loaded = loaded;
+        if (loaded) {
+            assetManager.loadedSize += asset.size;
+        }
+        
+        const progress = assetManager.updateProgress();
+        
+        // Animazione più smooth della progress bar
+        gsap.to('#loader-progress', {
+            duration: 0.5,
+            width: `${progress}%`,
+            ease: "power2.out"
+        });
+        
+        console.log(`Asset caricato: ${url} - Progresso: ${progress.toFixed(1)}%`);
+    }
+}
+
+function completeInitialization() {
+    // VERIFICA che gli asset essenziali siano caricati prima di procedere
+    const essentialAssets = assetManager.assets.filter(asset => 
+        asset.type === 'environment' || asset.type === 'hdri' || 
+        asset.type.startsWith('product_0') // Primo prodotto
+    );
+    
+    const allEssentialLoaded = essentialAssets.every(asset => asset.loaded);
+    
+    if (!allEssentialLoaded) {
+        console.log('In attesa degli asset essenziali...');
+        setTimeout(completeInitialization, 100);
+        return;
+    }
+
+    const loaderElement = document.getElementById('loader');
+    const loaderContent = document.querySelector('.loader-content');
+    
+    // Animazione più smooth e graduale
+    const timeline = gsap.timeline({
+        onComplete: () => {
+            loaderElement.classList.add('fade-out');
             
-            sortedAssets.forEach(asset => {
-                switch(asset.type) {
-                    case 'environment':
-                        loadEnvironmentWithCamera(asset.url);
-                        break;
-                    case 'hdri':
-                        loadHDRI(asset.url);
-                        break;
-                    case 'plants':
-                        loadPlants(asset.url);
-                        break;
-                    default:
-                        if (asset.type.startsWith('product_')) {
-                            // I modelli dei prodotti vengono precaricati
-                            preloadProductModel(asset.url);
+            // Nascondi loading
+            document.querySelector('.loading').style.display = 'none';
+
+            // Animazione iniziale della scheda
+            animateProductInfo();
+
+            // Aggiorna indicatore luce
+            updateLightIndicator();
+
+            // Event listeners per UI
+            setupEventListeners();
+
+            // Carica primo prodotto
+            loadProduct(0);
+
+            isInitialLoad = false;
+            
+            // Avvia animazione
+            animate();
+        }
+    });
+
+    // Prima fade out dei contenuti del loader
+    timeline.to(loaderContent, {
+        duration: 0.6,
+        opacity: 0,
+        scale: 0.9,
+        ease: "power2.inOut"
+    })
+    // Poi fade out del background del loader
+    .to(loaderElement, {
+        duration: 0.8,
+        opacity: 0,
+        ease: "power2.inOut"
+    }, "-=0.3"); // Inizia 0.3 secondi prima della fine della prima animazione
+}
+
+function preloadProductModel(url) {
+    // Precaria il modello senza aggiungerlo alla scena
+    loader.load(
+        url,
+        (gltf) => {
+            console.log(`Modello precaricato: ${url}`);
+            // PULISCI la scena del GLTF per liberare memoria
+            gltf.scene.traverse(child => {
+                if (child.isMesh) {
+                    if (child.geometry) child.geometry.dispose();
+                    if (child.material) {
+                        if (Array.isArray(child.material)) {
+                            child.material.forEach(material => material.dispose());
+                        } else {
+                            child.material.dispose();
                         }
-                        break;
+                    }
                 }
             });
+            updateAssetProgress(url, true);
+        },
+        undefined,
+        (error) => {
+            console.error(`Errore precaricamento ${url}:`, error);
+            updateAssetProgress(url, true); // Considera comunque caricato per non bloccare
         }
-
-        function updateAssetProgress(url, loaded = true) {
-            const asset = assetManager.assets.find(a => a.url === url);
-            if (asset) {
-                asset.loaded = loaded;
-                if (loaded) {
-                    assetManager.loadedSize += asset.size;
-                }
-                
-                const progress = assetManager.updateProgress();
-                
-                // Se tutti gli asset sono caricati, nascondi il loader
-                if (progress >= 100 && isInitialLoad) {
-                    setTimeout(() => {
-                        completeInitialization();
-                    }, 1000);
-                }
-            }
-        }
-
-        function completeInitialization() {
-            const loaderElement = document.getElementById('loader');
-            
-            // Animazione di uscita del loader
-            gsap.to(loaderElement, {
-                opacity: 0,
-                duration: 0.8,
-                ease: "power2.inOut",
-                onComplete: () => {
-                    loaderElement.classList.add('fade-out');
-                    
-                    // Nascondi loading
-                    document.querySelector('.loading').style.display = 'none';
-
-                    // Animazione iniziale della scheda
-                    animateProductInfo();
-
-                    // Aggiorna indicatore luce
-                    updateLightIndicator();
-
-                    // Event listeners per UI
-                    setupEventListeners();
-
-                    // Carica primo prodotto
-                    loadProduct(0);
-
-                    isInitialLoad = false;
-                    
-                    // Avvia animazione
-                    animate();
-                }
-            });
-        }
-
-        function preloadProductModel(url) {
-            // Precaria il modello senza aggiungerlo alla scena
-            loader.load(
-                url,
-                () => {
-                    console.log(`Modello precaricato: ${url}`);
-                    updateAssetProgress(url, true);
-                },
-                undefined,
-                (error) => {
-                    console.error(`Errore precaricamento ${url}:`, error);
-                    updateAssetProgress(url, true); // Considera comunque caricato per non bloccare
-                }
-            );
-        }
+    );
+}
 
         function setupParallaxEvents() {
             // Desktop - Mouse movement
