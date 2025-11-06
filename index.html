@@ -31,6 +31,126 @@
             position: relative;
         }
 
+        /* Loader Styles */
+        #loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #0a0a0a;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            transition: opacity 0.8s ease, visibility 0.8s ease;
+        }
+
+        #loader.fade-out {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .loader-content {
+            text-align: center;
+            padding: 0 20px;
+        }
+
+        .loader-logo {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.95);
+            margin-bottom: 2rem;
+            letter-spacing: 2px;
+        }
+
+        .loader-progress-container {
+            width: 300px;
+            max-width: 80%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 2rem auto;
+            position: relative;
+        }
+
+        .loader-progress-bar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #FFD700, #FFA500);
+            border-radius: 4px;
+            transition: width 0.4s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .loader-progress-bar::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+
+        .loader-text {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.7);
+            margin-top: 1rem;
+            font-weight: 400;
+            letter-spacing: 0.5px;
+        }
+
+        .loader-dots {
+            display: flex;
+            gap: 8px;
+            margin-top: 1.5rem;
+            justify-content: center;
+        }
+
+        .loader-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            animation: dotPulse 1.4s ease-in-out infinite both;
+        }
+
+        .loader-dot:nth-child(1) { animation-delay: -0.32s; }
+        .loader-dot:nth-child(2) { animation-delay: -0.16s; }
+        .loader-dot:nth-child(3) { animation-delay: 0s; }
+
+        @keyframes dotPulse {
+            0%, 80%, 100% {
+                transform: scale(0.8);
+                opacity: 0.5;
+            }
+            40% {
+                transform: scale(1.2);
+                opacity: 1;
+            }
+        }
+
+        .loader-stats {
+            display: flex;
+            justify-content: space-between;
+            width: 300px;
+            max-width: 80%;
+            margin-top: 1rem;
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
         /* Stile Glass Frosted per i controlli */
         .glass-frosted {
             background: rgba(255, 255, 255, 0.15);
@@ -291,6 +411,21 @@
             box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
         }
 
+        .toggle-slider.disabled {
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .toggle-switch input:disabled {
+            cursor: not-allowed;
+        }
+
+        /* Previene completamente l'interazione quando disabilitato */
+        .toggle-switch input:disabled + .toggle-slider {
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
         .toggle-slider:before {
             position: absolute;
             content: "";
@@ -508,6 +643,14 @@
                 width: 100px;
                 height: 30px;
             }
+
+            .loader-logo {
+                font-size: 2rem;
+            }
+
+            .loader-progress-container {
+                width: 250px;
+            }
         }
 
         @media (max-width: 480px) {
@@ -589,6 +732,14 @@
                 height: 25px;
                 bottom: 10px;
             }
+
+            .loader-logo {
+                font-size: 1.8rem;
+            }
+
+            .loader-progress-container {
+                width: 200px;
+            }
         }
 
         @media (max-width: 360px) {
@@ -665,6 +816,25 @@
     </style>
 </head>
 <body>
+    <!-- Loader Elegante -->
+    <div id="loader">
+        <div class="loader-content">
+            <div class="loader-logo">PLATEK</div>
+            <div class="loader-progress-container">
+                <div class="loader-progress-bar" id="loader-progress"></div>
+            </div>
+            <div class="loader-text" id="loader-text">Inizializzazione configuratore...</div>
+            <div class="loader-dots">
+                <div class="loader-dot"></div>
+                <div class="loader-dot"></div>
+                <div class="loader-dot"></div>
+            </div>
+            <div class="loader-stats">
+
+            </div>
+        </div>
+    </div>
+
     <div id="canvas-container">
         <div class="loading">Caricamento...</div>
     </div>
@@ -719,7 +889,7 @@
                 <span class="toggle-label">OFF</span>
                 <label class="toggle-switch">
                     <input type="checkbox" id="light-toggle">
-                    <span class="toggle-slider"></span>
+                    <span class="toggle-slider" id="toggle-slider"></span>
                 </label>
                 <span class="toggle-label">ON</span>
             </div>
@@ -768,6 +938,7 @@
         let currentProductIndex = 0;
         let isLightOn = false; // Stato luce: false = spenta, true = accesa
         let controlsVisible = true; // Stato visibilità controlli
+        let toggleCooldown = false; // Nuova variabile per prevenire click rapidi
         
         // Variabili per effetto parallasse
         let mouseX = 0;
@@ -784,6 +955,11 @@
         let originalCameraPosition = new THREE.Vector3();
         let originalCameraRotation = new THREE.Euler();
         let useSceneCamera = false;
+
+        // Variabili per il loader
+        let totalAssets = 0;
+        let loadedAssets = 0;
+        let isInitialLoad = true;
 
         // Configurazione prodotti con rotazione personalizzata
         const products = [
@@ -831,7 +1007,77 @@
             }
         ];
 
+        // Sistema di caricamento asset
+        const assetManager = {
+            assets: [],
+            totalSize: 0,
+            loadedSize: 0,
+            
+            addAsset(type, url, priority = 1) {
+                this.assets.push({
+                    type,
+                    url,
+                    priority,
+                    loaded: false,
+                    size: 0 // Sarà stimato
+                });
+            },
+            
+            getTotalAssets() {
+                return this.assets.length;
+            },
+            
+            getLoadedAssets() {
+                return this.assets.filter(asset => asset.loaded).length;
+            },
+            
+            updateProgress() {
+                const progress = (this.loadedSize / this.totalSize) * 100;
+                const loadedCount = this.getLoadedAssets();
+                const totalCount = this.getTotalAssets();
+                
+                // Aggiorna UI loader
+                document.getElementById('loader-progress').style.width = `${progress}%`;
+
+                
+                // Aggiorna testo loader
+                const loaderText = document.getElementById('loader-text');
+                if (progress < 30) {
+                    loaderText.textContent = 'Caricamento ambiente 3D...';
+                } else if (progress < 60) {
+                    loaderText.textContent = 'Preparazione modelli...';
+                } else if (progress < 90) {
+                    loaderText.textContent = 'Ottimizzazione texture...';
+                } else {
+                    loaderText.textContent = 'Completamento configurazione...';
+                }
+                
+                return progress;
+            },
+            
+            estimateAssetSize(url) {
+                // Stima dimensioni asset basata sul tipo
+                if (url.includes('.hdr')) return 5 * 1024 * 1024; // 5MB per HDRI
+                if (url.includes('.glb')) return 2 * 1024 * 1024; // 2MB per GLB
+                if (url.includes('.png') || url.includes('.jpg')) return 500 * 1024; // 500KB per immagini
+                return 1 * 1024 * 1024; // 1MB default
+            },
+            
+            initialize() {
+                // Calcola dimensioni totali stimate
+                this.totalSize = this.assets.reduce((total, asset) => {
+                    asset.size = this.estimateAssetSize(asset.url);
+                    return total + asset.size;
+                }, 0);
+                
+                console.log(`Caricamento ${this.assets.length} asset (${(this.totalSize / (1024 * 1024)).toFixed(1)}MB stimati)`);
+            }
+        };
+
         function init() {
+            // Setup asset manager
+            setupAssetLoading();
+            
             const container = document.getElementById('canvas-container');
             
             // Inizializza loader CON DRACO
@@ -870,33 +1116,119 @@
             // Setup event listeners per parallasse
             setupParallaxEvents();
 
-            // Carica HDRI
-            loadHDRI();
-
-            // Carica l'ambiente con la camera dal GLB
-            loadEnvironmentWithCamera();
-
-            // Carica le piante PNG
-            loadPlants();
-
-            // Carica primo prodotto
-            loadProduct(0);
-
-            // Nascondi loading
-            document.querySelector('.loading').style.display = 'none';
-
-            // Animazione iniziale della scheda
-            animateProductInfo();
-
-            // Aggiorna indicatore luce
-            updateLightIndicator();
-
-            // Event listeners per UI
-            setupEventListeners();
+            // Inizia il caricamento degli asset
+            startAssetLoading();
 
             window.addEventListener('resize', onWindowResize);
+        }
 
-            animate();
+        function setupAssetLoading() {
+            // Aggiungi asset essenziali
+            assetManager.addAsset('environment', 'assets/camera.glb', 10);
+            assetManager.addAsset('hdri', 'https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/industrial_sunset_puresky_1k.hdr', 9);
+            assetManager.addAsset('plants', 'assets/piante44.png', 5);
+            
+            // Aggiungi tutti i modelli dei prodotti
+            products.forEach((product, index) => {
+                assetManager.addAsset(`product_${index}_off`, product.modelOff, 8 - index);
+                assetManager.addAsset(`product_${index}_on`, product.modelOn, 8 - index);
+            });
+            
+            assetManager.initialize();
+        }
+
+        function startAssetLoading() {
+            // Carica asset in ordine di priorità
+            const sortedAssets = [...assetManager.assets].sort((a, b) => b.priority - a.priority);
+            
+            sortedAssets.forEach(asset => {
+                switch(asset.type) {
+                    case 'environment':
+                        loadEnvironmentWithCamera(asset.url);
+                        break;
+                    case 'hdri':
+                        loadHDRI(asset.url);
+                        break;
+                    case 'plants':
+                        loadPlants(asset.url);
+                        break;
+                    default:
+                        if (asset.type.startsWith('product_')) {
+                            // I modelli dei prodotti vengono precaricati
+                            preloadProductModel(asset.url);
+                        }
+                        break;
+                }
+            });
+        }
+
+        function updateAssetProgress(url, loaded = true) {
+            const asset = assetManager.assets.find(a => a.url === url);
+            if (asset) {
+                asset.loaded = loaded;
+                if (loaded) {
+                    assetManager.loadedSize += asset.size;
+                }
+                
+                const progress = assetManager.updateProgress();
+                
+                // Se tutti gli asset sono caricati, nascondi il loader
+                if (progress >= 100 && isInitialLoad) {
+                    setTimeout(() => {
+                        completeInitialization();
+                    }, 1000);
+                }
+            }
+        }
+
+        function completeInitialization() {
+            const loaderElement = document.getElementById('loader');
+            
+            // Animazione di uscita del loader
+            gsap.to(loaderElement, {
+                opacity: 0,
+                duration: 0.8,
+                ease: "power2.inOut",
+                onComplete: () => {
+                    loaderElement.classList.add('fade-out');
+                    
+                    // Nascondi loading
+                    document.querySelector('.loading').style.display = 'none';
+
+                    // Animazione iniziale della scheda
+                    animateProductInfo();
+
+                    // Aggiorna indicatore luce
+                    updateLightIndicator();
+
+                    // Event listeners per UI
+                    setupEventListeners();
+
+                    // Carica primo prodotto
+                    loadProduct(0);
+
+                    isInitialLoad = false;
+                    
+                    // Avvia animazione
+                    animate();
+                }
+            });
+        }
+
+        function preloadProductModel(url) {
+            // Precaria il modello senza aggiungerlo alla scena
+            loader.load(
+                url,
+                () => {
+                    console.log(`Modello precaricato: ${url}`);
+                    updateAssetProgress(url, true);
+                },
+                undefined,
+                (error) => {
+                    console.error(`Errore precaricamento ${url}:`, error);
+                    updateAssetProgress(url, true); // Considera comunque caricato per non bloccare
+                }
+            );
         }
 
         function setupParallaxEvents() {
@@ -937,8 +1269,8 @@
                     const deltaY = touch.clientY - lastTouchY;
                     
                     // Calcola movimento parallasse basato su movimento touch
-                    targetCameraX += deltaX * 0.0001;
-                    targetCameraY += deltaY * 0.0001;
+                    targetCameraX += deltaX * 0;
+                    targetCameraY += deltaY * 0;
                     
                     // Limita il movimento
                     targetCameraX = Math.max(-1, Math.min(1, targetCameraX));
@@ -964,9 +1296,9 @@
             });
         }
 
-        function loadPlants() {
+        function loadPlants(url) {
             textureLoader.load(
-                'assets/piante44.png',
+                url,
                 (texture) => {
                     // Configura la texture per la trasparenza
                     texture.encoding = THREE.sRGBEncoding;
@@ -992,10 +1324,12 @@
                     scene.add(plantsSprite);
                     
                     console.log('Piante PNG caricate con successo');
+                    updateAssetProgress(url, true);
                 },
                 undefined,
                 (error) => {
                     console.error('Errore nel caricamento delle piante PNG:', error);
+                    updateAssetProgress(url, true);
                 }
             );
         }
@@ -1014,11 +1348,36 @@
 
             // Toggle luce
             document.getElementById('light-toggle').addEventListener('change', (e) => {
+                // Se il toggle è in cooldown, previeni completamente l'azione
+                if (toggleCooldown) {
+                    e.preventDefault();
+                    // Forza il checkbox a mantenere lo stato corrente
+                    e.target.checked = isLightOn;
+                    return;
+                }
+                
+                // Attiva il cooldown
+                toggleCooldown = true;
+                const toggleSlider = document.getElementById('toggle-slider');
+                const toggleInput = document.getElementById('light-toggle');
+                
+                toggleSlider.classList.add('disabled');
+                toggleInput.disabled = true;
+                
                 isLightOn = e.target.checked;
                 console.log('Stato luce:', isLightOn ? 'ACCESA' : 'SPENTA');
                 updateLightIndicator();
+                
                 // Ricarica il prodotto corrente con lo stato luce corretto
-                loadProduct(currentProductIndex);
+                loadProduct(currentProductIndex, true);
+                
+                // Riabilita il toggle dopo 1 secondo
+                setTimeout(() => {
+                    toggleCooldown = false;
+                    toggleSlider.classList.remove('disabled');
+                    toggleInput.disabled = false;
+                    console.log('Toggle riabilitato');
+                }, 1000);
             });
 
             // Espandi/contrai scheda info
@@ -1295,12 +1654,12 @@
             document.getElementById('price-value').textContent = product.price;
         }
 
-        function loadHDRI() {
+        function loadHDRI(url) {
             const rgbeLoader = new THREE.RGBELoader();
             rgbeLoader.setDataType(THREE.HalfFloatType);
             
             rgbeLoader.load(
-                'https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/industrial_sunset_puresky_1k.hdr',
+                url,
                 function(texture) {
                     
                     texture.mapping = THREE.EquirectangularReflectionMapping;
@@ -1320,11 +1679,13 @@
                     pmremGenerator.dispose();
                     
                     console.log('HDRI caricato con successo');
+                    updateAssetProgress(url, true);
                 },
                 undefined,
                 function(error) {
                     console.error('Errore nel caricamento HDRI:', error);
                     createFallbackEnvironment();
+                    updateAssetProgress(url, true);
                 }
             );
         }
@@ -1347,68 +1708,71 @@
             scene.background = envMap;
         }
 
-function loadEnvironmentWithCamera() {
-    // Carica il GLB che contiene la camera
-    loader.load(
-        'assets/camera.glb', // Usa il primo GLB che contiene la camera
-        (gltf) => {
-            environmentMesh = gltf.scene;
-            
-            // Configura l'ambiente
-            environmentMesh.position.set(0, 1, 6)
-            environmentMesh.scale.set(18, 18, 18)
-            
-            // Cerca una camera nel GLB
-            let cameraFound = false;
-            gltf.scene.traverse((child) => {
-                if (child.isCamera) {
-                    console.log('Camera trovata nel GLB:', child);
-                    sceneCamera = child;
+        function loadEnvironmentWithCamera(url) {
+            // Carica il GLB che contiene la camera
+            loader.load(
+                url,
+                (gltf) => {
+                    environmentMesh = gltf.scene;
                     
-                    // Salva la posizione e rotazione originale della camera
-                    originalCameraPosition.copy(sceneCamera.position);
-                    originalCameraRotation.copy(sceneCamera.rotation);
+                    // Configura l'ambiente
+                    environmentMesh.position.set(0, 1, 6)
+                    environmentMesh.scale.set(18, 18, 18)
                     
-                    // Regola i piani di clipping per evitare problemi
-                    if (sceneCamera.isPerspectiveCamera) {
-                        sceneCamera.near = 0.1;  // Piano near molto vicino
-                        sceneCamera.far = 1000;  // Piano far molto lontano
-                        
-                        // *** MODIFICA LA LUNGHEZZA FOCALE QUI ***
-                        sceneCamera.fov = 25; // Cambia questo valore (default: 50)
-                        
-                        console.log('Piani di clipping regolati:', sceneCamera.near, sceneCamera.far);
-                        console.log('FOV impostato a:', sceneCamera.fov);
+                    // Cerca una camera nel GLB
+                    let cameraFound = false;
+                    gltf.scene.traverse((child) => {
+                        if (child.isCamera) {
+                            console.log('Camera trovata nel GLB:', child);
+                            sceneCamera = child;
+                            
+                            // Salva la posizione e rotazione originale della camera
+                            originalCameraPosition.copy(sceneCamera.position);
+                            originalCameraRotation.copy(sceneCamera.rotation);
+                            
+                            // Regola i piani di clipping per evitare problemi
+                            if (sceneCamera.isPerspectiveCamera) {
+                                sceneCamera.near = 0.1;  // Piano near molto vicino
+                                sceneCamera.far = 1000;  // Piano far molto lontano
+                                
+                                // *** MODIFICA LA LUNGHEZZA FOCALE QUI ***
+                                sceneCamera.fov = 25; // Cambia questo valore (default: 50)
+                                
+                                console.log('Piani di clipping regolati:', sceneCamera.near, sceneCamera.far);
+                                console.log('FOV impostato a:', sceneCamera.fov);
+                            }
+                            
+                            // Usa la camera del GLB invece di quella creata
+                            camera = sceneCamera;
+                            useSceneCamera = true;
+                            cameraFound = true;
+                            
+                            // Aggiorna il rapporto d'aspetto
+                            camera.aspect = window.innerWidth / window.innerHeight;
+                            camera.updateProjectionMatrix();
+                            
+                            console.log('Camera del GLB impostata come camera principale');
+                        }
+                    });
+                    
+                    if (!cameraFound) {
+                        console.warn('Nessuna camera trovata nel GLB, uso camera di default');
+                        createBasicEnvironment();
+                    } else {
+                        scene.add(environmentMesh);
+                        console.log('Ambiente con camera GLB caricato con successo');
                     }
                     
-                    // Usa la camera del GLB invece di quella creata
-                    camera = sceneCamera;
-                    useSceneCamera = true;
-                    cameraFound = true;
-                    
-                    // Aggiorna il rapporto d'aspetto
-                    camera.aspect = window.innerWidth / window.innerHeight;
-                    camera.updateProjectionMatrix();
-                    
-                    console.log('Camera del GLB impostata come camera principale');
+                    updateAssetProgress(url, true);
+                },
+                undefined,
+                (error) => {
+                    console.error('Errore nel caricamento dell\'ambiente con camera:', error);
+                    createBasicEnvironment();
+                    updateAssetProgress(url, true);
                 }
-            });
-            
-            if (!cameraFound) {
-                console.warn('Nessuna camera trovata nel GLB, uso camera di default');
-                createBasicEnvironment();
-            } else {
-                scene.add(environmentMesh);
-                console.log('Ambiente con camera GLB caricato con successo');
-            }
-        },
-        undefined,
-        (error) => {
-            console.error('Errore nel caricamento dell\'ambiente con camera:', error);
-            createBasicEnvironment();
+            );
         }
-    );
-}
 
         function createBasicEnvironment() {
             // Pavimento riflettente di fallback
@@ -1491,16 +1855,19 @@ function loadEnvironmentWithCamera() {
             });
         }
 
-        function loadProduct(index) {
+        function loadProduct(index, isLightToggle = false) {
             if (isTransitioning) return;
             isTransitioning = true;
             
+            const previousMesh = currentMesh;
             currentProductIndex = index;
 
-            // Mostra loading
+            // Mostra loading solo per cambio prodotto (non per toggle luce)
             const loadingEl = document.querySelector('.loading');
-            loadingEl.style.display = 'block';
-            loadingEl.textContent = 'Caricamento modello...';
+            if (!isLightToggle) {
+                loadingEl.style.display = 'block';
+                loadingEl.textContent = '';
+            }
 
             createGeometry(index)
                 .then((newMesh) => {
@@ -1508,31 +1875,92 @@ function loadEnvironmentWithCamera() {
                     const scale = products[index].scale;
                     newMesh.scale.set(scale, scale, scale);
                     
-                    // Aggiungi alla scena
-                    scene.add(newMesh);
+                    // Se è un toggle luce, usa transizione smooth
+                    if (isLightToggle && previousMesh) {
+                        // Imposta opacità iniziale a 0 per la dissolvenza
+                        newMesh.traverse((child) => {
+                            if (child.isMesh && child.material) {
+                                child.material.transparent = true;
+                                child.material.opacity = 0;
+                            }
+                        });
+                        
+                        // Aggiungi il nuovo mesh alla scena
+                        scene.add(newMesh);
 
-                    // Rimuovi il vecchio mesh se esiste
-                    if (currentMesh) {
-                        scene.remove(currentMesh);
+                        // Timeline per la transizione smooth
+                        const transitionTimeline = gsap.timeline({
+                            onComplete: () => {
+                                // Rimuovi il vecchio mesh dopo la transizione
+                                if (previousMesh && scene.getObjectById(previousMesh.id)) {
+                                    scene.remove(previousMesh);
+                                }
+                                
+                                // Ripristina le proprietà dei materiali del nuovo mesh
+                                newMesh.traverse((child) => {
+                                    if (child.isMesh && child.material) {
+                                        child.material.transparent = false;
+                                    }
+                                });
+                                
+                                isTransitioning = false;
+                                console.log('Transizione toggle luce completata');
+                            }
+                        });
+
+                        // Fade out del mesh precedente
+                        previousMesh.traverse((child) => {
+                            if (child.isMesh && child.material) {
+                                child.material.transparent = true;
+                                transitionTimeline.to(child.material, {
+                                    opacity: 0,
+                                    duration: 1,
+                                    ease: "power2.in"
+                                }, 0);
+                            }
+                        });
+
+                        // Fade in del nuovo mesh
+                        newMesh.traverse((child) => {
+                            if (child.isMesh && child.material) {
+                                transitionTimeline.to(child.material, {
+                                    opacity: 1,
+                                    duration: 1,
+                                    ease: "power2.out"
+                                }, 0);
+                            }
+                        });
+
+                    } else {
+                        // Transizione originale per cambio prodotto con slider
+                        scene.add(newMesh);
+
+                        // Rimuovi il vecchio mesh se esiste
+                        if (previousMesh) {
+                            scene.remove(previousMesh);
+                        }
+
+                        isTransitioning = false;
+                        loadingEl.style.display = 'none';
+                        
+                        // Aggiorna UI
+                        animateProductChange();
+                        
+                        console.log('Cambio prodotto completato');
                     }
 
-                    // Imposta immediatamente il nuovo mesh come corrente
+                    // Imposta il nuovo mesh come corrente
                     currentMesh = newMesh;
-                    isTransitioning = false;
-                    loadingEl.style.display = 'none';
-                    
-                    // Aggiorna UI immediatamente
-                    updateProductInfo(index);
-                    
-                    console.log('Prodotto cambiato immediatamente');
                 })
                 .catch((error) => {
                     console.error('Errore nel caricamento del prodotto:', error);
                     isTransitioning = false;
-                    loadingEl.textContent = 'Errore nel caricamento. Verifica che i file GLB siano nella cartella assets/';
-                    setTimeout(() => {
-                        loadingEl.style.display = 'none';
-                    }, 3000);
+                    if (!isLightToggle) {
+                        loadingEl.textContent = 'Errore nel caricamento. Verifica che i file GLB siano nella cartella assets/';
+                        setTimeout(() => {
+                            loadingEl.style.display = 'none';
+                        }, 3000);
+                    }
                 });
         }
 
