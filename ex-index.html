@@ -1,0 +1,2153 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configuratore Illuminazione 3D</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            overflow: hidden;
+            background: #0a0a0a;
+            color: #fff;
+            touch-action: pan-x pan-y;
+            cursor: grab;
+        }
+
+        body:active {
+            cursor: grabbing;
+        }
+
+        #canvas-container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+
+        /* Loader Styles */
+        #loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #0a0a0a;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            transition: opacity 0.8s ease, visibility 0.8s ease;
+            /* Aggiungi queste proprietà per performance */
+            will-change: opacity;
+            transform: translateZ(0);
+        }
+
+        #loader.fade-out {
+            opacity: 0;
+            visibility: hidden;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        .loader-content {
+            text-align: center;
+            padding: 0 20px;
+            /* Aggiungi transizione smooth */
+            transition: all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            will-change: transform, opacity;
+        }
+
+        .loader-logo {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.95);
+            margin-bottom: 2rem;
+            letter-spacing: 2px;
+        }
+
+        .loader-progress-container {
+            width: 300px;
+            max-width: 80%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 2rem auto;
+            position: relative;
+        }
+
+        /* Migliora l'animazione della progress bar */
+        .loader-progress-bar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #FFD700, #FFA500);
+            border-radius: 4px;
+            transition: width 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .loader-progress-bar::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+
+        .loader-text {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.7);
+            margin-top: 1rem;
+            font-weight: 400;
+            letter-spacing: 0.5px;
+        }
+
+        .loader-dots {
+            display: flex;
+            gap: 8px;
+            margin-top: 1.5rem;
+            justify-content: center;
+        }
+
+        .loader-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            animation: dotPulse 1.4s ease-in-out infinite both;
+        }
+
+        .loader-dot:nth-child(1) { animation-delay: -0.32s; }
+        .loader-dot:nth-child(2) { animation-delay: -0.16s; }
+        .loader-dot:nth-child(3) { animation-delay: 0s; }
+
+        @keyframes dotPulse {
+            0%, 80%, 100% {
+                transform: scale(0.8);
+                opacity: 0.5;
+            }
+            40% {
+                transform: scale(1.2);
+                opacity: 1;
+            }
+        }
+
+        .loader-stats {
+            display: flex;
+            justify-content: space-between;
+            width: 300px;
+            max-width: 80%;
+            margin-top: 1rem;
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        /* Stile Glass Frosted per i controlli */
+        .glass-frosted {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.36);
+        }
+
+        #controls {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 20px 30px;
+            border-radius: 16px;
+            z-index: 100;
+            width: 90%;
+            max-width: 600px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+        }
+
+        #controls.hidden {
+            transform: translateX(-50%) translateY(100px);
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .controls-section {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .section-title {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.7);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            font-weight: 500;
+            text-align: center;
+            margin-bottom: 4px;
+        }
+
+        #product-info {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            padding: 20px;
+            border-radius: 5px;
+            max-width: 320px;
+            width: calc(100% - 40px);
+            transition: border-radius 0.4s ease;
+            overflow: hidden;
+            cursor: pointer;
+            z-index: 100;
+            padding-bottom: 60px;
+        }
+
+        #product-info.fullscreen {
+            border-radius: 5px !important;
+        }
+
+        .expand-btn {
+            position: absolute;
+            bottom: 15px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            color: white;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            z-index: 101;
+        }
+
+        .expand-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
+        }
+
+        .expand-btn.expanded {
+            transform: rotate(180deg);
+        }
+
+        h1 {
+            font-size: 14px;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.8);
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+        }
+
+        .product-name {
+            font-family: 'Playfair Display', serif;
+            font-size: 28px;
+            margin-bottom: 12px;
+            color: rgba(255, 255, 255, 0.95);
+            font-weight: 700;
+            line-height: 1.1;
+        }
+
+        .product-desc {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.75);
+            line-height: 1.5;
+            margin-bottom: 15px;
+            font-weight: 400;
+            opacity: 0;
+            max-height: 0;
+            overflow: hidden;
+            transition: opacity 0.3s ease, max-height 0.4s ease;
+        }
+
+        .additional-info {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.7);
+            line-height: 1.5;
+            margin-top: 15px;
+            opacity: 0;
+            max-height: 0;
+            overflow: hidden;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        .info-label {
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .info-value {
+            color: rgba(255, 255, 255, 0.7);
+            text-align: right;
+        }
+
+        .price-tag {
+            background: linear-gradient(135deg, rgba(255,215,0,0.2), rgba(255,215,0,0.1));
+            padding: 8px 15px;
+            border-radius: 12px;
+            margin-top: 10px;
+            display: inline-block;
+            border: 1px solid rgba(255,215,0,0.3);
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        /* Power Switch Section */
+        .power-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .power-indicator {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            justify-content: center;
+        }
+
+        .power-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .power-dot.active {
+            background-color: #FFD700;
+            box-shadow: 0 0 12px #FFD700;
+        }
+
+        .power-status {
+            font-size: 13px;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.7);
+            transition: all 0.3s ease;
+        }
+
+        .power-status.active {
+            color: #FFD700;
+            font-weight: 600;
+        }
+
+        /* Toggle Switch Styles - Improved */
+        .toggle-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .toggle-label {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.7);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            position: relative;
+        }
+
+        .toggle-label.active {
+            color: #FFD700;
+            font-weight: 600;
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 70px;
+            height: 34px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            transition: .4s;
+            border-radius: 34px;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .toggle-slider.disabled {
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .toggle-switch input:disabled {
+            cursor: not-allowed;
+        }
+
+        /* Previene completamente l'interazione quando disabilitato */
+        .toggle-switch input:disabled + .toggle-slider {
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 3px;
+            background: linear-gradient(135deg, #f5f5f5, #e0e0e0);
+            transition: .4s;
+            border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        input:checked + .toggle-slider {
+            background: linear-gradient(135deg, rgba(255,215,0,0.6), rgba(255,215,0,0.3));
+            border-color: rgba(255, 215, 0, 0.6);
+        }
+
+        input:checked + .toggle-slider:before {
+            transform: translateX(36px);
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            box-shadow: 0 0 8px rgba(255, 215, 0, 0.8);
+        }
+
+        /* Product Slider Section */
+        .product-slider-section {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .slider-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+        }
+
+        .arrow-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+            flex-shrink: 0;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        .arrow-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
+        }
+
+        .arrow-btn:active {
+            transform: scale(0.95);
+        }
+
+        .current-product-display {
+            flex: 1;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .current-product-name {
+            font-size: 28px;
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: 500;
+        }
+
+        .product-counter {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.9);
+            text-align: center;
+            padding: 0 20px;
+        }
+
+        /* Toggle Controls Button - POSIZIONATO AL CENTRO IN ALTO ALLA SCHEDA */
+        .toggle-controls-btn {
+            position: absolute;
+            bottom: 180px; /* Metà fuori e metà sopra la scheda */
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 25px;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-bottom: none;
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 102;
+        }
+
+        .toggle-controls-btn:hover {
+            background: rgba(255, 255, 255, 0.25);
+            transform: translateX(-50%) scale(1.1);
+        }
+
+        .toggle-controls-btn:active {
+            transform: translateX(-50%) scale(0.95);
+        }
+
+        /* Stato quando i controlli sono nascosti */
+        #controls.hidden + .toggle-controls-btn {
+            top: auto;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-radius: 5px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            height: 30px;
+            width: 100px;
+        }
+
+        /* Media Queries per dispositivi mobili */
+        @media (max-width: 768px) {
+            #controls {
+                bottom: 15px;
+                padding: 16px 20px;
+                width: 95%;
+                border-radius: 14px;
+                gap: 14px;
+            }
+            
+            #product-info {
+                top: 15px;
+                left: 15px;
+                right: 15px;
+                padding: 15px;
+                max-width: none;
+                width: calc(100% - 30px);
+            }
+            
+            h1 {
+                font-size: 12px;
+            }
+            
+            .product-name {
+                font-size: 22px;
+            }
+            
+            .product-desc {
+                font-size: 13px;
+            }
+            
+            .section-title {
+                font-size: 11px;
+            }
+            
+            .arrow-btn {
+                width: 50px;
+                height: 50px;
+                font-size: 16px;
+            }
+            
+            .current-product-name {
+                font-size: 20px;
+            }
+            
+            #product-info.expanded {
+                width: calc(100% - 30px) !important;
+                max-width: none !important;
+            }
+
+            .toggle-switch {
+                width: 65px;
+                height: 32px;
+            }
+
+            .toggle-slider:before {
+                height: 24px;
+                width: 24px;
+            }
+
+            input:checked + .toggle-slider:before {
+                transform: translateX(33px);
+            }
+
+            .toggle-controls-btn {
+                width: 100px;
+                height: 30px;
+                font-size: 14px;
+            }
+
+            #controls.hidden + .toggle-controls-btn {
+                bottom: 10px;
+                width: 100px;
+                height: 30px;
+            }
+
+            .loader-logo {
+                font-size: 2rem;
+            }
+
+            .loader-progress-container {
+                width: 250px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            #controls {
+                padding: 14px 16px;
+                bottom: 20px;
+                border-radius: 12px;
+                gap: 12px;
+            }
+            
+            #product-info {
+                top: 10px;
+                left: 10px;
+                right: 10px;
+                padding: 12px;
+                max-width: none;
+                width: calc(100% - 20px);
+            }
+            
+            h1 {
+                font-size: 11px;
+            }
+            
+            .product-name {
+                font-size: 20px;
+                margin-bottom: 8px;
+            }
+            
+            .product-desc {
+                font-size: 12px;
+                line-height: 1.4;
+            }
+            
+            .slider-wrapper {
+                gap: 12px;
+            }
+            
+            .arrow-btn {
+                width: 44px;
+                height: 44px;
+                font-size: 14px;
+            }
+            
+            .current-product-name {
+                font-size: 16px;
+            }
+            
+            .section-title {
+                font-size: 10px;
+            }
+            
+            #product-info.expanded {
+                width: calc(100% - 20px) !important;
+                max-width: none !important;
+            }
+
+            .toggle-switch {
+                width: 60px;
+                height: 30px;
+            }
+
+            .toggle-slider:before {
+                height: 22px;
+                width: 22px;
+            }
+
+            input:checked + .toggle-slider:before {
+                transform: translateX(30px);
+            }
+
+            .toggle-controls-btn {
+                width: 80px;
+                height: 25px;
+                font-size: 12px;
+            }
+
+            #controls.hidden + .toggle-controls-btn {
+                width: 80px;
+                height: 25px;
+                bottom: 10px;
+            }
+
+            .loader-logo {
+                font-size: 1.8rem;
+            }
+
+            .loader-progress-container {
+                width: 200px;
+            }
+        }
+
+        @media (max-width: 360px) {
+            .slider-wrapper {
+                gap: 10px;
+            }
+            
+            .current-product-name {
+                font-size: 15px;
+            }
+            
+            .product-name {
+                font-size: 18px;
+            }
+            
+            .arrow-btn {
+                width: 40px;
+                height: 40px;
+            }
+        }
+
+        /* Orientamento landscape per mobile */
+        @media (max-height: 500px) and (orientation: landscape) {
+            #product-info {
+                top: 10px;
+                left: 10px;
+                right: 10px;
+                padding: 10px;
+                max-width: none;
+                width: calc(100% - 20px);
+            }
+            
+            #controls {
+                bottom: 20px;
+                padding: 12px 15px;
+                gap: 10px;
+            }
+            
+            .product-desc {
+                display: none;
+            }
+            
+            .product-name {
+                font-size: 16px;
+            }
+            
+            .section-title {
+                margin-bottom: 2px;
+            }
+            
+            .toggle-controls-btn {
+                top: -12px;
+            }
+            
+            #controls.hidden + .toggle-controls-btn {
+                bottom: 15px;
+            }
+        }
+
+        /* Supporto per touch devices */
+        @media (hover: none) and (pointer: coarse) {
+            .arrow-btn:hover {
+                transform: none;
+            }
+            
+            .arrow-btn:active {
+                transform: scale(0.95);
+            }
+            
+            body {
+                cursor: default;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Loader Elegante -->
+    <div id="loader">
+        <div class="loader-content">
+            <div class="loader-logo"><img src="assets/platek.png" width="50%"></div>
+            <div class="loader-progress-container">
+                <div class="loader-progress-bar" id="loader-progress"></div>
+            </div>
+            <div class="loader-text" id="loader-text">Inizializzazione configuratore...</div>
+            <div class="loader-dots">
+                <div class="loader-dot"></div>
+                <div class="loader-dot"></div>
+                <div class="loader-dot"></div>
+            </div>
+            <div class="loader-stats">
+
+            </div>
+        </div>
+    </div>
+
+    <div id="canvas-container">
+        <div class="loading">Caricamento...</div>
+    </div>
+
+    <div id="product-info" class="glass-frosted">
+        <h1>Configuratore Illuminazione</h1>
+        <div class="product-name" id="product-name">Lampada Cubo Moderna</div>
+        <div class="product-desc" id="product-desc">Lampada a sospensione con design geometrico moderno</div>
+        
+        <div class="additional-info" id="additional-info">
+            <div class="info-row">
+                <span class="info-label">Materiale:</span>
+                <span class="info-value" id="material-value">Alluminio anodizzato</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Dimensioni:</span>
+                <span class="info-value" id="dimensions-value">30x30x30 cm</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Potenza:</span>
+                <span class="info-value" id="power-value">15W LED</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Temperatura colore:</span>
+                <span class="info-value" id="color-temp-value">3000K (caldo)</span>
+            </div>
+            <div class="price-tag">
+                <span class="info-value" id="price-value">€ 149,00</span>
+            </div>
+        </div>
+        
+        <button class="expand-btn" id="expand-btn">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                xmlns="http://www.w3.org/2000/svg">
+                <path d="M6 9L12 15L18 9"
+                    stroke="white" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </button>
+    </div>
+
+    <div id="controls" class="glass-frosted">
+        <div class="slider-container">
+            <!-- Indicatore stato luce -->
+            <div class="power-indicator">
+                <div class="power-dot" id="power-dot"></div>
+                <span class="toggle-label" id="power-status">LUCE SPENTA</span>
+            </div>
+
+            <!-- Toggle per accensione luce -->
+            <div class="toggle-container">
+                <span class="toggle-label">OFF</span>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="light-toggle">
+                    <span class="toggle-slider" id="toggle-slider"></span>
+                </label>
+                <span class="toggle-label">ON</span>
+            </div>
+
+            <div class="slider-wrapper">
+                <div class="arrow-btn" id="prev-btn">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        xmlns="http://www.w3.org/2000/svg">
+                        <path d="M15 6L9 12L15 18"
+                        stroke="white" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </div>
+                <div class="current-product-name" id="current-product-name">Lampada Cubo</div>
+                <div class="arrow-btn" id="next-btn">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        xmlns="http://www.w3.org/2000/svg">
+                        <path d="M9 6L15 12L9 18"
+                        stroke="white" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottone toggle POSIZIONATO AL CENTRO IN ALTO ALLA SCHEDA CONTROLS -->
+    <button class="toggle-controls-btn glass-frosted" id="toggle-controls-btn">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+            xmlns="http://www.w3.org/2000/svg">
+            <path d="M6 9L12 15L18 9"
+                stroke="white" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+    </button>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/DRACOLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/RGBELoader.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script>
+        let scene, camera, renderer, currentMesh, envMap, environmentMesh, plantsSprite;
+        let isTransitioning = false;
+        let loader, textureLoader;
+        let currentProductIndex = 0;
+        let isLightOn = false; // Stato luce: false = spenta, true = accesa
+        let controlsVisible = true; // Stato visibilità controlli
+        let toggleCooldown = false; // Nuova variabile per prevenire click rapidi
+        
+        // Variabili per effetto parallasse
+        let mouseX = 0;
+        let mouseY = 0;
+        let targetCameraX = 0;
+        let targetCameraY = 0;
+        let currentCameraX = 0;
+        let currentCameraY = 0;
+        let isMouseMoving = false;
+        let lastMouseMoveTime = 0;
+
+        // Variabili per la camera del GLB
+        let sceneCamera = null;
+        let originalCameraPosition = new THREE.Vector3();
+        let originalCameraRotation = new THREE.Euler();
+        let useSceneCamera = false;
+
+        // Variabili per il loader
+        let totalAssets = 0;
+        let loadedAssets = 0;
+        let isInitialLoad = true;
+
+        // Configurazione prodotti con rotazione personalizzata
+        const products = [
+            { 
+                name: 'Team Round', 
+                shortName: 'Lampada Cubo',
+                desc: 'Segnapasso da parete di grande eleganza e capacità di giocare con la luce d\'ambiente quando spento', 
+                modelOff: 'assets/1/Prova_export_6_circle_giorno.glb',    // Luce spenta
+                modelOn: 'assets/1/Prova_export_6_circle_sera.glb',     // Luce accesa
+                scale: 15,
+                rotation: { x: 0, y: 0, z: 0 },
+                material: 'Alluminio anodizzato',
+                dimensions: '30x30x30 cm',
+                power: '15W LED',
+                colorTemp: '3000K (caldo)',
+                price: '€ 149,00'
+            },
+            { 
+                name: 'Lampada Sfera Elegante', 
+                shortName: 'Lampada Sfera',
+                desc: 'Lampada da tavolo elegante e minimalista', 
+                modelOff: 'assets/1/Prova_export_6_square_giorno.glb',    // Luce spenta
+                modelOn: 'assets/1/Prova_export_6_square_sera.glb',     // Luce accesa
+                scale: 15,
+                rotation: { x: 0, y: 0, z: 0 },
+                material: 'Vetro opalino e ottone',
+                dimensions: 'Ø 25 cm',
+                power: '12W LED',
+                colorTemp: '2700K (molto caldo)',
+                price: '€ 189,00'
+            },
+            { 
+                name: 'Faretto Direzionale', 
+                shortName: 'Faretto',
+                desc: 'Faretto direzionale per illuminazione d\'accento', 
+                modelOff: 'assets/1/Prova_export_6_rettangular_giorno.glb',    // Luce spenta
+                modelOn: 'assets/1/Prova_export_6_rettangular_sera.glb',     // Luce accesa
+                scale: 15,
+                rotation: { x: 0, y: 0, z: 0 },
+                material: 'Acciaio inox satinato',
+                dimensions: '15x8x8 cm',
+                power: '7W LED',
+                colorTemp: '4000K (neutro)',
+                price: '€ 79,00'
+            }
+        ];
+
+        // Sistema di caricamento asset
+        const assetManager = {
+            assets: [],
+            totalSize: 0,
+            loadedSize: 0,
+            
+            addAsset(type, url, priority = 1) {
+                this.assets.push({
+                    type,
+                    url,
+                    priority,
+                    loaded: false,
+                    size: 0 // Sarà stimato
+                });
+            },
+            
+            getTotalAssets() {
+                return this.assets.length;
+            },
+            
+            getLoadedAssets() {
+                return this.assets.filter(asset => asset.loaded).length;
+            },
+            
+            updateProgress() {
+                const progress = (this.loadedSize / this.totalSize) * 100;
+                const loadedCount = this.getLoadedAssets();
+                const totalCount = this.getTotalAssets();
+                
+                // Aggiorna UI loader
+                document.getElementById('loader-progress').style.width = `${progress}%`;
+
+                
+                // Aggiorna testo loader
+                const loaderText = document.getElementById('loader-text');
+                if (progress < 30) {
+                    loaderText.textContent = 'Caricamento ambiente 3D...';
+                } else if (progress < 60) {
+                    loaderText.textContent = 'Preparazione modelli...';
+                } else if (progress < 90) {
+                    loaderText.textContent = 'Ottimizzazione texture...';
+                } else {
+                    loaderText.textContent = 'Completamento configurazione...';
+                }
+                
+                return progress;
+            },
+            
+            estimateAssetSize(url) {
+                // Stima dimensioni asset basata sul tipo
+                if (url.includes('.hdr')) return 5 * 1024 * 1024; // 5MB per HDRI
+                if (url.includes('.glb')) return 2 * 1024 * 1024; // 2MB per GLB
+                if (url.includes('.png') || url.includes('.jpg')) return 500 * 1024; // 500KB per immagini
+                return 1 * 1024 * 1024; // 1MB default
+            },
+            
+            initialize() {
+                // Calcola dimensioni totali stimate
+                this.totalSize = this.assets.reduce((total, asset) => {
+                    asset.size = this.estimateAssetSize(asset.url);
+                    return total + asset.size;
+                }, 0);
+                
+                console.log(`Caricamento ${this.assets.length} asset (${(this.totalSize / (1024 * 1024)).toFixed(1)}MB stimati)`);
+            }
+        };
+
+        function init() {
+            // Setup asset manager
+            setupAssetLoading();
+            
+            const container = document.getElementById('canvas-container');
+            
+            // Inizializza loader CON DRACO
+            loader = new THREE.GLTFLoader();
+            
+            // CONFIGURA DRACO LOADER
+            const dracoLoader = new THREE.DRACOLoader();
+            dracoLoader.setDecoderPath('https://www.gstatic.com/draco/v1/decoders/');
+            loader.setDRACOLoader(dracoLoader);
+            
+            textureLoader = new THREE.TextureLoader();
+            
+            // Scena
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x0a0a0a);
+
+            // Camera temporanea - sarà sostituita dalla camera del GLB
+            camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 2, 6);
+
+            // Renderer
+            renderer = new THREE.WebGLRenderer({ 
+                antialias: true,
+                alpha: true,
+                powerPreference: "high-performance"
+            });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.toneMappingExposure = 1;
+            renderer.outputEncoding = THREE.sRGBEncoding;
+            container.appendChild(renderer.domElement);
+
+            // Setup event listeners per parallasse
+            setupParallaxEvents();
+
+            // Inizia il caricamento degli asset
+            startAssetLoading();
+
+            // FALLBACK: se dopo 15 secondi non è ancora tutto caricato, procedi comunque
+            setTimeout(() => {
+                if (isInitialLoad) {
+                    console.warn('Timeout caricamento, procedo comunque');
+                    hideLoaderAndStartApp();
+                }
+            }, 15000);
+
+            window.addEventListener('resize', onWindowResize);
+        }
+
+        
+        function setupAssetLoading() {
+            // Aggiungi asset essenziali
+            assetManager.addAsset('environment', 'assets/camera.glb', 10);
+            assetManager.addAsset('hdri', 'https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/industrial_sunset_puresky_1k.hdr', 9);
+            assetManager.addAsset('plants', 'assets/piante4.png', 1);
+            
+            // Aggiungi tutti i modelli dei prodotti
+            products.forEach((product, index) => {
+                assetManager.addAsset(`product_${index}_off`, product.modelOff, 8 - index);
+                assetManager.addAsset(`product_${index}_on`, product.modelOn, 8 - index);
+            });
+            
+            assetManager.initialize();
+        }
+
+function startAssetLoading() {
+    // Carica asset in ordine di priorità
+    const sortedAssets = [...assetManager.assets].sort((a, b) => b.priority - a.priority);
+    
+    let loadedCount = 0;
+    const totalAssets = sortedAssets.length;
+    
+    sortedAssets.forEach(asset => {
+        switch(asset.type) {
+            case 'environment':
+                loadEnvironmentWithCamera(asset.url);
+                break;
+            case 'hdri':
+                loadHDRI(asset.url);
+                break;
+            case 'plants':
+                loadPlants(asset.url);
+                break;
+            default:
+                if (asset.type.startsWith('product_')) {
+                    // I modelli dei prodotti vengono precaricati
+                    preloadProductModel(asset.url);
+                }
+                break;
+        }
+    });
+    
+    // Avvia il controllo per il completamento
+    setTimeout(completeInitialization, 500);
+}
+
+function updateAssetProgress(url, loaded = true) {
+    const asset = assetManager.assets.find(a => a.url === url);
+    if (asset) {
+        asset.loaded = loaded;
+        if (loaded) {
+            assetManager.loadedSize += asset.size;
+        }
+        
+        const progress = assetManager.updateProgress();
+        
+        // Animazione più smooth della progress bar
+        gsap.to('#loader-progress', {
+            duration: 0.5,
+            width: `${progress}%`,
+            ease: "power2.out"
+        });
+        
+        console.log(`Asset caricato: ${url} - Progresso: ${progress.toFixed(1)}%`);
+    }
+}
+
+function completeInitialization() {
+    // VERIFICA che gli asset essenziali siano caricati prima di procedere
+    const essentialAssets = assetManager.assets.filter(asset => 
+        asset.type === 'environment' || asset.type === 'hdri' || 
+        asset.type.startsWith('product_0') // Primo prodotto
+    );
+    
+    const allEssentialLoaded = essentialAssets.every(asset => asset.loaded);
+    
+    if (!allEssentialLoaded) {
+        console.log('In attesa degli asset essenziali...');
+        setTimeout(completeInitialization, 100);
+        return;
+    }
+
+    console.log('Tutti gli asset essenziali caricati, procedo con il primo prodotto...');
+    
+    // Carica il primo prodotto e POI nascondi il loader
+    loadProduct(0).then(() => {
+        // DOPO che il prodotto è caricato, nascondi il loader
+        hideLoaderAndStartApp();
+    }).catch((error) => {
+        console.error('Errore nel caricamento del primo prodotto:', error);
+        // Anche in caso di errore, procedi comunque
+        hideLoaderAndStartApp();
+    });
+}
+
+function hideLoaderAndStartApp() {
+    const loaderElement = document.getElementById('loader');
+    const loaderContent = document.querySelector('.loader-content');
+    
+    // Animazione più smooth e graduale
+    const timeline = gsap.timeline({
+        onComplete: () => {
+            loaderElement.classList.add('fade-out');
+            
+            // Nascondi loading
+            document.querySelector('.loading').style.display = 'none';
+
+            // Animazione iniziale della scheda
+            animateProductInfo();
+
+            // Aggiorna indicatore luce
+            updateLightIndicator();
+
+            // Event listeners per UI
+            setupEventListeners();
+
+            isInitialLoad = false;
+            
+            // Avvia animazione
+            animate();
+            
+            console.log('Applicazione completamente inizializzata');
+        }
+    });
+
+    // Prima fade out dei contenuti del loader
+    timeline.to(loaderContent, {
+        duration: 0.6,
+        opacity: 0,
+        scale: 0.9,
+        ease: "power2.inOut"
+    })
+    // Poi fade out del background del loader
+    .to(loaderElement, {
+        duration: 0.8,
+        opacity: 0,
+        ease: "power2.inOut"
+    }, "-=0.3"); // Inizia 0.3 secondi prima della fine della prima animazione
+}
+
+function preloadProductModel(url) {
+    // Precaria il modello senza aggiungerlo alla scena
+    loader.load(
+        url,
+        (gltf) => {
+            console.log(`Modello precaricato: ${url}`);
+            // PULISCI la scena del GLTF per liberare memoria
+            gltf.scene.traverse(child => {
+                if (child.isMesh) {
+                    if (child.geometry) child.geometry.dispose();
+                    if (child.material) {
+                        if (Array.isArray(child.material)) {
+                            child.material.forEach(material => material.dispose());
+                        } else {
+                            child.material.dispose();
+                        }
+                    }
+                }
+            });
+            updateAssetProgress(url, true);
+        },
+        undefined,
+        (error) => {
+            console.error(`Errore precaricamento ${url}:`, error);
+            updateAssetProgress(url, true); // Considera comunque caricato per non bloccare
+        }
+    );
+}
+
+        function setupParallaxEvents() {
+            // Desktop - Mouse movement
+            document.addEventListener('mousemove', (event) => {
+                if (!isTransitioning) {
+                    mouseX = (event.clientX / window.innerWidth) * 2 - 1;
+                    mouseY = -(event.clientY / window.innerHeight) * 2 + 1;
+                    
+                    // Calcola target position con effetto parallasse più leggero
+                    targetCameraX = mouseX * 0.05;
+                    targetCameraY = mouseY * 0.05;
+                    
+                    isMouseMoving = true;
+                    lastMouseMoveTime = Date.now();
+                }
+            });
+
+            // Mobile - Touch movement
+            let isTouching = false;
+            let lastTouchX = 0;
+            let lastTouchY = 0;
+
+            document.addEventListener('touchstart', (event) => {
+                if (!isTransitioning) {
+                    isTouching = true;
+                    const touch = event.touches[0];
+                    lastTouchX = touch.clientX;
+                    lastTouchY = touch.clientY;
+                    event.preventDefault();
+                }
+            });
+
+            document.addEventListener('touchmove', (event) => {
+                if (!isTransitioning && isTouching) {
+                    const touch = event.touches[0];
+                    const deltaX = touch.clientX - lastTouchX;
+                    const deltaY = touch.clientY - lastTouchY;
+                    
+                    // Calcola movimento parallasse basato su movimento touch
+                    targetCameraX += deltaX * 0;
+                    targetCameraY += deltaY * 0;
+                    
+                    // Limita il movimento
+                    targetCameraX = Math.max(-1, Math.min(1, targetCameraX));
+                    targetCameraY = Math.max(-0.8, Math.min(0.8, targetCameraY));
+                    
+                    lastTouchX = touch.clientX;
+                    lastTouchY = touch.clientY;
+                    event.preventDefault();
+                }
+            });
+
+            document.addEventListener('touchend', () => {
+                isTouching = false;
+                // Ritorno graduale alla posizione centrale
+                targetCameraX = 0;
+                targetCameraY = 0;
+            });
+
+            // Reset camera quando il mouse esce dalla finestra
+            document.addEventListener('mouseleave', () => {
+                targetCameraX = 0;
+                targetCameraY = 0;
+            });
+        }
+
+        function loadPlants(url) {
+            textureLoader.load(
+                url,
+                (texture) => {
+                    // Configura la texture per la trasparenza
+                    texture.encoding = THREE.sRGBEncoding;
+                    
+                    // Crea un materiale con trasparenza
+                    const material = new THREE.SpriteMaterial({
+                        map: texture,
+                        transparent: true,
+                        alphaTest: 0.1,
+                        opacity: 1
+                    });
+                    
+                    // Crea lo sprite
+                    plantsSprite = new THREE.Sprite(material);
+                    
+                    // Posiziona le piante dietro i prodotti
+                    plantsSprite.position.set(20, 5, 15);
+                    
+                    // Scala lo sprite
+                    plantsSprite.scale.set(70, 70, 70);
+                    
+                    // Aggiungi alla scena
+                    scene.add(plantsSprite);
+                    
+                    console.log('Piante PNG caricate con successo');
+                    updateAssetProgress(url, true);
+                },
+                undefined,
+                (error) => {
+                    console.error('Errore nel caricamento delle piante PNG:', error);
+                    updateAssetProgress(url, true);
+                }
+            );
+        }
+
+        function setupEventListeners() {
+            // Frecce
+            document.getElementById('prev-btn').addEventListener('click', () => {
+                const newIndex = currentProductIndex > 0 ? currentProductIndex - 1 : products.length - 1;
+                loadProduct(newIndex);
+            });
+
+            document.getElementById('next-btn').addEventListener('click', () => {
+                const newIndex = currentProductIndex < products.length - 1 ? currentProductIndex + 1 : 0;
+                loadProduct(newIndex);
+            });
+
+            // Toggle luce
+            document.getElementById('light-toggle').addEventListener('change', (e) => {
+                // Se il toggle è in cooldown, previeni completamente l'azione
+                if (toggleCooldown) {
+                    e.preventDefault();
+                    // Forza il checkbox a mantenere lo stato corrente
+                    e.target.checked = isLightOn;
+                    return;
+                }
+                
+                // Attiva il cooldown
+                toggleCooldown = true;
+                const toggleSlider = document.getElementById('toggle-slider');
+                const toggleInput = document.getElementById('light-toggle');
+                
+                toggleSlider.classList.add('disabled');
+                toggleInput.disabled = true;
+                
+                isLightOn = e.target.checked;
+                console.log('Stato luce:', isLightOn ? 'ACCESA' : 'SPENTA');
+                updateLightIndicator();
+                
+                // Ricarica il prodotto corrente con lo stato luce corretto
+                loadProduct(currentProductIndex, true).finally(() => {
+                    // Riabilita il toggle dopo che il caricamento è completato
+                    toggleCooldown = false;
+                    toggleSlider.classList.remove('disabled');
+                    toggleInput.disabled = false;
+                    console.log('Toggle riabilitato');
+                });
+            });
+
+            // Espandi/contrai scheda info
+            const expandBtn = document.getElementById('expand-btn');
+            const productInfo = document.getElementById('product-info');
+            
+            expandBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                toggleProductInfo();
+            });
+
+            productInfo.addEventListener('click', (e) => {
+                if (e.target === productInfo) {
+                    toggleProductInfo();
+                }
+            });
+
+            // Toggle controlli
+            document.getElementById('toggle-controls-btn').addEventListener('click', toggleControls);
+
+            // Prevenire zoom su doppio tap
+            let lastTouchEnd = 0;
+            document.addEventListener('touchend', function (event) {
+                const now = (new Date()).getTime();
+                if (now - lastTouchEnd <= 300) {
+                    event.preventDefault();
+                }
+                lastTouchEnd = now;
+            }, false);
+        }
+
+        function toggleControls() {
+            const controls = document.getElementById('controls');
+            const toggleBtn = document.getElementById('toggle-controls-btn');
+            
+            if (controlsVisible) {
+                // Nascondi controlli
+                controls.classList.add('hidden');
+                toggleBtn.innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 15L12 9L18 15" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+                controlsVisible = false;
+            } else {
+                // Mostra controlli
+                controls.classList.remove('hidden');
+                toggleBtn.innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 9L12 15L18 9" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+                controlsVisible = true;
+            }
+        }
+
+        function updateLightIndicator() {
+            const powerDot = document.getElementById('power-dot');
+            const powerStatus = document.getElementById('power-status');
+            
+            if (isLightOn) {
+                powerDot.classList.add('active');
+                powerStatus.textContent = 'LUCE ACCESA';
+                powerStatus.style.color = '#FFD700';
+            } else {
+                powerDot.classList.remove('active');
+                powerStatus.textContent = 'LUCE SPENTA';
+                powerStatus.style.color = 'rgba(255, 255, 255, 0.7)';
+            }
+        }
+
+        function toggleProductInfo() {
+            const expandBtn = document.getElementById('expand-btn');
+            const productInfo = document.getElementById('product-info');
+            const productDesc = document.querySelector('.product-desc');
+            const additionalInfo = document.querySelector('.additional-info');
+            const isExpanding = !productInfo.classList.contains('expanded');
+
+            if (isExpanding) {
+                // Misuriamo l'altezza reale del contenuto prima di animare
+                productDesc.style.display = "block";
+                additionalInfo.style.display = "block";
+                additionalInfo.style.maxHeight = "none";
+                const fullHeight = additionalInfo.scrollHeight + "px";
+                productDesc.style.maxHeight = "none";
+                const descHeight = productDesc.scrollHeight + "px";
+                productDesc.style.maxHeight = "0";
+                additionalInfo.style.maxHeight = "0";
+
+                // Animazione espansione fluida senza "schiacciamento"
+                if (window.innerWidth > 768) {
+                    gsap.to(productInfo, {
+                        duration: 0.6,
+                        width: '600px',
+                        ease: "power2.inOut",
+                        onStart: () => {
+                            productInfo.classList.add('expanded');
+                            expandBtn.classList.add('expanded');
+                        }
+                    });
+                } else {
+                    // Su mobile, mantieni la larghezza al 100% e aggiungi solo la classe expanded
+                    productInfo.classList.add('expanded');
+                    expandBtn.classList.add('expanded');
+                }
+
+                // Animazione per mostrare la descrizione del prodotto
+                gsap.to(productDesc, {
+                    duration: 0.4,
+                    opacity: 1,
+                    maxHeight: descHeight,
+                    ease: "power2.out",
+                    delay: 0.1
+                });
+
+                gsap.to(additionalInfo, {
+                    duration: 0.6,
+                    opacity: 1,
+                    maxHeight: fullHeight,
+                    ease: "power2.out",
+                    delay: 0.2
+                });
+
+                gsap.to('.info-row', {
+                    duration: 0.5,
+                    opacity: 1,
+                    y: 0,
+                    stagger: 0.1,
+                    ease: "back.out(1.2)",
+                    delay: 0.4
+                });
+
+                gsap.to('.price-tag', {
+                    duration: 0.5,
+                    opacity: 1,
+                    y: 0,
+                    ease: "back.out(1.2)",
+                    delay: 0.7
+                });
+
+            } else {
+                const tl = gsap.timeline({
+                    defaults: { ease: "power2.inOut" },
+                    onComplete: () => {
+                        productInfo.classList.remove('expanded');
+                        expandBtn.classList.remove('expanded');
+                        // Nascondi completamente gli elementi dopo l'animazione
+                        productDesc.style.display = "none";
+                        additionalInfo.style.display = "none";
+                    }
+                });
+
+                tl.to('.price-tag', { opacity: 0, y: 10, duration: 0.3 }, 0)
+                  .to('.info-row', { opacity: 0, y: 10, stagger: 0.05, duration: 0.3 }, 0)
+                  .to('.additional-info', { opacity: 0, maxHeight: 0, duration: 0.4 }, 0.1)
+                  .to('.product-desc', { opacity: 0, maxHeight: 0, duration: 0.3 }, 0);
+                
+                if (window.innerWidth > 768) {
+                    tl.to(productInfo, {
+                        width: '320px',
+                        duration: 0.6
+                    }, 0.2);
+                }
+            }
+        }
+
+        function animateProductInfo() {
+            // Animazione di entrata della scheda prodotto
+            gsap.fromTo('#product-info', 
+                {
+                    y: -50,
+                    opacity: 0
+                },
+                {
+                    y: 0,
+                    opacity: 1,
+                    duration: 0.8,
+                    ease: "back.out(1.2)",
+                    delay: 0.5
+                }
+            );
+            
+            // Animazione a scaglioni per il contenuto
+            const timeline = gsap.timeline({ delay: 0.8 });
+            
+            timeline.fromTo('#product-info h1', 
+                {
+                    y: -20,
+                    opacity: 0
+                },
+                {
+                    y: 0,
+                    opacity: 1,
+                    duration: 0.6
+                }
+            )
+            .fromTo('.product-name', 
+                {
+                    y: -20,
+                    opacity: 0
+                },
+                {
+                    y: 0,
+                    opacity: 1,
+                    duration: 0.6
+                },
+                "-=0.4"
+            );
+        }
+
+        function animateProductChange() {
+            const productName = document.getElementById('product-name');
+            const productDesc = document.getElementById('product-desc');
+            const productInfo = document.getElementById('product-info');
+            const isExpanded = productInfo.classList.contains('expanded');
+            
+            // Prepara le additional-info se la scheda è espansa
+            if (isExpanded) {
+                const infoRows = document.querySelectorAll('.info-row');
+                const priceTag = document.querySelector('.price-tag');
+                
+                gsap.set([...infoRows, priceTag], {
+                    opacity: 0,
+                    y: 10
+                });
+            }
+            
+            // Aggiorna immediatamente il contenuto
+            updateProductInfo(currentProductIndex);
+            
+            // Crea una timeline per l'animazione
+            const changeTimeline = gsap.timeline();
+            
+            changeTimeline.to([productName, productDesc], {
+                duration: 0.15,
+                opacity: 0,
+                y: -8,
+                ease: "power2.in"
+            })
+            .to([productName, productDesc], {
+                duration: 0.3,
+                opacity: 1,
+                y: 0,
+                ease: "back.out(1.2)",
+                stagger: 0.05
+            });
+
+            // Se la scheda è espansa, anima le additional-info
+            if (isExpanded) {
+                const infoRows = document.querySelectorAll('.info-row');
+                const priceTag = document.querySelector('.price-tag');
+                
+                changeTimeline
+                    .to(infoRows, {
+                        duration: 0.5,
+                        opacity: 1,
+                        y: 0,
+                        stagger: 0.1,
+                        ease: "back.out(1.2)"
+                    }, "+=0.1")
+                    .to(priceTag, {
+                        duration: 0.5,
+                        opacity: 1,
+                        y: 0,
+                        ease: "back.out(1.2)"
+                    }, "-=0.3");
+            }
+        }
+
+        function updateProductInfo(index) {
+            const product = products[index];
+            
+            document.getElementById('product-name').textContent = product.name;
+            document.getElementById('product-desc').textContent = product.desc;
+            document.getElementById('current-product-name').textContent = product.shortName;
+            
+            // Aggiorna informazioni aggiuntive
+            document.getElementById('material-value').textContent = product.material;
+            document.getElementById('dimensions-value').textContent = product.dimensions;
+            document.getElementById('power-value').textContent = product.power;
+            document.getElementById('color-temp-value').textContent = product.colorTemp;
+            document.getElementById('price-value').textContent = product.price;
+        }
+
+        function loadHDRI(url) {
+            const rgbeLoader = new THREE.RGBELoader();
+            rgbeLoader.setDataType(THREE.HalfFloatType);
+            
+            rgbeLoader.load(
+                url,
+                function(texture) {
+                    
+                    texture.mapping = THREE.EquirectangularReflectionMapping;
+                    
+                    // Crea environment map
+                    const pmremGenerator = new THREE.PMREMGenerator(renderer);
+                    pmremGenerator.compileEquirectangularShader();
+                    
+                    envMap = pmremGenerator.fromEquirectangular(texture).texture;
+                    
+                    // Applica l'envMap alla scena
+                    scene.environment = envMap;
+                    scene.background = envMap;
+                    
+                    // Pulisci
+                    texture.dispose();
+                    pmremGenerator.dispose();
+                    
+                    console.log('HDRI caricato con successo');
+                    updateAssetProgress(url, true);
+                },
+                undefined,
+                function(error) {
+                    console.error('Errore nel caricamento HDRI:', error);
+                    createFallbackEnvironment();
+                    updateAssetProgress(url, true);
+                }
+            );
+        }
+
+        function createFallbackEnvironment() {
+            const cubeTextureLoader = new THREE.CubeTextureLoader();
+            const urls = [
+                'https://threejs.org/examples/textures/cube/pisa/px.png',
+                'https://threejs.org/examples/textures/cube/pisa/nx.png',
+                'https://threejs.org/examples/textures/cube/pisa/py.png',
+                'https://threejs.org/examples/textures/cube/pisa/ny.png',
+                'https://threejs.org/examples/textures/cube/pisa/pz.png',
+                'https://threejs.org/examples/textures/cube/pisa/nz.png'
+            ];
+            
+            envMap = cubeTextureLoader.load(urls);
+            envMap.encoding = THREE.sRGBEncoding;
+            
+            scene.environment = envMap;
+            scene.background = envMap;
+        }
+
+        function loadEnvironmentWithCamera(url) {
+            loader.load(
+                url,
+                (gltf) => {
+                    environmentMesh = gltf.scene;
+                    
+                    // Applica le ottimizzazioni delle texture anche all'ambiente
+                    environmentMesh.traverse((child) => {
+                        if (child.isMesh && child.material) {
+                            if (child.material.map) {
+                                child.material.map.minFilter = THREE.LinearFilter;
+                                child.material.map.magFilter = THREE.LinearFilter;
+                                child.material.map.anisotropy = renderer.capabilities.getMaxAnisotropy();
+                                child.material.map.needsUpdate = true;
+                            }
+                        }
+                    });
+                    
+                    // Configura l'ambiente
+                    environmentMesh.position.set(0, 1, 6)
+                    environmentMesh.scale.set(18, 18, 18)
+                    
+                    // Cerca una camera nel GLB
+                    let cameraFound = false;
+                    gltf.scene.traverse((child) => {
+                        if (child.isCamera) {
+                            console.log('Camera trovata nel GLB:', child);
+                            sceneCamera = child;
+                            
+                            // Salva la posizione e rotazione originale della camera
+                            originalCameraPosition.copy(sceneCamera.position);
+                            originalCameraRotation.copy(sceneCamera.rotation);
+                            
+                            // Regola i piani di clipping per evitare problemi
+                            if (sceneCamera.isPerspectiveCamera) {
+                                sceneCamera.near = 0.1;  // Piano near molto vicino
+                                sceneCamera.far = 1000;  // Piano far molto lontano
+                                
+                                // *** MODIFICA LA LUNGHEZZA FOCALE QUI ***
+                                sceneCamera.fov = 21; // Cambia questo valore (default: 50)
+                                
+                                console.log('Piani di clipping regolati:', sceneCamera.near, sceneCamera.far);
+                                console.log('FOV impostato a:', sceneCamera.fov);
+                            }
+                            
+                            // Usa la camera del GLB invece di quella creata
+                            camera = sceneCamera;
+                            useSceneCamera = true;
+                            cameraFound = true;
+                            
+                            // Aggiorna il rapporto d'aspetto
+                            camera.aspect = window.innerWidth / window.innerHeight;
+                            camera.updateProjectionMatrix();
+                            
+                            console.log('Camera del GLB impostata come camera principale');
+                        }
+                    });
+                    
+                    if (!cameraFound) {
+                        console.warn('Nessuna camera trovata nel GLB, uso camera di default');
+                        createBasicEnvironment();
+                    } else {
+                        scene.add(environmentMesh);
+                        console.log('Ambiente con camera GLB caricato con successo');
+                    }
+                    
+                    updateAssetProgress(url, true);
+                },
+                undefined,
+                (error) => {
+                    console.error('Errore nel caricamento dell\'ambiente con camera:', error);
+                    createBasicEnvironment();
+                    updateAssetProgress(url, true);
+                },
+                undefined,
+                (error) => {
+                    console.error('Errore nel caricamento dell\'ambiente con camera:', error);
+                    createBasicEnvironment();
+                    updateAssetProgress(url, true);
+                }
+            );
+        }
+
+        function createBasicEnvironment() {
+            // Pavimento riflettente di fallback
+            const floorGeometry = new THREE.CircleGeometry(15, 32);
+            const floorMaterial = new THREE.MeshStandardMaterial({ 
+                color: 0x1a1a1a,
+                roughness: 0.1,
+                metalness: 0.9,
+                envMap: envMap
+            });
+            const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+            floor.rotation.x = -Math.PI / 2;
+            floor.receiveShadow = true;
+            floor.position.y = -1;
+            scene.add(floor);
+
+            environmentMesh = floor;
+            console.log('Ambiente base creato con successo');
+        }
+
+function createGeometry(index) {
+    return new Promise((resolve, reject) => {
+        const product = products[index];
+        const modelPath = isLightOn ? product.modelOn : product.modelOff;
+        
+        console.log(`Caricamento prodotto ${index}: ${isLightOn ? 'LUCE ACCESA' : 'LUCE SPENTA'}`);
+        console.log(`Percorso modello: ${modelPath}`);
+        
+        loader.load(
+            modelPath,
+            (gltf) => {
+                const model = gltf.scene;
+                
+                // Abilita ombre per tutti i mesh
+                model.traverse((child) => {
+                    if (child.isMesh) {
+                        child.castShadow = true;
+                        child.receiveShadow = true;
+                        
+                        // Migliora i materiali con envMap
+                        if (child.material) {
+                            child.material.envMap = envMap;
+                            child.material.envMapIntensity = 1.0;
+                            child.material.needsUpdate = true;
+                            
+                            // OTTIMIZZAZIONE QUALITÀ TEXTURE - AGGIUNGI QUESTA PARTE
+                            if (child.material.map) {
+                                child.material.map.minFilter = THREE.LinearFilter;
+                                child.material.map.magFilter = THREE.LinearFilter;
+                                child.material.map.anisotropy = 4;
+                                child.material.map.needsUpdate = true;
+                            }
+                            
+                            // Se il materiale ha mappe aggiuntive, applicalo anche a quelle
+                            if (child.material.normalMap) {
+                                child.material.normalMap.minFilter = THREE.LinearFilter;
+                                child.material.normalMap.magFilter = THREE.LinearFilter;
+                                child.material.normalMap.needsUpdate = true;
+                            }
+                            
+                            if (child.material.roughnessMap) {
+                                child.material.roughnessMap.minFilter = THREE.LinearFilter;
+                                child.material.roughnessMap.magFilter = THREE.LinearFilter;
+                                child.material.roughnessMap.needsUpdate = true;
+                            }
+                            
+                            if (child.material.metalnessMap) {
+                                child.material.metalnessMap.minFilter = THREE.LinearFilter;
+                                child.material.metalnessMap.magFilter = THREE.LinearFilter;
+                                child.material.metalnessMap.needsUpdate = true;
+                            }
+                            
+                            if (child.material.metalness > 0) {
+                                child.material.roughness = 0.1;
+                            }
+                        }
+                    }
+                });
+                
+                // Centra il modello
+                const box = new THREE.Box3().setFromObject(model);
+                const center = box.getCenter(new THREE.Vector3());
+                model.position.sub(center);
+                
+                // Posiziona sopra il pavimento
+                model.position.y = 0;
+                
+                // Applica la scala fissa per questo prodotto
+                const scale = product.scale;
+                model.scale.set(scale, scale, scale);
+                
+                // Applica la rotazione personalizzata
+                const rotation = product.rotation;
+                model.rotation.set(rotation.x, rotation.y, rotation.z);
+                
+                resolve(model);
+            },
+            (xhr) => {
+                const percentComplete = (xhr.loaded / xhr.total) * 100;
+                console.log(modelPath + ' ' + percentComplete.toFixed(0) + '% caricato');
+            },
+            (error) => {
+                console.error('Errore nel caricamento del modello:', error);
+                reject(error);
+            }
+        );
+    });
+}
+
+function loadProduct(index, isLightToggle = false) {
+    return new Promise((resolve, reject) => {
+        if (isTransitioning) {
+            reject('Transizione già in corso');
+            return;
+        }
+        
+        isTransitioning = true;
+        
+        const previousMesh = currentMesh;
+        currentProductIndex = index;
+
+        // Mostra loading solo per cambio prodotto (non per toggle luce)
+        const loadingEl = document.querySelector('.loading');
+        if (!isLightToggle) {
+            loadingEl.style.display = 'block';
+            loadingEl.textContent = '';
+        }
+
+        createGeometry(index)
+            .then((newMesh) => {
+                // Applica la scala immediatamente
+                const scale = products[index].scale;
+                newMesh.scale.set(scale, scale, scale);
+                
+                // Se è un toggle luce, usa transizione smooth
+                if (isLightToggle && previousMesh) {
+                    // Imposta opacità iniziale a 0 per la dissolvenza
+                    newMesh.traverse((child) => {
+                        if (child.isMesh && child.material) {
+                            child.material.transparent = true;
+                            child.material.opacity = 0;
+                        }
+                    });
+                    
+                    // Aggiungi il nuovo mesh alla scena
+                    scene.add(newMesh);
+
+                    // Timeline per la transizione smooth
+                    const transitionTimeline = gsap.timeline({
+                        onComplete: () => {
+                            // Rimuovi il vecchio mesh dopo la transizione
+                            if (previousMesh && scene.getObjectById(previousMesh.id)) {
+                                scene.remove(previousMesh);
+                            }
+                            
+                            // Ripristina le proprietà dei materiali del nuovo mesh
+                            newMesh.traverse((child) => {
+                                if (child.isMesh && child.material) {
+                                    child.material.transparent = false;
+                                }
+                            });
+                            
+                            isTransitioning = false;
+                            currentMesh = newMesh;
+                            console.log('Transizione toggle luce completata');
+                            resolve();
+                        }
+                    });
+
+                    // Fade out del mesh precedente
+                    previousMesh.traverse((child) => {
+                        if (child.isMesh && child.material) {
+                            child.material.transparent = true;
+                            transitionTimeline.to(child.material, {
+                                opacity: 0,
+                                duration: 1,
+                                ease: "power2.in"
+                            }, 0);
+                        }
+                    });
+
+                    // Fade in del nuovo mesh
+                    newMesh.traverse((child) => {
+                        if (child.isMesh && child.material) {
+                            transitionTimeline.to(child.material, {
+                                opacity: 1,
+                                duration: 1,
+                                ease: "power2.out"
+                            }, 0);
+                        }
+                    });
+
+                } else {
+                    // Transizione originale per cambio prodotto con slider
+                    scene.add(newMesh);
+
+                    // Rimuovi il vecchio mesh se esiste
+                    if (previousMesh) {
+                        scene.remove(previousMesh);
+                    }
+
+                    isTransitioning = false;
+                    loadingEl.style.display = 'none';
+                    
+                    // Aggiorna UI
+                    animateProductChange();
+                    
+                    currentMesh = newMesh;
+                    console.log('Cambio prodotto completato');
+                    resolve();
+                }
+            })
+            .catch((error) => {
+                console.error('Errore nel caricamento del prodotto:', error);
+                isTransitioning = false;
+                if (!isLightToggle) {
+                    loadingEl.textContent = 'Errore nel caricamento. Verifica che i file GLB siano nella cartella assets/';
+                    setTimeout(() => {
+                        loadingEl.style.display = 'none';
+                    }, 3000);
+                }
+                reject(error);
+            });
+    });
+}
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // Smooth camera movement per effetto parallasse
+            if (!isTransitioning && useSceneCamera) {
+                // Interpolazione smooth della posizione camera
+                currentCameraX += (targetCameraX - currentCameraX) * 0.1;
+                currentCameraY += (targetCameraY - currentCameraY) * 0.1;
+                
+                // Applica movimento parallasse alla camera del GLB
+                // Usiamo la posizione originale come base e aggiungiamo l'offset parallasse
+                camera.position.x = originalCameraPosition.x + currentCameraX;
+                camera.position.y = originalCameraPosition.y + currentCameraY;
+                camera.position.z = originalCameraPosition.z;
+                
+                // Manteniamo la rotazione originale della camera del GLB
+                camera.rotation.copy(originalCameraRotation);
+                
+                // Reset graduale se il mouse non si muove da un po'
+                if (isMouseMoving && Date.now() - lastMouseMoveTime > 1000) {
+                    isMouseMoving = false;
+                    targetCameraX = 0;
+                    targetCameraY = 0;
+                }
+            } else if (!isTransitioning) {
+                // Fallback per quando non c'è camera nel GLB
+                currentCameraX += (targetCameraX - currentCameraX) * 0.1;
+                currentCameraY += (targetCameraY - currentCameraY) * 0.1;
+                
+                camera.position.x = currentCameraX;
+                camera.position.y = 2 + currentCameraY;
+                camera.lookAt(currentCameraX * 0.3, currentCameraY * 0.2, 0);
+                
+                if (isMouseMoving && Date.now() - lastMouseMoveTime > 1000) {
+                    isMouseMoving = false;
+                    targetCameraX = 0;
+                    targetCameraY = 0;
+                }
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        }
+
+        // Inizializza quando il documento è pronto
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init();
+        }
+    </script>
+</body>
+</html>
