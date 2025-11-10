@@ -264,7 +264,7 @@
 
         .product-title-container {
             flex: 1;
-            padding: 10px 0px 0px 0px;
+            padding: 7px 0px 0px 0px;
         }
 
         .expand-btn {
@@ -883,6 +883,21 @@
                 transform: translate(-50%, -50%) scale(0.95);
             }
         }
+
+        /* Migliora il comportamento touch per i bottoni */
+        @media (hover: none) and (pointer: coarse) {
+            .arrow-btn,
+            .toggle-switch,
+            .toggle-controls-btn,
+            .expand-btn {
+                touch-action: manipulation;
+                -webkit-tap-highlight-color: transparent;
+            }
+            
+            .toggle-switch * {
+                touch-action: pan-y;
+            }
+        }
     </style>
 </head>
 <body>
@@ -1041,6 +1056,8 @@
         let totalAssets = 0;
         let allAssetsLoaded = false;
         let progressInterval;
+
+        
 
         // Configurazione prodotti con rotazione personalizzata
         const products = [
@@ -1364,97 +1381,152 @@ function showStartButton() {
             animate();
         }
 
-        function setupParallaxEvents() {
-            // Rileva se è un dispositivo touch
-            const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+function setupParallaxEvents() {
+    // Desktop - Mouse movement
+    document.addEventListener('mousemove', (event) => {
+        if (!isTransitioning) {
+            mouseX = (event.clientX / window.innerWidth) * 2 - 1;
+            mouseY = -(event.clientY / window.innerHeight) * 2 + 1;
             
-            // Applica parallasse SOLO su desktop (non touch)
-            if (!isTouchDevice) {
-                // Desktop - Mouse movement
-                document.addEventListener('mousemove', (event) => {
-                    if (!isTransitioning) {
-                        mouseX = (event.clientX / window.innerWidth) * 2 - 1;
-                        mouseY = -(event.clientY / window.innerHeight) * 2 + 1;
-                        
-                        // Calcola target position con effetto parallasse più leggero
-                        targetCameraX = mouseX * 0.05;
-                        targetCameraY = mouseY * 0.05;
-                        
-                        isMouseMoving = true;
-                        lastMouseMoveTime = Date.now();
-                    }
-                });
+            // Calcola target position con effetto parallasse più leggero
+            targetCameraX = mouseX * 0.05;
+            targetCameraY = mouseY * 0.05;
+            
+            isMouseMoving = true;
+            lastMouseMoveTime = Date.now();
+        }
+    });
 
-                // Reset camera quando il mouse esce dalla finestra
-                document.addEventListener('mouseleave', () => {
-                    targetCameraX = 0;
-                    targetCameraY = 0;
-                });
-            } else {
-                // Su dispositivi touch, disabilita completamente il parallasse
-                console.log('Parallasse disabilitato su dispositivo touch');
+    // Mobile - Touch movement
+    let isTouching = false;
+    let lastTouchX = 0;
+    let lastTouchY = 0;
+    let touchStartTime = 0;
+
+    document.addEventListener('touchstart', (event) => {
+        if (!isTransitioning) {
+            // Controlla se il tocco è su un bottone
+            const isButtonTouch = event.target.closest('.arrow-btn') || 
+                                event.target.closest('.toggle-switch') ||
+                                event.target.closest('.toggle-controls-btn') ||
+                                event.target.closest('.expand-btn');
+            
+            if (!isButtonTouch) {
+                isTouching = true;
+                const touch = event.touches[0];
+                lastTouchX = touch.clientX;
+                lastTouchY = touch.clientY;
+                touchStartTime = Date.now();
             }
+            event.preventDefault();
         }
+    });
 
-        function setupEventListeners() {
-            // Frecce
-            document.getElementById('prev-btn').addEventListener('click', (e) => {
-                e.preventDefault();
-                const newIndex = currentProductIndex > 0 ? currentProductIndex - 1 : products.length - 1;
-                loadProduct(newIndex);
-            });
-
-            document.getElementById('next-btn').addEventListener('click', (e) => {
-                e.preventDefault();
-                const newIndex = currentProductIndex < products.length - 1 ? currentProductIndex + 1 : 0;
-                loadProduct(newIndex);
-            });
-
-            // Toggle luce
-            document.getElementById('light-toggle').addEventListener('change', (e) => {
-                e.preventDefault();
-                isLightOn = e.target.checked;
-                console.log('Stato luce:', isLightOn ? 'ACCESA' : 'SPENTA');
-                updateLightIndicator();
-                // Ricarica il prodotto corrente con lo stato luce corretto
-                loadProduct(currentProductIndex);
-                // Cambia l'immagine delle piante in base allo stato della luce
-                loadPlants(isLightOn);
-            });
-
-            // Espandi/contrai scheda info
-            const expandBtn = document.getElementById('expand-btn');
-            const productInfo = document.getElementById('product-info');
+    document.addEventListener('touchmove', (event) => {
+        if (!isTransitioning && isTouching) {
+            const touch = event.touches[0];
+            const deltaX = touch.clientX - lastTouchX;
+            const deltaY = touch.clientY - lastTouchY;
             
-            expandBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                toggleProductInfo();
-            });
-
-            productInfo.addEventListener('click', (e) => {
-                if (e.target === productInfo) {
-                    e.preventDefault();
-                    toggleProductInfo();
-                }
-            });
-
-            // Toggle controlli
-            document.getElementById('toggle-controls-btn').addEventListener('click', (e) => {
-                e.preventDefault();
-                toggleControls();
-            });
-
-            // Prevenire zoom su doppio tap
-            let lastTouchEnd = 0;
-            document.addEventListener('touchend', function (event) {
-                const now = (new Date()).getTime();
-                if (now - lastTouchEnd <= 300) {
-                    event.preventDefault();
-                }
-                lastTouchEnd = now;
-            }, false);
+            // Calcola movimento parallasse basato su movimento touch
+            targetCameraX += deltaX * 0.0001;
+            targetCameraY += deltaY * 0.0001;
+            
+            // Limita il movimento
+            targetCameraX = Math.max(-1, Math.min(1, targetCameraX));
+            targetCameraY = Math.max(-0.8, Math.min(0.8, targetCameraY));
+            
+            lastTouchX = touch.clientX;
+            lastTouchY = touch.clientY;
+            event.preventDefault();
         }
+    });
+
+    document.addEventListener('touchend', (event) => {
+        // Se il tocco è stato breve (click) e su un bottone, resetta la camera
+        const touchDuration = Date.now() - touchStartTime;
+        const isButtonTouch = event.target.closest('.arrow-btn') || 
+                            event.target.closest('.toggle-switch') ||
+                            event.target.closest('.toggle-controls-btn') ||
+                            event.target.closest('.expand-btn');
+        
+        if (isButtonTouch && touchDuration < 300) {
+            targetCameraX = 0;
+            targetCameraY = 0;
+        }
+        
+        isTouching = false;
+    });
+
+    // Reset camera quando il mouse esce dalla finestra
+    document.addEventListener('mouseleave', () => {
+        targetCameraX = 0;
+        targetCameraY = 0;
+    });
+}
+
+function setupEventListeners() {
+    // Frecce
+    document.getElementById('prev-btn').addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const newIndex = currentProductIndex > 0 ? currentProductIndex - 1 : products.length - 1;
+        loadProduct(newIndex);
+    });
+
+    document.getElementById('next-btn').addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const newIndex = currentProductIndex < products.length - 1 ? currentProductIndex + 1 : 0;
+        loadProduct(newIndex);
+    });
+
+    // Toggle luce
+    document.getElementById('light-toggle').addEventListener('change', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        isLightOn = e.target.checked;
+        console.log('Stato luce:', isLightOn ? 'ACCESA' : 'SPENTA');
+        updateLightIndicator();
+        loadProduct(currentProductIndex);
+        loadPlants(isLightOn);
+    });
+
+    // Espandi/contrai scheda info
+    const expandBtn = document.getElementById('expand-btn');
+    const productInfo = document.getElementById('product-info');
+    
+    expandBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        toggleProductInfo();
+    });
+
+    productInfo.addEventListener('click', (e) => {
+        if (e.target === productInfo) {
+            e.preventDefault();
+            e.stopPropagation();
+            toggleProductInfo();
+        }
+    });
+
+    // Toggle controlli
+    document.getElementById('toggle-controls-btn').addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        toggleControls();
+    });
+
+    // Prevenire zoom su doppio tap
+    let lastTouchEnd = 0;
+    document.addEventListener('touchend', function (event) {
+        const now = (new Date()).getTime();
+        if (now - lastTouchEnd <= 300) {
+            event.preventDefault();
+        }
+        lastTouchEnd = now;
+    }, false);
+}
 
         function toggleControls() {
             const controls = document.getElementById('controls');
@@ -2003,50 +2075,48 @@ function showStartButton() {
                 });
         }
 
-        function animate() {
-            requestAnimationFrame(animate);
+function animate() {
+    requestAnimationFrame(animate);
 
-            // Smooth camera movement per effetto parallasse - SOLO se non è un dispositivo touch
-            const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-            
-            if (!isTransitioning && useSceneCamera && !isTouchDevice) {
-                // Interpolazione smooth della posizione camera
-                currentCameraX += (targetCameraX - currentCameraX) * 0.1;
-                currentCameraY += (targetCameraY - currentCameraY) * 0.1;
-                
-                // Applica movimento parallasse alla camera del GLB
-                // Usiamo la posizione originale come base e aggiungiamo l'offset parallasse
-                camera.position.x = originalCameraPosition.x + currentCameraX;
-                camera.position.y = originalCameraPosition.y + currentCameraY;
-                camera.position.z = originalCameraPosition.z;
-                
-                // Manteniamo la rotazione originale della camera del GLB
-                camera.rotation.copy(originalCameraRotation);
-                
-                // Reset graduale se il mouse non si muove da un po'
-                if (isMouseMoving && Date.now() - lastMouseMoveTime > 1000) {
-                    isMouseMoving = false;
-                    targetCameraX = 0;
-                    targetCameraY = 0;
-                }
-            } else if (!isTransitioning && !isTouchDevice) {
-                // Fallback per quando non c'è camera nel GLB
-                currentCameraX += (targetCameraX - currentCameraX) * 0.1;
-                currentCameraY += (targetCameraY - currentCameraY) * 0.1;
-                
-                camera.position.x = currentCameraX;
-                camera.position.y = 2 + currentCameraY;
-                camera.lookAt(currentCameraX * 0.3, currentCameraY * 0.2, 0);
-                
-                if (isMouseMoving && Date.now() - lastMouseMoveTime > 1000) {
-                    isMouseMoving = false;
-                    targetCameraX = 0;
-                    targetCameraY = 0;
-                }
-            }
-
-            renderer.render(scene, camera);
+    // Smooth camera movement per effetto parallasse
+    if (!isTransitioning && useSceneCamera) {
+        // Interpolazione smooth della posizione camera
+        currentCameraX += (targetCameraX - currentCameraX) * 0.1;
+        currentCameraY += (targetCameraY - currentCameraY) * 0.1;
+        
+        // Applica movimento parallasse alla camera del GLB
+        // Usiamo la posizione originale come base e aggiungiamo l'offset parallasse
+        camera.position.x = originalCameraPosition.x + currentCameraX;
+        camera.position.y = originalCameraPosition.y + currentCameraY;
+        camera.position.z = originalCameraPosition.z;
+        
+        // Manteniamo la rotazione originale della camera del GLB
+        camera.rotation.copy(originalCameraRotation);
+        
+        // Reset graduale se il mouse non si muove da un po'
+        if (isMouseMoving && Date.now() - lastMouseMoveTime > 1000) {
+            isMouseMoving = false;
+            targetCameraX = 0;
+            targetCameraY = 0;
         }
+    } else if (!isTransitioning) {
+        // Fallback per quando non c'è camera nel GLB
+        currentCameraX += (targetCameraX - currentCameraX) * 0.1;
+        currentCameraY += (targetCameraY - currentCameraY) * 0.1;
+        
+        camera.position.x = currentCameraX;
+        camera.position.y = 2 + currentCameraY;
+        camera.lookAt(currentCameraX * 0.3, currentCameraY * 0.2, 0);
+        
+        if (isMouseMoving && Date.now() - lastMouseMoveTime > 1000) {
+            isMouseMoving = false;
+            targetCameraX = 0;
+            targetCameraY = 0;
+        }
+    }
+
+    renderer.render(scene, camera);
+}
 
         function onWindowResize() {
             camera.aspect = window.innerWidth / window.innerHeight;
