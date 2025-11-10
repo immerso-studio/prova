@@ -149,33 +149,45 @@
         }
 
         #start-button {
-            padding: 18px 45px;
+            padding: 12px 25px;
             background: rgba(255, 255, 255, 0.15);
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 3px;
+            border-radius: 5px;
             color: white;
             font-family: 'Inter', sans-serif;
             font-size: 16px;
-            font-weight: 300;
+            font-weight: 500;
             cursor: pointer;
             transition: all 0.3s ease;
             opacity: 0;
             visibility: hidden;
             position: absolute;
-            top: calc(50% + 20px); /* REGOLATO per posizionamento preciso */
+            top: calc(50% + 20px);
             left: 50%;
             transform: translate(-50%, -50%);
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
         #start-button:hover {
             background: rgba(255, 255, 255, 0.25);
             transform: translate(-50%, -50%) scale(1.05);
+            gap: 12px; /* Leggera animazione dello spazio */
         }
 
         #start-button:active {
             transform: translate(-50%, -50%) scale(0.95);
+        }
+
+        #start-button svg {
+            transition: transform 0.3s ease;
+        }
+
+        #start-button:hover svg {
+            transform: translateX(3px); /* Leggera animazione della freccia */
         }
 
         /* Stile Glass Frosted per i controlli */
@@ -664,7 +676,7 @@
 
             .loader-logo {
                 width: 150px;
-                height: 150px;
+                height: 200px;
             }
         }
 
@@ -755,12 +767,12 @@
             }
 
             .loader-logo {
-                width: 120px;
-                height: 120px;
+                width: 140px;
+                height: 200px;
             }
 
             #start-button {
-                padding: 15px 30px;
+                padding: 18px 35px;
                 font-size: 14px;
             }
         }
@@ -788,8 +800,8 @@
             }
 
             .loader-logo {
-                width: 70px;
-                height: 70px;
+                width: 150px;
+                height: 150px;
             }
         }
 
@@ -880,7 +892,12 @@
                 </div>
                 <div class="loader-text" id="loader-text">Caricamento in corso...</div>
             </div>
-            <button id="start-button">START</button>
+            <button id="start-button">
+                START
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M9 6L15 12L9 18" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
             <div class="company-credit">
                 <div class="company-text">Realizzato da:</div>
                 <img src="assets/loghi/immerso.webp" alt="Immerso Logo" class="company-logo">
