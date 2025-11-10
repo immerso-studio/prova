@@ -249,17 +249,25 @@
             overflow: hidden;
             cursor: pointer;
             z-index: 100;
-            padding-bottom: 60px;
         }
 
         #product-info.fullscreen {
             border-radius: 5px !important;
         }
 
+        .product-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 15px;
+        }
+
+        .product-title-container {
+            flex: 1;
+            padding: 10px 0px 0px 0px;
+        }
+
         .expand-btn {
-            position: absolute;
-            bottom: 15px;
-            right: 20px;
             background: rgba(255, 255, 255, 0.2);
             border: none;
             border-radius: 50%;
@@ -272,7 +280,8 @@
             justify-content: center;
             cursor: pointer;
             transition: all 0.3s ease;
-            z-index: 101;
+            flex-shrink: 0;
+            margin-top: 5px;
         }
 
         .expand-btn:hover {
@@ -282,15 +291,6 @@
 
         .expand-btn.expanded {
             transform: rotate(180deg);
-        }
-
-        h1 {
-            font-size: 14px;
-            margin-bottom: 8px;
-            font-weight: 500;
-            color: rgba(255, 255, 255, 0.8);
-            letter-spacing: 1.5px;
-            text-transform: uppercase;
         }
 
         .product-name {
@@ -312,7 +312,9 @@
             max-height: 0;
             overflow: hidden;
             transition: opacity 0.3s ease, max-height 0.4s ease;
+            margin-bottom: 0; /* AGGIUNGI per rimuovere margine quando non espanso */
         }
+
 
         .additional-info {
             font-size: 14px;
@@ -322,6 +324,16 @@
             opacity: 0;
             max-height: 0;
             overflow: hidden;
+            margin-top: 0; /* AGGIUNGI per rimuovere margine quando non espanso */
+        }
+
+        /* AGGIUNGI queste regole per quando la scheda è espansa */
+        #product-info.expanded .product-desc {
+            margin-bottom: 15px;
+        }
+
+        #product-info.expanded .additional-info {
+            margin-top: 15px;
         }
 
         .info-row {
@@ -611,10 +623,6 @@
                 width: calc(100% - 30px);
             }
             
-            h1 {
-                font-size: 12px;
-            }
-            
             .product-name {
                 font-size: 22px;
             }
@@ -695,10 +703,6 @@
                 padding: 12px;
                 max-width: none;
                 width: calc(100% - 20px);
-            }
-            
-            h1 {
-                font-size: 11px;
             }
             
             .product-name {
@@ -910,8 +914,19 @@
     </div>
 
     <div id="product-info" class="glass-frosted">
-        <h1>Configuratore Illuminazione</h1>
-        <div class="product-name" id="product-name">Lampada Cubo Moderna</div>
+        <div class="product-header">
+            <div class="product-title-container">
+                <div class="product-name" id="product-name">Lampada Cubo Moderna</div>
+            </div>
+            <button class="expand-btn" id="expand-btn">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                    xmlns="http://www.w3.org/2000/svg">
+                    <path d="M6 9L12 15L18 9"
+                        stroke="white" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+        </div>
         <div class="product-desc" id="product-desc">Lampada a sospensione con design geometrico moderno</div>
         
         <div class="additional-info" id="additional-info">
@@ -935,15 +950,6 @@
                 <span class="info-value" id="price-value">€ 149,00</span>
             </div>
         </div>
-        
-        <button class="expand-btn" id="expand-btn">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
-                xmlns="http://www.w3.org/2000/svg">
-                <path d="M6 9L12 15L18 9"
-                    stroke="white" stroke-width="2"
-                    stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-        </button>
     </div>
 
     <div id="controls" class="glass-frosted">
@@ -1326,7 +1332,7 @@ function showStartButton() {
             renderer.outputEncoding = THREE.sRGBEncoding;
             container.appendChild(renderer.domElement);
 
-            // Setup event listeners per parallasse
+            // Setup event listeners per parallasse - SOLO DESKTOP
             setupParallaxEvents();
 
             // Carica HDRI
@@ -1359,84 +1365,54 @@ function showStartButton() {
         }
 
         function setupParallaxEvents() {
-            // Desktop - Mouse movement
-            document.addEventListener('mousemove', (event) => {
-                if (!isTransitioning) {
-                    mouseX = (event.clientX / window.innerWidth) * 2 - 1;
-                    mouseY = -(event.clientY / window.innerHeight) * 2 + 1;
-                    
-                    // Calcola target position con effetto parallasse più leggero
-                    targetCameraX = mouseX * 0.05;
-                    targetCameraY = mouseY * 0.05;
-                    
-                    isMouseMoving = true;
-                    lastMouseMoveTime = Date.now();
-                }
-            });
+            // Rileva se è un dispositivo touch
+            const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+            
+            // Applica parallasse SOLO su desktop (non touch)
+            if (!isTouchDevice) {
+                // Desktop - Mouse movement
+                document.addEventListener('mousemove', (event) => {
+                    if (!isTransitioning) {
+                        mouseX = (event.clientX / window.innerWidth) * 2 - 1;
+                        mouseY = -(event.clientY / window.innerHeight) * 2 + 1;
+                        
+                        // Calcola target position con effetto parallasse più leggero
+                        targetCameraX = mouseX * 0.05;
+                        targetCameraY = mouseY * 0.05;
+                        
+                        isMouseMoving = true;
+                        lastMouseMoveTime = Date.now();
+                    }
+                });
 
-            // Mobile - Touch movement
-            let isTouching = false;
-            let lastTouchX = 0;
-            let lastTouchY = 0;
-
-            document.addEventListener('touchstart', (event) => {
-                if (!isTransitioning) {
-                    isTouching = true;
-                    const touch = event.touches[0];
-                    lastTouchX = touch.clientX;
-                    lastTouchY = touch.clientY;
-                    event.preventDefault();
-                }
-            });
-
-            document.addEventListener('touchmove', (event) => {
-                if (!isTransitioning && isTouching) {
-                    const touch = event.touches[0];
-                    const deltaX = touch.clientX - lastTouchX;
-                    const deltaY = touch.clientY - lastTouchY;
-                    
-                    // Calcola movimento parallasse basato su movimento touch
-                    targetCameraX += deltaX * 0.0001;
-                    targetCameraY += deltaY * 0.0001;
-                    
-                    // Limita il movimento
-                    targetCameraX = Math.max(-1, Math.min(1, targetCameraX));
-                    targetCameraY = Math.max(-0.8, Math.min(0.8, targetCameraY));
-                    
-                    lastTouchX = touch.clientX;
-                    lastTouchY = touch.clientY;
-                    event.preventDefault();
-                }
-            });
-
-            document.addEventListener('touchend', () => {
-                isTouching = false;
-                // Ritorno graduale alla posizione centrale
-                targetCameraX = 0;
-                targetCameraY = 0;
-            });
-
-            // Reset camera quando il mouse esce dalla finestra
-            document.addEventListener('mouseleave', () => {
-                targetCameraX = 0;
-                targetCameraY = 0;
-            });
+                // Reset camera quando il mouse esce dalla finestra
+                document.addEventListener('mouseleave', () => {
+                    targetCameraX = 0;
+                    targetCameraY = 0;
+                });
+            } else {
+                // Su dispositivi touch, disabilita completamente il parallasse
+                console.log('Parallasse disabilitato su dispositivo touch');
+            }
         }
 
         function setupEventListeners() {
             // Frecce
-            document.getElementById('prev-btn').addEventListener('click', () => {
+            document.getElementById('prev-btn').addEventListener('click', (e) => {
+                e.preventDefault();
                 const newIndex = currentProductIndex > 0 ? currentProductIndex - 1 : products.length - 1;
                 loadProduct(newIndex);
             });
 
-            document.getElementById('next-btn').addEventListener('click', () => {
+            document.getElementById('next-btn').addEventListener('click', (e) => {
+                e.preventDefault();
                 const newIndex = currentProductIndex < products.length - 1 ? currentProductIndex + 1 : 0;
                 loadProduct(newIndex);
             });
 
             // Toggle luce
             document.getElementById('light-toggle').addEventListener('change', (e) => {
+                e.preventDefault();
                 isLightOn = e.target.checked;
                 console.log('Stato luce:', isLightOn ? 'ACCESA' : 'SPENTA');
                 updateLightIndicator();
@@ -1451,18 +1427,23 @@ function showStartButton() {
             const productInfo = document.getElementById('product-info');
             
             expandBtn.addEventListener('click', (e) => {
+                e.preventDefault();
                 e.stopPropagation();
                 toggleProductInfo();
             });
 
             productInfo.addEventListener('click', (e) => {
                 if (e.target === productInfo) {
+                    e.preventDefault();
                     toggleProductInfo();
                 }
             });
 
             // Toggle controlli
-            document.getElementById('toggle-controls-btn').addEventListener('click', toggleControls);
+            document.getElementById('toggle-controls-btn').addEventListener('click', (e) => {
+                e.preventDefault();
+                toggleControls();
+            });
 
             // Prevenire zoom su doppio tap
             let lastTouchEnd = 0;
@@ -1621,7 +1602,7 @@ function showStartButton() {
             // Animazione a scaglioni per il contenuto
             const timeline = gsap.timeline({ delay: 0.8 });
             
-            timeline.fromTo('#product-info h1', 
+            timeline.fromTo('.product-name', 
                 {
                     y: -20,
                     opacity: 0
@@ -1631,18 +1612,6 @@ function showStartButton() {
                     opacity: 1,
                     duration: 0.6
                 }
-            )
-            .fromTo('.product-name', 
-                {
-                    y: -20,
-                    opacity: 0
-                },
-                {
-                    y: 0,
-                    opacity: 1,
-                    duration: 0.6
-                },
-                "-=0.4"
             );
         }
 
@@ -2037,8 +2006,10 @@ function showStartButton() {
         function animate() {
             requestAnimationFrame(animate);
 
-            // Smooth camera movement per effetto parallasse
-            if (!isTransitioning && useSceneCamera) {
+            // Smooth camera movement per effetto parallasse - SOLO se non è un dispositivo touch
+            const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+            
+            if (!isTransitioning && useSceneCamera && !isTouchDevice) {
                 // Interpolazione smooth della posizione camera
                 currentCameraX += (targetCameraX - currentCameraX) * 0.1;
                 currentCameraY += (targetCameraY - currentCameraY) * 0.1;
@@ -2058,7 +2029,7 @@ function showStartButton() {
                     targetCameraX = 0;
                     targetCameraY = 0;
                 }
-            } else if (!isTransitioning) {
+            } else if (!isTransitioning && !isTouchDevice) {
                 // Fallback per quando non c'è camera nel GLB
                 currentCameraX += (targetCameraX - currentCameraX) * 0.1;
                 currentCameraY += (targetCameraY - currentCameraY) * 0.1;
