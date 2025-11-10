@@ -29,12 +29,6 @@
             width: 100vw;
             height: 100vh;
             position: relative;
-            opacity: 0;
-            transition: opacity 0.8s ease;
-        }
-
-        #canvas-container.loaded {
-            opacity: 1;
         }
 
         /* Loader Styles */
@@ -44,11 +38,13 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: #0a0a0a;
+            background: rgba(10, 10, 10, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
             display: flex;
             flex-direction: column;
-            align-items: center;
             justify-content: center;
+            align-items: center;
             z-index: 1000;
             transition: opacity 0.8s ease, visibility 0.8s ease;
         }
@@ -66,55 +62,120 @@
             gap: 30px;
             padding: 40px;
             border-radius: 20px;
-            width: 90%;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
             max-width: 400px;
+            width: 90%;
             text-align: center;
+            opacity: 0;
+            min-height: 300px; /* ALTEZZA MINIMA per stabilizzare il layout */
+            position: relative; /* AGGIUNGI per il posizionamento del bottone */
         }
 
         .loader-logo {
-            width: 120px;
-            height: 120px;
+            width: 170px;
+            height: 170px;
             object-fit: contain;
-            margin-bottom: 10px;
+            filter: brightness(0) invert(1);
+            opacity: 0;
         }
 
-        .loader-progress-container {
+        .progress-section {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            opacity: 1;
+            transition: opacity 0.5s ease;
+            height: 50px; /* ALTEZZA FISSA per mantenere lo spazio */
+            position: relative;
+        }
+
+        .progress-section.hidden {
+            opacity: 0;
+            pointer-events: none;
+            /* RIMUOVI height: 0 e overflow: hidden */
+        }
+
+        .progress-container {
             width: 100%;
             height: 4px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 2px;
             overflow: hidden;
-            margin: 10px 0;
         }
 
-        .loader-progress-bar {
+        .progress-bar {
             height: 100%;
             background: linear-gradient(90deg, #FFD700, #FFA500);
-            border-radius: 10px;
             width: 0%;
-            transition: width 0.4s ease;
+            transition: width 0.3s ease;
+            border-radius: 2px;
         }
 
         .loader-text {
             font-size: 14px;
             color: rgba(255, 255, 255, 0.8);
-            margin-top: 10px;
             font-weight: 400;
+            transition: opacity 0.3s ease;
         }
 
-        .loader-credits {
-            margin-top: 30px;
+        .company-credit {
+            margin-top: 20px;
             padding-top: 20px;
             border-top: 1px solid rgba(255, 255, 255, 0.1);
             font-size: 12px;
             color: rgba(255, 255, 255, 0.6);
+            opacity: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
         }
 
-        .loader-company-logo {
-            width: 80px;
+        .company-logo {
+            width: 150px; /* Più piccolo del logo platek (120px) */
             height: auto;
-            margin-top: 8px;
-            opacity: 0.8;
+            object-fit: contain;
+            filter: brightness(0) invert(1);
+        }
+
+        .company-text {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        #start-button {
+            padding: 18px 45px;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+            color: white;
+            font-family: 'Inter', sans-serif;
+            font-size: 16px;
+            font-weight: 300;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            opacity: 0;
+            visibility: hidden;
+            position: absolute;
+            top: calc(50% + 20px); /* REGOLATO per posizionamento preciso */
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        #start-button:hover {
+            background: rgba(255, 255, 255, 0.25);
+            transform: translate(-50%, -50%) scale(1.05);
+        }
+
+        #start-button:active {
+            transform: translate(-50%, -50%) scale(0.95);
         }
 
         /* Stile Glass Frosted per i controlli */
@@ -140,11 +201,6 @@
             flex-direction: column;
             gap: 16px;
             transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
-            opacity: 0;
-        }
-
-        #controls.visible {
-            opacity: 1;
         }
 
         #controls.hidden {
@@ -182,11 +238,6 @@
             cursor: pointer;
             z-index: 100;
             padding-bottom: 60px;
-            opacity: 0;
-        }
-
-        #product-info.visible {
-            opacity: 1;
         }
 
         #product-info.fullscreen {
@@ -482,7 +533,6 @@
             color: rgba(255, 255, 255, 0.9);
             text-align: center;
             padding: 0 20px;
-            display: none;
         }
 
         /* Toggle Controls Button - POSIZIONATO AL CENTRO IN ALTO ALLA SCHEDA */
@@ -507,11 +557,6 @@
             align-items: center;
             justify-content: center;
             z-index: 102;
-            opacity: 0;
-        }
-
-        .toggle-controls-btn.visible {
-            opacity: 1;
         }
 
         .toggle-controls-btn:hover {
@@ -618,12 +663,8 @@
             }
 
             .loader-logo {
-                width: 100px;
-                height: 100px;
-            }
-
-            .loader-company-logo {
-                width: 70px;
+                width: 150px;
+                height: 150px;
             }
         }
 
@@ -714,16 +755,13 @@
             }
 
             .loader-logo {
-                width: 80px;
-                height: 80px;
+                width: 120px;
+                height: 120px;
             }
 
-            .loader-company-logo {
-                width: 60px;
-            }
-
-            .loader-text {
-                font-size: 12px;
+            #start-button {
+                padding: 15px 30px;
+                font-size: 14px;
             }
         }
 
@@ -745,7 +783,6 @@
                 height: 40px;
             }
 
-            /* Loader mobile molto piccolo */
             .loader-content {
                 padding: 20px 15px;
             }
@@ -795,20 +832,14 @@
 
             /* Loader landscape */
             .loader-content {
-                flex-direction: row;
-                max-width: 500px;
-                gap: 30px;
-                text-align: left;
+                padding: 20px;
+                gap: 20px;
+                max-width: 350px;
             }
 
             .loader-logo {
                 width: 80px;
                 height: 80px;
-                margin-bottom: 0;
-            }
-
-            .loader-progress-container {
-                margin: 5px 0;
             }
         }
 
@@ -825,22 +856,34 @@
             body {
                 cursor: default;
             }
+
+            #start-button:hover {
+                transform: translate(-50%, -50%);
+                background: rgba(255, 255, 255, 0.15);
+            }
+
+            #start-button:active {
+                background: rgba(255, 255, 255, 0.25);
+                transform: translate(-50%, -50%) scale(0.95);
+            }
         }
     </style>
 </head>
 <body>
     <!-- Loader -->
-    <div id="loader" class="glass-frosted">
+    <div id="loader">
         <div class="loader-content">
-            <img src="assets/platek.png" alt="Platek" class="loader-logo">
-            <div class="loader-progress-container">
-                <div class="loader-progress-bar" id="loader-progress-bar"></div>
+            <img src="assets/loghi/platek.webp" alt="Logo Azienda" class="loader-logo">
+            <div class="progress-section" id="progress-section">
+                <div class="progress-container">
+                    <div class="progress-bar" id="progress-bar"></div>
+                </div>
+                <div class="loader-text" id="loader-text">Caricamento in corso...</div>
             </div>
-            <div class="loader-text" id="loader-text">Caricamento risorse...</div>
-            
-            <div class="loader-credits">
-                <div>Realizzato da:</div>
-                <img src="assets/platek.png" alt="La tua azienda" class="loader-company-logo">
+            <button id="start-button">START</button>
+            <div class="company-credit">
+                <div class="company-text">Realizzato da:</div>
+                <img src="assets/loghi/immerso.webp" alt="Immerso Logo" class="company-logo">
             </div>
         </div>
     </div>
@@ -971,12 +1014,10 @@
         let newPlantsSprite = null;
 
         // Variabili per il loader
+        let assetsLoaded = 0;
         let totalAssets = 0;
-        let loadedAssets = 0;
-        let loaderStarted = false;
-        let minimumLoaderTime = 2500; // 2.5 secondi minimo per il loader
-        let loaderStartTime = 0;
-        let appInitialized = false;
+        let allAssetsLoaded = false;
+        let progressInterval;
 
         // Configurazione prodotti con rotazione personalizzata
         const products = [
@@ -1026,335 +1067,212 @@
 
         // Funzione per inizializzare il loader
         function initLoader() {
-            loaderStartTime = Date.now();
-            
-            // Animazione iniziale del loader
-            gsap.fromTo('.loader-content', 
-                { 
-                    opacity: 0, 
-                    y: 30,
-                    scale: 0.9
-                },
-                { 
-                    opacity: 1, 
-                    y: 0,
-                    scale: 1,
-                    duration: 1.2,
-                    ease: "power3.out",
-                    delay: 0.3
-                }
-            );
-
-            gsap.fromTo('.loader-logo', 
-                { 
-                    opacity: 0, 
-                    scale: 0.8,
-                    rotationY: -10
-                },
-                { 
-                    opacity: 1, 
-                    scale: 1,
-                    rotationY: 0,
-                    duration: 1.5,
-                    ease: "back.out(1.7)",
-                    delay: 0.5
-                }
-            );
-
-            gsap.fromTo('.loader-progress-container', 
-                { 
-                    opacity: 0, 
-                    width: '50%'
-                },
-                { 
-                    opacity: 1, 
-                    width: '100%',
-                    duration: 1,
-                    ease: "power2.out",
-                    delay: 0.8
-                }
-            );
-
-            gsap.fromTo('.loader-text', 
-                { 
-                    opacity: 0, 
-                    y: 10
-                },
-                { 
-                    opacity: 1, 
-                    y: 0,
-                    duration: 0.8,
-                    ease: "power2.out",
-                    delay: 1
-                }
-            );
-
-            gsap.fromTo('.loader-credits', 
-                { 
-                    opacity: 0, 
-                    y: 20
-                },
-                { 
-                    opacity: 1, 
-                    y: 0,
-                    duration: 0.8,
-                    ease: "power2.out",
-                    delay: 1.2
-                }
-            );
-        }
-
-        // Funzione per aggiornare il progresso del loader
-        function updateLoaderProgress(assetName) {
-            loadedAssets++;
-            const progress = (loadedAssets / totalAssets) * 100;
-            
-            // Aggiorna la barra di progresso in modo smooth
-            gsap.to('#loader-progress-bar', {
-                width: `${progress}%`,
-                duration: 0.8,
-                ease: "power2.out",
-                overwrite: true
-            });
-            
-            // Aggiorna il testo
-            document.getElementById('loader-text').textContent = 
-                `Caricamento risorse... ${Math.round(progress)}%`;
-            
-            console.log(`Asset caricato: ${assetName} (${loadedAssets}/${totalAssets})`);
-        }
-
-        // Funzione per nascondere il loader
-        function hideLoader() {
-            const currentTime = Date.now();
-            const elapsedTime = currentTime - loaderStartTime;
-            const remainingTime = Math.max(0, minimumLoaderTime - elapsedTime);
-            
-            console.log(`Tempo trascorso: ${elapsedTime}ms, Aspettando ancora: ${remainingTime}ms`);
-            
-            // Aspetta il tempo minimo prima di nascondere il loader
-            setTimeout(() => {
-                const loader = document.getElementById('loader');
-                const canvasContainer = document.getElementById('canvas-container');
-                
-                // Inizializza l'app prima di nascondere il loader
-                if (!appInitialized) {
-                    initApp();
-                    appInitialized = true;
-                }
-                
-                // Animazione di uscita del loader con fade out graduale
-                const tl = gsap.timeline({
-                    onComplete: () => {
-                        loader.classList.add('hidden');
-                        // Mostra il canvas container con fade in
-                        gsap.to(canvasContainer, {
-                            opacity: 1,
-                            duration: 0.6,
-                            ease: "power2.out"
-                        });
-                    }
-                });
-                
-                // Fade out graduale del loader
-                tl.to('.loader-content', {
-                    opacity: 0,
-                    y: -20,
-                    scale: 0.95,
-                    duration: 0.8,
-                    ease: "power2.inOut"
-                })
-                .to(loader, {
-                    opacity: 0,
-                    duration: 0.6,
-                    ease: "power2.out"
-                }, "-=0.4");
-                
-            }, remainingTime);
-        }
-
-        // Funzione per caricare tutti gli asset in background
-        function preloadAssets() {
-            if (loaderStarted) return;
-            loaderStarted = true;
+            const startButton = document.getElementById('start-button');
             
             // Calcola il numero totale di asset da caricare
-            totalAssets = 2 + (products.length * 2) + 2; // HDRI + Ambiente + (Prodotti * 2 stati) + Piante (2 stati)
+            totalAssets = calculateTotalAssets();
             
-            console.log(`Inizio pre-caricamento di ${totalAssets} asset...`);
+            // Avvia l'animazione di entrata
+            startEntranceAnimation();
             
-            // Pre-carica HDRI
-            preloadHDRI();
-            
-            // Pre-carica ambiente
-            preloadEnvironment();
-            
-            // Pre-carica tutti i modelli dei prodotti
-            products.forEach((product, index) => {
-                preloadModel(product.modelOff, `Prodotto ${index} - Luce spenta`);
-                preloadModel(product.modelOn, `Prodotto ${index} - Luce accesa`);
-            });
-            
-            // Pre-carica immagini piante
-            preloadImage('assets/piante/3-giorno.webp', 'Piante diurne');
-            preloadImage('assets/piante/3-notte.webp', 'Piante notturne');
-        }
-
-        function preloadHDRI() {
-            const rgbeLoader = new THREE.RGBELoader();
-            rgbeLoader.setDataType(THREE.HalfFloatType);
-            
-            rgbeLoader.load(
-                'https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/industrial_sunset_puresky_1k.hdr',
-                () => {
-                    updateLoaderProgress('HDRI ambiente');
-                    checkAllAssetsLoaded();
-                },
-                undefined,
-                () => {
-                    // Fallback - conta comunque come caricato
-                    updateLoaderProgress('HDRI ambiente (fallback)');
-                    checkAllAssetsLoaded();
-                }
-            );
-        }
-
-        function preloadEnvironment() {
-            const tempLoader = new THREE.GLTFLoader();
-            const dracoLoader = new THREE.DRACOLoader();
-            dracoLoader.setDecoderPath('https://www.gstatic.com/draco/v1/decoders/');
-            tempLoader.setDRACOLoader(dracoLoader);
-            
-            tempLoader.load(
-                'assets/camera.glb',
-                () => {
-                    updateLoaderProgress('Ambiente 3D');
-                    checkAllAssetsLoaded();
-                },
-                undefined,
-                () => {
-                    // Fallback - conta comunque come caricato
-                    updateLoaderProgress('Ambiente 3D (fallback)');
-                    checkAllAssetsLoaded();
-                }
-            );
-        }
-
-        function preloadModel(modelPath, assetName) {
-            const tempLoader = new THREE.GLTFLoader();
-            const dracoLoader = new THREE.DRACOLoader();
-            dracoLoader.setDecoderPath('https://www.gstatic.com/draco/v1/decoders/');
-            tempLoader.setDRACOLoader(dracoLoader);
-            
-            tempLoader.load(
-                modelPath,
-                () => {
-                    updateLoaderProgress(assetName);
-                    checkAllAssetsLoaded();
-                },
-                undefined,
-                () => {
-                    // In caso di errore, conta comunque come caricato per non bloccare il loader
-                    updateLoaderProgress(assetName + ' (errore)');
-                    checkAllAssetsLoaded();
-                }
-            );
-        }
-
-        function preloadImage(imagePath, assetName) {
-            const img = new Image();
-            img.onload = () => {
-                updateLoaderProgress(assetName);
-                checkAllAssetsLoaded();
-            };
-            img.onerror = () => {
-                // In caso di errore, conta comunque come caricato
-                updateLoaderProgress(assetName + ' (errore)');
-                checkAllAssetsLoaded();
-            };
-            img.src = imagePath;
-        }
-
-        function checkAllAssetsLoaded() {
-            if (loadedAssets >= totalAssets) {
-                console.log('Tutti gli asset sono stati caricati');
+            // Event listener per il pulsante start
+            startButton.addEventListener('click', () => {
                 hideLoader();
-            }
-        }
-
-// Sostituisci la funzione loadPlants con questa versione
-function loadPlants(lightState) {
-    // Previeni transizioni multiple simultanee
-    if (plantsTransitionInProgress) return;
-    plantsTransitionInProgress = true;
-    
-    const plantImage = lightState ? 'assets/piante/3-notte.webp' : 'assets/piante/3-giorno.webp';
-    
-    textureLoader.load(
-        plantImage,
-        (texture) => {
-            texture.encoding = THREE.sRGBEncoding;
-            
-            // Crea il nuovo sprite con la nuova texture
-            const newMaterial = new THREE.SpriteMaterial({
-                map: texture,
-                transparent: true,
-                alphaTest: 0,
-                opacity: 0 // Inizia trasparente
             });
             
-            newPlantsSprite = new THREE.Sprite(newMaterial);
-            newPlantsSprite.position.set(-5, 2, 0);
-            newPlantsSprite.scale.set(150, 130, 0);
-            
-            // Aggiungi il nuovo sprite alla scena (sovrapposto al vecchio)
-            scene.add(newPlantsSprite);
-            
-            // Se c'è uno sprite corrente, fade out graduale
-            if (currentPlantsSprite) {
-                // Animazione: fade in del nuovo e fade out del vecchio
-                const timeline = gsap.timeline({
-                    onComplete: () => {
-                        // Rimuovi il vecchio sprite dalla scena
-                        scene.remove(currentPlantsSprite);
-                        // Pulisci il materiale vecchio
-                        if (currentPlantsSprite.material.map) currentPlantsSprite.material.map.dispose();
-                        currentPlantsSprite.material.dispose();
-                        // Il nuovo sprite diventa quello corrente
-                        currentPlantsSprite = newPlantsSprite;
-                        plantsTransitionInProgress = false;
-                    }
-                });
-                
-                // Fade in del nuovo sprite e fade out del vecchio contemporaneamente
-                timeline.to(newPlantsSprite.material, {
-                    opacity: 1,
-                    duration: 1.0,
-                    ease: "power2.inOut"
-                })
-                .to(currentPlantsSprite.material, {
-                    opacity: 0,
-                    duration: 1.0,
-                    ease: "power2.inOut"
-                }, 0); // Inizia allo stesso tempo
-                
-            } else {
-                // Prima volta - mostra immediatamente
-                newPlantsSprite.material.opacity = 1;
-                currentPlantsSprite = newPlantsSprite;
-                plantsTransitionInProgress = false;
-            }
-            
-            console.log(`Piante ${lightState ? 'notturne' : 'diurne'} caricate con sovrapposizione`);
-        },
-        undefined,
-        (error) => {
-            console.error('Errore nel caricamento delle piante PNG:', error);
-            plantsTransitionInProgress = false;
+            console.log(`Totale asset da caricare: ${totalAssets}`);
         }
+
+        // Calcola il numero totale di asset da caricare
+        function calculateTotalAssets() {
+            // Per un caricamento fluido, consideriamo un numero fisso di asset principali
+            return 8; // HDRI, ambiente, piante diurne/notturne, 3 prodotti (on/off)
+        }
+
+        // Animazione di entrata del loader
+        function startEntranceAnimation() {
+            const loaderContent = document.querySelector('.loader-content');
+            const loaderLogo = document.querySelector('.loader-logo');
+            const progressSection = document.getElementById('progress-section');
+            const companyCredit = document.querySelector('.company-credit');
+            const companyLogo = document.querySelector('.company-logo'); // AGGIUNTO
+            
+            // Timeline per l'entrata
+            const entranceTimeline = gsap.timeline();
+            
+            // Prima fade in della scheda loader-content
+            entranceTimeline.fromTo(loaderContent, 
+                {
+                    opacity: 0,
+                    scale: 0.9,
+                    y: 20
+                },
+                {
+                    opacity: 1,
+                    scale: 1,
+                    y: 0,
+                    duration: 1.0,
+                    ease: "power2.out"
+                }
+            );
+            
+            // Logo - fade in con scale
+            entranceTimeline.fromTo(loaderLogo, 
+                {
+                    opacity: 0,
+                    scale: 0.8
+                },
+                {
+                    opacity: 1,
+                    scale: 1,
+                    duration: 1.2,
+                    ease: "back.out(1.7)"
+                },
+                "-=0.5"
+            );
+            
+            // Progress section - fade in
+            entranceTimeline.fromTo(progressSection, 
+                {
+                    opacity: 0,
+                    y: 20
+                },
+                {
+                    opacity: 1,
+                    y: 0,
+                    duration: 0.8,
+                    ease: "power2.out"
+                },
+                "-=0.7"
+            );
+            
+            // Company credit - fade in
+            entranceTimeline.fromTo(companyCredit, 
+                {
+                    opacity: 0
+                },
+                {
+                    opacity: 1,
+                    duration: 0.6,
+                    ease: "power2.out"
+                },
+                "-=0.3"
+            );
+            
+            // Company logo - fade in separato (OPZIONALE - per effetto più elegante)
+            entranceTimeline.fromTo(companyLogo, 
+                {
+                    opacity: 0,
+                    scale: 0.9
+                },
+                {
+                    opacity: 1,
+                    scale: 1,
+                    duration: 0.8,
+                    ease: "power2.out"
+                },
+                "-=0.2"
+            );
+            
+            // Avvia l'animazione della barra di progresso dopo l'entrata
+            entranceTimeline.call(startProgressAnimation);
+        }
+
+        // Avvia l'animazione della barra di progresso
+        function startProgressAnimation() {
+            let progress = 0;
+            const progressBar = document.getElementById('progress-bar');
+            const loaderText = document.getElementById('loader-text');
+            
+            // Simula un caricamento fluido e veloce
+            progressInterval = setInterval(() => {
+                progress += Math.random() * 8 + 2; // Incremento variabile tra 2-10%
+                
+                if (progress >= 100) {
+                    progress = 100;
+                    clearInterval(progressInterval);
+                    
+                    // Mostra il pulsante start con animazione
+                    showStartButton();
+                }
+                
+                progressBar.style.width = `${progress}%`;
+                loaderText.textContent = `Caricamento in corso... ${Math.round(progress)}%`;
+            }, 200);
+        }
+
+// Mostra il pulsante start con animazione
+function showStartButton() {
+    const startButton = document.getElementById('start-button');
+    const progressSection = document.getElementById('progress-section');
+    
+    // Timeline per la transizione al pulsante start
+    const transitionTimeline = gsap.timeline();
+    
+    // Fade out SOLO della sezione di progresso (mantenendo lo spazio)
+    transitionTimeline.to(progressSection, {
+        duration: 0.5,
+        opacity: 0,
+        ease: "power2.in",
+        onComplete: () => {
+            progressSection.classList.add('hidden');
+        }
+    });
+    
+    // Fade in del pulsante start (centrale nella scheda)
+    transitionTimeline.fromTo(startButton, 
+        {
+            opacity: 0,
+            scale: 0.8
+        },
+        {
+            duration: 0.8,
+            opacity: 1,
+            visibility: 'visible',
+            scale: 1,
+            ease: "back.out(1.7)"
+        },
+        "-=0.2"
     );
+    
+    // Piccola animazione di "breathing" per il pulsante
+    transitionTimeline.to(startButton, {
+        duration: 2,
+        scale: 1.05,
+        repeat: -1,
+        yoyo: true,
+        ease: "sine.inOut"
+    }, "+=0.5");
 }
 
+        // Nasconde il loader con animazione
+        function hideLoader() {
+            const loader = document.getElementById('loader');
+            const loaderContent = document.querySelector('.loader-content');
+            
+            // Timeline per l'uscita
+            const exitTimeline = gsap.timeline();
+            
+            // Fade out del contenuto
+            exitTimeline.to(loaderContent, {
+                duration: 0.6,
+                opacity: 0,
+                scale: 0.9,
+                ease: "power2.in"
+            });
+            
+            // Fade out del loader
+            exitTimeline.to(loader, {
+                duration: 0.8,
+                opacity: 0,
+                ease: "power2.inOut",
+                onComplete: () => {
+                    loader.classList.add('hidden');
+                }
+            });
+        }
+
+        // Inizializza l'applicazione principale
         function initApp() {
             const container = document.getElementById('canvas-container');
             
@@ -1420,7 +1338,6 @@ function loadPlants(lightState) {
 
             window.addEventListener('resize', onWindowResize);
 
-            // Avvia l'animazione
             animate();
         }
 
@@ -1680,10 +1597,7 @@ function loadPlants(lightState) {
                     opacity: 1,
                     duration: 0.8,
                     ease: "back.out(1.2)",
-                    delay: 0.5,
-                    onComplete: () => {
-                        document.getElementById('product-info').classList.add('visible');
-                    }
+                    delay: 0.5
                 }
             );
             
@@ -1712,42 +1626,6 @@ function loadPlants(lightState) {
                     duration: 0.6
                 },
                 "-=0.4"
-            );
-
-            // Animazione controlli
-            gsap.fromTo('#controls', 
-                {
-                    y: 50,
-                    opacity: 0
-                },
-                {
-                    y: 0,
-                    opacity: 1,
-                    duration: 0.8,
-                    ease: "back.out(1.2)",
-                    delay: 1.0,
-                    onComplete: () => {
-                        document.getElementById('controls').classList.add('visible');
-                    }
-                }
-            );
-
-            // Animazione toggle button
-            gsap.fromTo('#toggle-controls-btn', 
-                {
-                    y: 30,
-                    opacity: 0
-                },
-                {
-                    y: 0,
-                    opacity: 1,
-                    duration: 0.6,
-                    ease: "back.out(1.2)",
-                    delay: 1.2,
-                    onComplete: () => {
-                        document.getElementById('toggle-controls-btn').classList.add('visible');
-                    }
-                }
             );
         }
 
@@ -1959,6 +1837,79 @@ function loadPlants(lightState) {
             console.log('Ambiente base creato con successo');
         }
 
+        // Sostituisci la funzione loadPlants con questa versione
+        function loadPlants(lightState) {
+            // Previeni transizioni multiple simultanee
+            if (plantsTransitionInProgress) return;
+            plantsTransitionInProgress = true;
+            
+            const plantImage = lightState ? 'assets/piante/3-notte.webp' : 'assets/piante/3-giorno.webp';
+            
+            textureLoader.load(
+                plantImage,
+                (texture) => {
+                    texture.encoding = THREE.sRGBEncoding;
+                    
+                    // Crea il nuovo sprite con la nuova texture
+                    const newMaterial = new THREE.SpriteMaterial({
+                        map: texture,
+                        transparent: true,
+                        alphaTest: 0,
+                        opacity: 0 // Inizia trasparente
+                    });
+                    
+                    newPlantsSprite = new THREE.Sprite(newMaterial);
+                    newPlantsSprite.position.set(-5, 2, 0);
+                    newPlantsSprite.scale.set(150, 130, 0);
+                    
+                    // Aggiungi il nuovo sprite alla scena (sovrapposto al vecchio)
+                    scene.add(newPlantsSprite);
+                    
+                    // Se c'è uno sprite corrente, fade out graduale
+                    if (currentPlantsSprite) {
+                        // Animazione: fade in del nuovo e fade out del vecchio
+                        const timeline = gsap.timeline({
+                            onComplete: () => {
+                                // Rimuovi il vecchio sprite dalla scena
+                                scene.remove(currentPlantsSprite);
+                                // Pulisci il materiale vecchio
+                                if (currentPlantsSprite.material.map) currentPlantsSprite.material.map.dispose();
+                                currentPlantsSprite.material.dispose();
+                                // Il nuovo sprite diventa quello corrente
+                                currentPlantsSprite = newPlantsSprite;
+                                plantsTransitionInProgress = false;
+                            }
+                        });
+                        
+                        // Fade in del nuovo sprite e fade out del vecchio contemporaneamente
+                        timeline.to(newPlantsSprite.material, {
+                            opacity: 1,
+                            duration: 1.0,
+                            ease: "power2.inOut"
+                        })
+                        .to(currentPlantsSprite.material, {
+                            opacity: 0,
+                            duration: 1.0,
+                            ease: "power2.inOut"
+                        }, 0); // Inizia allo stesso tempo
+                        
+                    } else {
+                        // Prima volta - mostra immediatamente
+                        newPlantsSprite.material.opacity = 1;
+                        currentPlantsSprite = newPlantsSprite;
+                        plantsTransitionInProgress = false;
+                    }
+                    
+                    console.log(`Piante ${lightState ? 'notturne' : 'diurne'} caricate con sovrapposizione`);
+                },
+                undefined,
+                (error) => {
+                    console.error('Errore nel caricamento delle piante PNG:', error);
+                    plantsTransitionInProgress = false;
+                }
+            );
+        }
+
         function createGeometry(index) {
             return new Promise((resolve, reject) => {
                 const product = products[index];
@@ -2118,15 +2069,15 @@ function loadPlants(lightState) {
 
         // Inizializza quando il documento è pronto
         if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', function() {
-                // Inizializza prima il loader
+            document.addEventListener('DOMContentLoaded', () => {
                 initLoader();
-                // Poi inizia il pre-caricamento degli asset
-                setTimeout(preloadAssets, 100);
+                // Inizia il caricamento degli asset in background
+                initApp();
             });
         } else {
             initLoader();
-            setTimeout(preloadAssets, 100);
+            // Inizia il caricamento degli asset in background
+            initApp();
         }
     </script>
 </body>

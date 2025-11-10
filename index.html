@@ -29,12 +29,6 @@
             width: 100vw;
             height: 100vh;
             position: relative;
-            opacity: 0;
-            transition: opacity 0.8s ease;
-        }
-
-        #canvas-container.loaded {
-            opacity: 1;
         }
 
         /* Loader Styles */
@@ -47,74 +41,123 @@
             background: #0a0a0a;
             display: flex;
             flex-direction: column;
-            align-items: center;
             justify-content: center;
+            align-items: center;
             z-index: 1000;
             transition: opacity 0.8s ease, visibility 0.8s ease;
+            /* Aggiungi queste proprietà per performance */
+            will-change: opacity;
+            transform: translateZ(0);
         }
 
-        #loader.hidden {
+        #loader.fade-out {
             opacity: 0;
             visibility: hidden;
-            pointer-events: none;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
         }
 
         .loader-content {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 30px;
-            padding: 40px;
-            border-radius: 20px;
-            width: 90%;
-            max-width: 400px;
             text-align: center;
+            padding: 0 20px;
+            /* Aggiungi transizione smooth */
+            transition: all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            will-change: transform, opacity;
         }
 
         .loader-logo {
-            width: 120px;
-            height: 120px;
-            object-fit: contain;
-            margin-bottom: 10px;
+            font-family: 'Playfair Display', serif;
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.95);
+            margin-bottom: 2rem;
+            letter-spacing: 2px;
         }
 
         .loader-progress-container {
-            width: 100%;
+            width: 300px;
+            max-width: 80%;
             height: 4px;
             background: rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
+            border-radius: 4px;
             overflow: hidden;
-            margin: 10px 0;
+            margin: 2rem auto;
+            position: relative;
         }
 
+        /* Migliora l'animazione della progress bar */
         .loader-progress-bar {
             height: 100%;
-            background: linear-gradient(90deg, #FFD700, #FFA500);
-            border-radius: 10px;
             width: 0%;
-            transition: width 0.4s ease;
+            background: linear-gradient(90deg, #FFD700, #FFA500);
+            border-radius: 4px;
+            transition: width 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .loader-progress-bar::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { left: -100%; }
+            100% { left: 100%; }
         }
 
         .loader-text {
-            font-size: 14px;
-            color: rgba(255, 255, 255, 0.8);
-            margin-top: 10px;
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.7);
+            margin-top: 1rem;
             font-weight: 400;
+            letter-spacing: 0.5px;
         }
 
-        .loader-credits {
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-            font-size: 12px;
+        .loader-dots {
+            display: flex;
+            gap: 8px;
+            margin-top: 1.5rem;
+            justify-content: center;
+        }
+
+        .loader-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            animation: dotPulse 1.4s ease-in-out infinite both;
+        }
+
+        .loader-dot:nth-child(1) { animation-delay: -0.32s; }
+        .loader-dot:nth-child(2) { animation-delay: -0.16s; }
+        .loader-dot:nth-child(3) { animation-delay: 0s; }
+
+        @keyframes dotPulse {
+            0%, 80%, 100% {
+                transform: scale(0.8);
+                opacity: 0.5;
+            }
+            40% {
+                transform: scale(1.2);
+                opacity: 1;
+            }
+        }
+
+        .loader-stats {
+            display: flex;
+            justify-content: space-between;
+            width: 300px;
+            max-width: 80%;
+            margin-top: 1rem;
+            font-size: 0.8rem;
             color: rgba(255, 255, 255, 0.6);
-        }
-
-        .loader-company-logo {
-            width: 80px;
-            height: auto;
-            margin-top: 8px;
-            opacity: 0.8;
         }
 
         /* Stile Glass Frosted per i controlli */
@@ -140,11 +183,6 @@
             flex-direction: column;
             gap: 16px;
             transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
-            opacity: 0;
-        }
-
-        #controls.visible {
-            opacity: 1;
         }
 
         #controls.hidden {
@@ -182,11 +220,6 @@
             cursor: pointer;
             z-index: 100;
             padding-bottom: 60px;
-            opacity: 0;
-        }
-
-        #product-info.visible {
-            opacity: 1;
         }
 
         #product-info.fullscreen {
@@ -387,6 +420,21 @@
             box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
         }
 
+        .toggle-slider.disabled {
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .toggle-switch input:disabled {
+            cursor: not-allowed;
+        }
+
+        /* Previene completamente l'interazione quando disabilitato */
+        .toggle-switch input:disabled + .toggle-slider {
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
         .toggle-slider:before {
             position: absolute;
             content: "";
@@ -482,7 +530,6 @@
             color: rgba(255, 255, 255, 0.9);
             text-align: center;
             padding: 0 20px;
-            display: none;
         }
 
         /* Toggle Controls Button - POSIZIONATO AL CENTRO IN ALTO ALLA SCHEDA */
@@ -507,11 +554,6 @@
             align-items: center;
             justify-content: center;
             z-index: 102;
-            opacity: 0;
-        }
-
-        .toggle-controls-btn.visible {
-            opacity: 1;
         }
 
         .toggle-controls-btn:hover {
@@ -611,19 +653,12 @@
                 height: 30px;
             }
 
-            /* Loader mobile */
-            .loader-content {
-                padding: 30px 20px;
-                gap: 25px;
-            }
-
             .loader-logo {
-                width: 100px;
-                height: 100px;
+                font-size: 2rem;
             }
 
-            .loader-company-logo {
-                width: 70px;
+            .loader-progress-container {
+                width: 250px;
             }
         }
 
@@ -707,23 +742,12 @@
                 bottom: 10px;
             }
 
-            /* Loader mobile piccolo */
-            .loader-content {
-                padding: 25px 15px;
-                gap: 20px;
-            }
-
             .loader-logo {
-                width: 80px;
-                height: 80px;
+                font-size: 1.8rem;
             }
 
-            .loader-company-logo {
-                width: 60px;
-            }
-
-            .loader-text {
-                font-size: 12px;
+            .loader-progress-container {
+                width: 200px;
             }
         }
 
@@ -743,16 +767,6 @@
             .arrow-btn {
                 width: 40px;
                 height: 40px;
-            }
-
-            /* Loader mobile molto piccolo */
-            .loader-content {
-                padding: 20px 15px;
-            }
-
-            .loader-logo {
-                width: 70px;
-                height: 70px;
             }
         }
 
@@ -792,24 +806,6 @@
             #controls.hidden + .toggle-controls-btn {
                 bottom: 15px;
             }
-
-            /* Loader landscape */
-            .loader-content {
-                flex-direction: row;
-                max-width: 500px;
-                gap: 30px;
-                text-align: left;
-            }
-
-            .loader-logo {
-                width: 80px;
-                height: 80px;
-                margin-bottom: 0;
-            }
-
-            .loader-progress-container {
-                margin: 5px 0;
-            }
         }
 
         /* Supporto per touch devices */
@@ -829,18 +825,21 @@
     </style>
 </head>
 <body>
-    <!-- Loader -->
-    <div id="loader" class="glass-frosted">
+    <!-- Loader Elegante -->
+    <div id="loader">
         <div class="loader-content">
-            <img src="assets/platek.png" alt="Platek" class="loader-logo">
+            <div class="loader-logo"><img src="assets/platek.png" width="50%"></div>
             <div class="loader-progress-container">
-                <div class="loader-progress-bar" id="loader-progress-bar"></div>
+                <div class="loader-progress-bar" id="loader-progress"></div>
             </div>
-            <div class="loader-text" id="loader-text">Caricamento risorse...</div>
-            
-            <div class="loader-credits">
-                <div>Realizzato da:</div>
-                <img src="assets/platek.png" alt="La tua azienda" class="loader-company-logo">
+            <div class="loader-text" id="loader-text">Inizializzazione configuratore...</div>
+            <div class="loader-dots">
+                <div class="loader-dot"></div>
+                <div class="loader-dot"></div>
+                <div class="loader-dot"></div>
+            </div>
+            <div class="loader-stats">
+
             </div>
         </div>
     </div>
@@ -899,7 +898,7 @@
                 <span class="toggle-label">OFF</span>
                 <label class="toggle-switch">
                     <input type="checkbox" id="light-toggle">
-                    <span class="toggle-slider"></span>
+                    <span class="toggle-slider" id="toggle-slider"></span>
                 </label>
                 <span class="toggle-label">ON</span>
             </div>
@@ -948,6 +947,7 @@
         let currentProductIndex = 0;
         let isLightOn = false; // Stato luce: false = spenta, true = accesa
         let controlsVisible = true; // Stato visibilità controlli
+        let toggleCooldown = false; // Nuova variabile per prevenire click rapidi
         
         // Variabili per effetto parallasse
         let mouseX = 0;
@@ -965,18 +965,10 @@
         let originalCameraRotation = new THREE.Euler();
         let useSceneCamera = false;
 
-        // Aggiungi questa variabile globale all'inizio con le altre variabili
-        let plantsTransitionInProgress = false;
-        let currentPlantsSprite = null;
-        let newPlantsSprite = null;
-
         // Variabili per il loader
         let totalAssets = 0;
         let loadedAssets = 0;
-        let loaderStarted = false;
-        let minimumLoaderTime = 2500; // 2.5 secondi minimo per il loader
-        let loaderStartTime = 0;
-        let appInitialized = false;
+        let isInitialLoad = true;
 
         // Configurazione prodotti con rotazione personalizzata
         const products = [
@@ -1024,338 +1016,77 @@
             }
         ];
 
-        // Funzione per inizializzare il loader
-        function initLoader() {
-            loaderStartTime = Date.now();
+        // Sistema di caricamento asset
+        const assetManager = {
+            assets: [],
+            totalSize: 0,
+            loadedSize: 0,
             
-            // Animazione iniziale del loader
-            gsap.fromTo('.loader-content', 
-                { 
-                    opacity: 0, 
-                    y: 30,
-                    scale: 0.9
-                },
-                { 
-                    opacity: 1, 
-                    y: 0,
-                    scale: 1,
-                    duration: 1.2,
-                    ease: "power3.out",
-                    delay: 0.3
-                }
-            );
-
-            gsap.fromTo('.loader-logo', 
-                { 
-                    opacity: 0, 
-                    scale: 0.8,
-                    rotationY: -10
-                },
-                { 
-                    opacity: 1, 
-                    scale: 1,
-                    rotationY: 0,
-                    duration: 1.5,
-                    ease: "back.out(1.7)",
-                    delay: 0.5
-                }
-            );
-
-            gsap.fromTo('.loader-progress-container', 
-                { 
-                    opacity: 0, 
-                    width: '50%'
-                },
-                { 
-                    opacity: 1, 
-                    width: '100%',
-                    duration: 1,
-                    ease: "power2.out",
-                    delay: 0.8
-                }
-            );
-
-            gsap.fromTo('.loader-text', 
-                { 
-                    opacity: 0, 
-                    y: 10
-                },
-                { 
-                    opacity: 1, 
-                    y: 0,
-                    duration: 0.8,
-                    ease: "power2.out",
-                    delay: 1
-                }
-            );
-
-            gsap.fromTo('.loader-credits', 
-                { 
-                    opacity: 0, 
-                    y: 20
-                },
-                { 
-                    opacity: 1, 
-                    y: 0,
-                    duration: 0.8,
-                    ease: "power2.out",
-                    delay: 1.2
-                }
-            );
-        }
-
-        // Funzione per aggiornare il progresso del loader
-        function updateLoaderProgress(assetName) {
-            loadedAssets++;
-            const progress = (loadedAssets / totalAssets) * 100;
-            
-            // Aggiorna la barra di progresso in modo smooth
-            gsap.to('#loader-progress-bar', {
-                width: `${progress}%`,
-                duration: 0.8,
-                ease: "power2.out",
-                overwrite: true
-            });
-            
-            // Aggiorna il testo
-            document.getElementById('loader-text').textContent = 
-                `Caricamento risorse... ${Math.round(progress)}%`;
-            
-            console.log(`Asset caricato: ${assetName} (${loadedAssets}/${totalAssets})`);
-        }
-
-        // Funzione per nascondere il loader
-        function hideLoader() {
-            const currentTime = Date.now();
-            const elapsedTime = currentTime - loaderStartTime;
-            const remainingTime = Math.max(0, minimumLoaderTime - elapsedTime);
-            
-            console.log(`Tempo trascorso: ${elapsedTime}ms, Aspettando ancora: ${remainingTime}ms`);
-            
-            // Aspetta il tempo minimo prima di nascondere il loader
-            setTimeout(() => {
-                const loader = document.getElementById('loader');
-                const canvasContainer = document.getElementById('canvas-container');
-                
-                // Inizializza l'app prima di nascondere il loader
-                if (!appInitialized) {
-                    initApp();
-                    appInitialized = true;
-                }
-                
-                // Animazione di uscita del loader con fade out graduale
-                const tl = gsap.timeline({
-                    onComplete: () => {
-                        loader.classList.add('hidden');
-                        // Mostra il canvas container con fade in
-                        gsap.to(canvasContainer, {
-                            opacity: 1,
-                            duration: 0.6,
-                            ease: "power2.out"
-                        });
-                    }
+            addAsset(type, url, priority = 1) {
+                this.assets.push({
+                    type,
+                    url,
+                    priority,
+                    loaded: false,
+                    size: 0 // Sarà stimato
                 });
+            },
+            
+            getTotalAssets() {
+                return this.assets.length;
+            },
+            
+            getLoadedAssets() {
+                return this.assets.filter(asset => asset.loaded).length;
+            },
+            
+            updateProgress() {
+                const progress = (this.loadedSize / this.totalSize) * 100;
+                const loadedCount = this.getLoadedAssets();
+                const totalCount = this.getTotalAssets();
                 
-                // Fade out graduale del loader
-                tl.to('.loader-content', {
-                    opacity: 0,
-                    y: -20,
-                    scale: 0.95,
-                    duration: 0.8,
-                    ease: "power2.inOut"
-                })
-                .to(loader, {
-                    opacity: 0,
-                    duration: 0.6,
-                    ease: "power2.out"
-                }, "-=0.4");
+                // Aggiorna UI loader
+                document.getElementById('loader-progress').style.width = `${progress}%`;
+
                 
-            }, remainingTime);
-        }
-
-        // Funzione per caricare tutti gli asset in background
-        function preloadAssets() {
-            if (loaderStarted) return;
-            loaderStarted = true;
-            
-            // Calcola il numero totale di asset da caricare
-            totalAssets = 2 + (products.length * 2) + 2; // HDRI + Ambiente + (Prodotti * 2 stati) + Piante (2 stati)
-            
-            console.log(`Inizio pre-caricamento di ${totalAssets} asset...`);
-            
-            // Pre-carica HDRI
-            preloadHDRI();
-            
-            // Pre-carica ambiente
-            preloadEnvironment();
-            
-            // Pre-carica tutti i modelli dei prodotti
-            products.forEach((product, index) => {
-                preloadModel(product.modelOff, `Prodotto ${index} - Luce spenta`);
-                preloadModel(product.modelOn, `Prodotto ${index} - Luce accesa`);
-            });
-            
-            // Pre-carica immagini piante
-            preloadImage('assets/piante/3-giorno.webp', 'Piante diurne');
-            preloadImage('assets/piante/3-notte.webp', 'Piante notturne');
-        }
-
-        function preloadHDRI() {
-            const rgbeLoader = new THREE.RGBELoader();
-            rgbeLoader.setDataType(THREE.HalfFloatType);
-            
-            rgbeLoader.load(
-                'https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/industrial_sunset_puresky_1k.hdr',
-                () => {
-                    updateLoaderProgress('HDRI ambiente');
-                    checkAllAssetsLoaded();
-                },
-                undefined,
-                () => {
-                    // Fallback - conta comunque come caricato
-                    updateLoaderProgress('HDRI ambiente (fallback)');
-                    checkAllAssetsLoaded();
+                // Aggiorna testo loader
+                const loaderText = document.getElementById('loader-text');
+                if (progress < 30) {
+                    loaderText.textContent = 'Caricamento ambiente 3D...';
+                } else if (progress < 60) {
+                    loaderText.textContent = 'Preparazione modelli...';
+                } else if (progress < 90) {
+                    loaderText.textContent = 'Ottimizzazione texture...';
+                } else {
+                    loaderText.textContent = 'Completamento configurazione...';
                 }
-            );
-        }
-
-        function preloadEnvironment() {
-            const tempLoader = new THREE.GLTFLoader();
-            const dracoLoader = new THREE.DRACOLoader();
-            dracoLoader.setDecoderPath('https://www.gstatic.com/draco/v1/decoders/');
-            tempLoader.setDRACOLoader(dracoLoader);
+                
+                return progress;
+            },
             
-            tempLoader.load(
-                'assets/camera.glb',
-                () => {
-                    updateLoaderProgress('Ambiente 3D');
-                    checkAllAssetsLoaded();
-                },
-                undefined,
-                () => {
-                    // Fallback - conta comunque come caricato
-                    updateLoaderProgress('Ambiente 3D (fallback)');
-                    checkAllAssetsLoaded();
-                }
-            );
-        }
-
-        function preloadModel(modelPath, assetName) {
-            const tempLoader = new THREE.GLTFLoader();
-            const dracoLoader = new THREE.DRACOLoader();
-            dracoLoader.setDecoderPath('https://www.gstatic.com/draco/v1/decoders/');
-            tempLoader.setDRACOLoader(dracoLoader);
+            estimateAssetSize(url) {
+                // Stima dimensioni asset basata sul tipo
+                if (url.includes('.hdr')) return 5 * 1024 * 1024; // 5MB per HDRI
+                if (url.includes('.glb')) return 2 * 1024 * 1024; // 2MB per GLB
+                if (url.includes('.png') || url.includes('.jpg')) return 500 * 1024; // 500KB per immagini
+                return 1 * 1024 * 1024; // 1MB default
+            },
             
-            tempLoader.load(
-                modelPath,
-                () => {
-                    updateLoaderProgress(assetName);
-                    checkAllAssetsLoaded();
-                },
-                undefined,
-                () => {
-                    // In caso di errore, conta comunque come caricato per non bloccare il loader
-                    updateLoaderProgress(assetName + ' (errore)');
-                    checkAllAssetsLoaded();
-                }
-            );
-        }
-
-        function preloadImage(imagePath, assetName) {
-            const img = new Image();
-            img.onload = () => {
-                updateLoaderProgress(assetName);
-                checkAllAssetsLoaded();
-            };
-            img.onerror = () => {
-                // In caso di errore, conta comunque come caricato
-                updateLoaderProgress(assetName + ' (errore)');
-                checkAllAssetsLoaded();
-            };
-            img.src = imagePath;
-        }
-
-        function checkAllAssetsLoaded() {
-            if (loadedAssets >= totalAssets) {
-                console.log('Tutti gli asset sono stati caricati');
-                hideLoader();
+            initialize() {
+                // Calcola dimensioni totali stimate
+                this.totalSize = this.assets.reduce((total, asset) => {
+                    asset.size = this.estimateAssetSize(asset.url);
+                    return total + asset.size;
+                }, 0);
+                
+                console.log(`Caricamento ${this.assets.length} asset (${(this.totalSize / (1024 * 1024)).toFixed(1)}MB stimati)`);
             }
-        }
+        };
 
-// Sostituisci la funzione loadPlants con questa versione
-function loadPlants(lightState) {
-    // Previeni transizioni multiple simultanee
-    if (plantsTransitionInProgress) return;
-    plantsTransitionInProgress = true;
-    
-    const plantImage = lightState ? 'assets/piante/3-notte.webp' : 'assets/piante/3-giorno.webp';
-    
-    textureLoader.load(
-        plantImage,
-        (texture) => {
-            texture.encoding = THREE.sRGBEncoding;
+        function init() {
+            // Setup asset manager
+            setupAssetLoading();
             
-            // Crea il nuovo sprite con la nuova texture
-            const newMaterial = new THREE.SpriteMaterial({
-                map: texture,
-                transparent: true,
-                alphaTest: 0,
-                opacity: 0 // Inizia trasparente
-            });
-            
-            newPlantsSprite = new THREE.Sprite(newMaterial);
-            newPlantsSprite.position.set(-5, 2, 0);
-            newPlantsSprite.scale.set(150, 130, 0);
-            
-            // Aggiungi il nuovo sprite alla scena (sovrapposto al vecchio)
-            scene.add(newPlantsSprite);
-            
-            // Se c'è uno sprite corrente, fade out graduale
-            if (currentPlantsSprite) {
-                // Animazione: fade in del nuovo e fade out del vecchio
-                const timeline = gsap.timeline({
-                    onComplete: () => {
-                        // Rimuovi il vecchio sprite dalla scena
-                        scene.remove(currentPlantsSprite);
-                        // Pulisci il materiale vecchio
-                        if (currentPlantsSprite.material.map) currentPlantsSprite.material.map.dispose();
-                        currentPlantsSprite.material.dispose();
-                        // Il nuovo sprite diventa quello corrente
-                        currentPlantsSprite = newPlantsSprite;
-                        plantsTransitionInProgress = false;
-                    }
-                });
-                
-                // Fade in del nuovo sprite e fade out del vecchio contemporaneamente
-                timeline.to(newPlantsSprite.material, {
-                    opacity: 1,
-                    duration: 1.0,
-                    ease: "power2.inOut"
-                })
-                .to(currentPlantsSprite.material, {
-                    opacity: 0,
-                    duration: 1.0,
-                    ease: "power2.inOut"
-                }, 0); // Inizia allo stesso tempo
-                
-            } else {
-                // Prima volta - mostra immediatamente
-                newPlantsSprite.material.opacity = 1;
-                currentPlantsSprite = newPlantsSprite;
-                plantsTransitionInProgress = false;
-            }
-            
-            console.log(`Piante ${lightState ? 'notturne' : 'diurne'} caricate con sovrapposizione`);
-        },
-        undefined,
-        (error) => {
-            console.error('Errore nel caricamento delle piante PNG:', error);
-            plantsTransitionInProgress = false;
-        }
-    );
-}
-
-        function initApp() {
             const container = document.getElementById('canvas-container');
             
             // Inizializza loader CON DRACO
@@ -1394,18 +1125,125 @@ function loadPlants(lightState) {
             // Setup event listeners per parallasse
             setupParallaxEvents();
 
-            // Carica HDRI
-            loadHDRI();
+            // Inizia il caricamento degli asset
+            startAssetLoading();
 
-            // Carica l'ambiente con la camera dal GLB
-            loadEnvironmentWithCamera();
+            // FALLBACK: se dopo 15 secondi non è ancora tutto caricato, procedi comunque
+            setTimeout(() => {
+                if (isInitialLoad) {
+                    console.warn('Timeout caricamento, procedo comunque');
+                    hideLoaderAndStartApp();
+                }
+            }, 15000);
 
-            // Carica le piante PNG iniziali (luce spenta)
-            loadPlants(isLightOn);
+            window.addEventListener('resize', onWindowResize);
+        }
 
-            // Carica primo prodotto
-            loadProduct(0);
+        
+        function setupAssetLoading() {
+            // Aggiungi asset essenziali
+            assetManager.addAsset('environment', 'assets/camera.glb', 10);
+            assetManager.addAsset('hdri', 'https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/industrial_sunset_puresky_1k.hdr', 9);
+            assetManager.addAsset('plants', 'assets/piante4.png', 1);
+            
+            // Aggiungi tutti i modelli dei prodotti
+            products.forEach((product, index) => {
+                assetManager.addAsset(`product_${index}_off`, product.modelOff, 8 - index);
+                assetManager.addAsset(`product_${index}_on`, product.modelOn, 8 - index);
+            });
+            
+            assetManager.initialize();
+        }
 
+function startAssetLoading() {
+    // Carica asset in ordine di priorità
+    const sortedAssets = [...assetManager.assets].sort((a, b) => b.priority - a.priority);
+    
+    let loadedCount = 0;
+    const totalAssets = sortedAssets.length;
+    
+    sortedAssets.forEach(asset => {
+        switch(asset.type) {
+            case 'environment':
+                loadEnvironmentWithCamera(asset.url);
+                break;
+            case 'hdri':
+                loadHDRI(asset.url);
+                break;
+            case 'plants':
+                loadPlants(asset.url);
+                break;
+            default:
+                if (asset.type.startsWith('product_')) {
+                    // I modelli dei prodotti vengono precaricati
+                    preloadProductModel(asset.url);
+                }
+                break;
+        }
+    });
+    
+    // Avvia il controllo per il completamento
+    setTimeout(completeInitialization, 500);
+}
+
+function updateAssetProgress(url, loaded = true) {
+    const asset = assetManager.assets.find(a => a.url === url);
+    if (asset) {
+        asset.loaded = loaded;
+        if (loaded) {
+            assetManager.loadedSize += asset.size;
+        }
+        
+        const progress = assetManager.updateProgress();
+        
+        // Animazione più smooth della progress bar
+        gsap.to('#loader-progress', {
+            duration: 0.5,
+            width: `${progress}%`,
+            ease: "power2.out"
+        });
+        
+        console.log(`Asset caricato: ${url} - Progresso: ${progress.toFixed(1)}%`);
+    }
+}
+
+function completeInitialization() {
+    // VERIFICA che gli asset essenziali siano caricati prima di procedere
+    const essentialAssets = assetManager.assets.filter(asset => 
+        asset.type === 'environment' || asset.type === 'hdri' || 
+        asset.type.startsWith('product_0') // Primo prodotto
+    );
+    
+    const allEssentialLoaded = essentialAssets.every(asset => asset.loaded);
+    
+    if (!allEssentialLoaded) {
+        console.log('In attesa degli asset essenziali...');
+        setTimeout(completeInitialization, 100);
+        return;
+    }
+
+    console.log('Tutti gli asset essenziali caricati, procedo con il primo prodotto...');
+    
+    // Carica il primo prodotto e POI nascondi il loader
+    loadProduct(0).then(() => {
+        // DOPO che il prodotto è caricato, nascondi il loader
+        hideLoaderAndStartApp();
+    }).catch((error) => {
+        console.error('Errore nel caricamento del primo prodotto:', error);
+        // Anche in caso di errore, procedi comunque
+        hideLoaderAndStartApp();
+    });
+}
+
+function hideLoaderAndStartApp() {
+    const loaderElement = document.getElementById('loader');
+    const loaderContent = document.querySelector('.loader-content');
+    
+    // Animazione più smooth e graduale
+    const timeline = gsap.timeline({
+        onComplete: () => {
+            loaderElement.classList.add('fade-out');
+            
             // Nascondi loading
             document.querySelector('.loading').style.display = 'none';
 
@@ -1418,11 +1256,58 @@ function loadPlants(lightState) {
             // Event listeners per UI
             setupEventListeners();
 
-            window.addEventListener('resize', onWindowResize);
-
-            // Avvia l'animazione
+            isInitialLoad = false;
+            
+            // Avvia animazione
             animate();
+            
+            console.log('Applicazione completamente inizializzata');
         }
+    });
+
+    // Prima fade out dei contenuti del loader
+    timeline.to(loaderContent, {
+        duration: 0.6,
+        opacity: 0,
+        scale: 0.9,
+        ease: "power2.inOut"
+    })
+    // Poi fade out del background del loader
+    .to(loaderElement, {
+        duration: 0.8,
+        opacity: 0,
+        ease: "power2.inOut"
+    }, "-=0.3"); // Inizia 0.3 secondi prima della fine della prima animazione
+}
+
+function preloadProductModel(url) {
+    // Precaria il modello senza aggiungerlo alla scena
+    loader.load(
+        url,
+        (gltf) => {
+            console.log(`Modello precaricato: ${url}`);
+            // PULISCI la scena del GLTF per liberare memoria
+            gltf.scene.traverse(child => {
+                if (child.isMesh) {
+                    if (child.geometry) child.geometry.dispose();
+                    if (child.material) {
+                        if (Array.isArray(child.material)) {
+                            child.material.forEach(material => material.dispose());
+                        } else {
+                            child.material.dispose();
+                        }
+                    }
+                }
+            });
+            updateAssetProgress(url, true);
+        },
+        undefined,
+        (error) => {
+            console.error(`Errore precaricamento ${url}:`, error);
+            updateAssetProgress(url, true); // Considera comunque caricato per non bloccare
+        }
+    );
+}
 
         function setupParallaxEvents() {
             // Desktop - Mouse movement
@@ -1462,8 +1347,8 @@ function loadPlants(lightState) {
                     const deltaY = touch.clientY - lastTouchY;
                     
                     // Calcola movimento parallasse basato su movimento touch
-                    targetCameraX += deltaX * 0.0001;
-                    targetCameraY += deltaY * 0.0001;
+                    targetCameraX += deltaX * 0;
+                    targetCameraY += deltaY * 0;
                     
                     // Limita il movimento
                     targetCameraX = Math.max(-1, Math.min(1, targetCameraX));
@@ -1489,6 +1374,44 @@ function loadPlants(lightState) {
             });
         }
 
+        function loadPlants(url) {
+            textureLoader.load(
+                url,
+                (texture) => {
+                    // Configura la texture per la trasparenza
+                    texture.encoding = THREE.sRGBEncoding;
+                    
+                    // Crea un materiale con trasparenza
+                    const material = new THREE.SpriteMaterial({
+                        map: texture,
+                        transparent: true,
+                        alphaTest: 0.1,
+                        opacity: 1
+                    });
+                    
+                    // Crea lo sprite
+                    plantsSprite = new THREE.Sprite(material);
+                    
+                    // Posiziona le piante dietro i prodotti
+                    plantsSprite.position.set(20, 5, 15);
+                    
+                    // Scala lo sprite
+                    plantsSprite.scale.set(70, 70, 70);
+                    
+                    // Aggiungi alla scena
+                    scene.add(plantsSprite);
+                    
+                    console.log('Piante PNG caricate con successo');
+                    updateAssetProgress(url, true);
+                },
+                undefined,
+                (error) => {
+                    console.error('Errore nel caricamento delle piante PNG:', error);
+                    updateAssetProgress(url, true);
+                }
+            );
+        }
+
         function setupEventListeners() {
             // Frecce
             document.getElementById('prev-btn').addEventListener('click', () => {
@@ -1503,13 +1426,34 @@ function loadPlants(lightState) {
 
             // Toggle luce
             document.getElementById('light-toggle').addEventListener('change', (e) => {
+                // Se il toggle è in cooldown, previeni completamente l'azione
+                if (toggleCooldown) {
+                    e.preventDefault();
+                    // Forza il checkbox a mantenere lo stato corrente
+                    e.target.checked = isLightOn;
+                    return;
+                }
+                
+                // Attiva il cooldown
+                toggleCooldown = true;
+                const toggleSlider = document.getElementById('toggle-slider');
+                const toggleInput = document.getElementById('light-toggle');
+                
+                toggleSlider.classList.add('disabled');
+                toggleInput.disabled = true;
+                
                 isLightOn = e.target.checked;
                 console.log('Stato luce:', isLightOn ? 'ACCESA' : 'SPENTA');
                 updateLightIndicator();
+                
                 // Ricarica il prodotto corrente con lo stato luce corretto
-                loadProduct(currentProductIndex);
-                // Cambia l'immagine delle piante in base allo stato della luce
-                loadPlants(isLightOn);
+                loadProduct(currentProductIndex, true).finally(() => {
+                    // Riabilita il toggle dopo che il caricamento è completato
+                    toggleCooldown = false;
+                    toggleSlider.classList.remove('disabled');
+                    toggleInput.disabled = false;
+                    console.log('Toggle riabilitato');
+                });
             });
 
             // Espandi/contrai scheda info
@@ -1680,10 +1624,7 @@ function loadPlants(lightState) {
                     opacity: 1,
                     duration: 0.8,
                     ease: "back.out(1.2)",
-                    delay: 0.5,
-                    onComplete: () => {
-                        document.getElementById('product-info').classList.add('visible');
-                    }
+                    delay: 0.5
                 }
             );
             
@@ -1712,42 +1653,6 @@ function loadPlants(lightState) {
                     duration: 0.6
                 },
                 "-=0.4"
-            );
-
-            // Animazione controlli
-            gsap.fromTo('#controls', 
-                {
-                    y: 50,
-                    opacity: 0
-                },
-                {
-                    y: 0,
-                    opacity: 1,
-                    duration: 0.8,
-                    ease: "back.out(1.2)",
-                    delay: 1.0,
-                    onComplete: () => {
-                        document.getElementById('controls').classList.add('visible');
-                    }
-                }
-            );
-
-            // Animazione toggle button
-            gsap.fromTo('#toggle-controls-btn', 
-                {
-                    y: 30,
-                    opacity: 0
-                },
-                {
-                    y: 0,
-                    opacity: 1,
-                    duration: 0.6,
-                    ease: "back.out(1.2)",
-                    delay: 1.2,
-                    onComplete: () => {
-                        document.getElementById('toggle-controls-btn').classList.add('visible');
-                    }
-                }
             );
         }
 
@@ -1825,12 +1730,12 @@ function loadPlants(lightState) {
             document.getElementById('price-value').textContent = product.price;
         }
 
-        function loadHDRI() {
+        function loadHDRI(url) {
             const rgbeLoader = new THREE.RGBELoader();
             rgbeLoader.setDataType(THREE.HalfFloatType);
             
             rgbeLoader.load(
-                'https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/industrial_sunset_puresky_1k.hdr',
+                url,
                 function(texture) {
                     
                     texture.mapping = THREE.EquirectangularReflectionMapping;
@@ -1850,11 +1755,13 @@ function loadPlants(lightState) {
                     pmremGenerator.dispose();
                     
                     console.log('HDRI caricato con successo');
+                    updateAssetProgress(url, true);
                 },
                 undefined,
                 function(error) {
                     console.error('Errore nel caricamento HDRI:', error);
                     createFallbackEnvironment();
+                    updateAssetProgress(url, true);
                 }
             );
         }
@@ -1877,15 +1784,26 @@ function loadPlants(lightState) {
             scene.background = envMap;
         }
 
-        function loadEnvironmentWithCamera() {
-            // Carica il GLB che contiene la camera
+        function loadEnvironmentWithCamera(url) {
             loader.load(
-                'assets/camera.glb', // Usa il primo GLB che contiene la camera
+                url,
                 (gltf) => {
                     environmentMesh = gltf.scene;
                     
+                    // Applica le ottimizzazioni delle texture anche all'ambiente
+                    environmentMesh.traverse((child) => {
+                        if (child.isMesh && child.material) {
+                            if (child.material.map) {
+                                child.material.map.minFilter = THREE.LinearFilter;
+                                child.material.map.magFilter = THREE.LinearFilter;
+                                child.material.map.anisotropy = renderer.capabilities.getMaxAnisotropy();
+                                child.material.map.needsUpdate = true;
+                            }
+                        }
+                    });
+                    
                     // Configura l'ambiente
-                    environmentMesh.position.set(0, 0, 6)
+                    environmentMesh.position.set(0, 1, 6)
                     environmentMesh.scale.set(18, 18, 18)
                     
                     // Cerca una camera nel GLB
@@ -1905,7 +1823,7 @@ function loadPlants(lightState) {
                                 sceneCamera.far = 1000;  // Piano far molto lontano
                                 
                                 // *** MODIFICA LA LUNGHEZZA FOCALE QUI ***
-                                sceneCamera.fov = 20; // Cambia questo valore (default: 50)
+                                sceneCamera.fov = 21; // Cambia questo valore (default: 50)
                                 
                                 console.log('Piani di clipping regolati:', sceneCamera.near, sceneCamera.far);
                                 console.log('FOV impostato a:', sceneCamera.fov);
@@ -1931,11 +1849,20 @@ function loadPlants(lightState) {
                         scene.add(environmentMesh);
                         console.log('Ambiente con camera GLB caricato con successo');
                     }
+                    
+                    updateAssetProgress(url, true);
                 },
                 undefined,
                 (error) => {
                     console.error('Errore nel caricamento dell\'ambiente con camera:', error);
                     createBasicEnvironment();
+                    updateAssetProgress(url, true);
+                },
+                undefined,
+                (error) => {
+                    console.error('Errore nel caricamento dell\'ambiente con camera:', error);
+                    createBasicEnvironment();
+                    updateAssetProgress(url, true);
                 }
             );
         }
@@ -1959,112 +1886,211 @@ function loadPlants(lightState) {
             console.log('Ambiente base creato con successo');
         }
 
-        function createGeometry(index) {
-            return new Promise((resolve, reject) => {
-                const product = products[index];
-                const modelPath = isLightOn ? product.modelOn : product.modelOff;
+function createGeometry(index) {
+    return new Promise((resolve, reject) => {
+        const product = products[index];
+        const modelPath = isLightOn ? product.modelOn : product.modelOff;
+        
+        console.log(`Caricamento prodotto ${index}: ${isLightOn ? 'LUCE ACCESA' : 'LUCE SPENTA'}`);
+        console.log(`Percorso modello: ${modelPath}`);
+        
+        loader.load(
+            modelPath,
+            (gltf) => {
+                const model = gltf.scene;
                 
-                console.log(`Caricamento prodotto ${index}: ${isLightOn ? 'LUCE ACCESA' : 'LUCE SPENTA'}`);
-                console.log(`Percorso modello: ${modelPath}`);
-                
-                loader.load(
-                    modelPath,
-                    (gltf) => {
-                        const model = gltf.scene;
+                // Abilita ombre per tutti i mesh
+                model.traverse((child) => {
+                    if (child.isMesh) {
+                        child.castShadow = true;
+                        child.receiveShadow = true;
                         
-                        // Abilita ombre per tutti i mesh
-                        model.traverse((child) => {
-                            if (child.isMesh) {
-                                child.castShadow = true;
-                                child.receiveShadow = true;
-                                
-                                // Migliora i materiali con envMap
-                                if (child.material) {
-                                    child.material.envMap = envMap;
-                                    child.material.envMapIntensity = 1.0;
-                                    child.material.needsUpdate = true;
-                                    
-                                    if (child.material.metalness > 0) {
-                                        child.material.roughness = 0.1;
-                                    }
-                                }
+                        // Migliora i materiali con envMap
+                        if (child.material) {
+                            child.material.envMap = envMap;
+                            child.material.envMapIntensity = 1.0;
+                            child.material.needsUpdate = true;
+                            
+                            // OTTIMIZZAZIONE QUALITÀ TEXTURE - AGGIUNGI QUESTA PARTE
+                            if (child.material.map) {
+                                child.material.map.minFilter = THREE.LinearFilter;
+                                child.material.map.magFilter = THREE.LinearFilter;
+                                child.material.map.anisotropy = 4;
+                                child.material.map.needsUpdate = true;
                             }
-                        });
-                        
-                        // Centra il modello
-                        const box = new THREE.Box3().setFromObject(model);
-                        const center = box.getCenter(new THREE.Vector3());
-                        model.position.sub(center);
-                        
-                        // Posiziona sopra il pavimento
-                        model.position.y = 0;
-                        
-                        // Applica la scala fissa per questo prodotto
-                        const scale = product.scale;
-                        model.scale.set(scale, scale, scale);
-                        
-                        // Applica la rotazione personalizzata
-                        const rotation = product.rotation;
-                        model.rotation.set(rotation.x, rotation.y, rotation.z);
-                        
-                        resolve(model);
-                    },
-                    (xhr) => {
-                        const percentComplete = (xhr.loaded / xhr.total) * 100;
-                        console.log(modelPath + ' ' + percentComplete.toFixed(0) + '% caricato');
-                    },
-                    (error) => {
-                        console.error('Errore nel caricamento del modello:', error);
-                        reject(error);
+                            
+                            // Se il materiale ha mappe aggiuntive, applicalo anche a quelle
+                            if (child.material.normalMap) {
+                                child.material.normalMap.minFilter = THREE.LinearFilter;
+                                child.material.normalMap.magFilter = THREE.LinearFilter;
+                                child.material.normalMap.needsUpdate = true;
+                            }
+                            
+                            if (child.material.roughnessMap) {
+                                child.material.roughnessMap.minFilter = THREE.LinearFilter;
+                                child.material.roughnessMap.magFilter = THREE.LinearFilter;
+                                child.material.roughnessMap.needsUpdate = true;
+                            }
+                            
+                            if (child.material.metalnessMap) {
+                                child.material.metalnessMap.minFilter = THREE.LinearFilter;
+                                child.material.metalnessMap.magFilter = THREE.LinearFilter;
+                                child.material.metalnessMap.needsUpdate = true;
+                            }
+                            
+                            if (child.material.metalness > 0) {
+                                child.material.roughness = 0.1;
+                            }
+                        }
                     }
-                );
-            });
+                });
+                
+                // Centra il modello
+                const box = new THREE.Box3().setFromObject(model);
+                const center = box.getCenter(new THREE.Vector3());
+                model.position.sub(center);
+                
+                // Posiziona sopra il pavimento
+                model.position.y = 0;
+                
+                // Applica la scala fissa per questo prodotto
+                const scale = product.scale;
+                model.scale.set(scale, scale, scale);
+                
+                // Applica la rotazione personalizzata
+                const rotation = product.rotation;
+                model.rotation.set(rotation.x, rotation.y, rotation.z);
+                
+                resolve(model);
+            },
+            (xhr) => {
+                const percentComplete = (xhr.loaded / xhr.total) * 100;
+                console.log(modelPath + ' ' + percentComplete.toFixed(0) + '% caricato');
+            },
+            (error) => {
+                console.error('Errore nel caricamento del modello:', error);
+                reject(error);
+            }
+        );
+    });
+}
+
+function loadProduct(index, isLightToggle = false) {
+    return new Promise((resolve, reject) => {
+        if (isTransitioning) {
+            reject('Transizione già in corso');
+            return;
+        }
+        
+        isTransitioning = true;
+        
+        const previousMesh = currentMesh;
+        currentProductIndex = index;
+
+        // Mostra loading solo per cambio prodotto (non per toggle luce)
+        const loadingEl = document.querySelector('.loading');
+        if (!isLightToggle) {
+            loadingEl.style.display = 'block';
+            loadingEl.textContent = '';
         }
 
-        function loadProduct(index) {
-            if (isTransitioning) return;
-            isTransitioning = true;
-            
-            currentProductIndex = index;
-
-            // Mostra loading
-            const loadingEl = document.querySelector('.loading');
-            loadingEl.style.display = 'block';
-            loadingEl.textContent = 'Caricamento modello...';
-
-            createGeometry(index)
-                .then((newMesh) => {
-                    // Applica la scala immediatamente
-                    const scale = products[index].scale;
-                    newMesh.scale.set(scale, scale, scale);
+        createGeometry(index)
+            .then((newMesh) => {
+                // Applica la scala immediatamente
+                const scale = products[index].scale;
+                newMesh.scale.set(scale, scale, scale);
+                
+                // Se è un toggle luce, usa transizione smooth
+                if (isLightToggle && previousMesh) {
+                    // Imposta opacità iniziale a 0 per la dissolvenza
+                    newMesh.traverse((child) => {
+                        if (child.isMesh && child.material) {
+                            child.material.transparent = true;
+                            child.material.opacity = 0;
+                        }
+                    });
                     
-                    // Aggiungi alla scena
+                    // Aggiungi il nuovo mesh alla scena
+                    scene.add(newMesh);
+
+                    // Timeline per la transizione smooth
+                    const transitionTimeline = gsap.timeline({
+                        onComplete: () => {
+                            // Rimuovi il vecchio mesh dopo la transizione
+                            if (previousMesh && scene.getObjectById(previousMesh.id)) {
+                                scene.remove(previousMesh);
+                            }
+                            
+                            // Ripristina le proprietà dei materiali del nuovo mesh
+                            newMesh.traverse((child) => {
+                                if (child.isMesh && child.material) {
+                                    child.material.transparent = false;
+                                }
+                            });
+                            
+                            isTransitioning = false;
+                            currentMesh = newMesh;
+                            console.log('Transizione toggle luce completata');
+                            resolve();
+                        }
+                    });
+
+                    // Fade out del mesh precedente
+                    previousMesh.traverse((child) => {
+                        if (child.isMesh && child.material) {
+                            child.material.transparent = true;
+                            transitionTimeline.to(child.material, {
+                                opacity: 0,
+                                duration: 1,
+                                ease: "power2.in"
+                            }, 0);
+                        }
+                    });
+
+                    // Fade in del nuovo mesh
+                    newMesh.traverse((child) => {
+                        if (child.isMesh && child.material) {
+                            transitionTimeline.to(child.material, {
+                                opacity: 1,
+                                duration: 1,
+                                ease: "power2.out"
+                            }, 0);
+                        }
+                    });
+
+                } else {
+                    // Transizione originale per cambio prodotto con slider
                     scene.add(newMesh);
 
                     // Rimuovi il vecchio mesh se esiste
-                    if (currentMesh) {
-                        scene.remove(currentMesh);
+                    if (previousMesh) {
+                        scene.remove(previousMesh);
                     }
 
-                    // Imposta immediatamente il nuovo mesh come corrente
-                    currentMesh = newMesh;
                     isTransitioning = false;
                     loadingEl.style.display = 'none';
                     
-                    // Aggiorna UI immediatamente
-                    updateProductInfo(index);
+                    // Aggiorna UI
+                    animateProductChange();
                     
-                    console.log('Prodotto cambiato immediatamente');
-                })
-                .catch((error) => {
-                    console.error('Errore nel caricamento del prodotto:', error);
-                    isTransitioning = false;
+                    currentMesh = newMesh;
+                    console.log('Cambio prodotto completato');
+                    resolve();
+                }
+            })
+            .catch((error) => {
+                console.error('Errore nel caricamento del prodotto:', error);
+                isTransitioning = false;
+                if (!isLightToggle) {
                     loadingEl.textContent = 'Errore nel caricamento. Verifica che i file GLB siano nella cartella assets/';
                     setTimeout(() => {
                         loadingEl.style.display = 'none';
                     }, 3000);
-                });
-        }
+                }
+                reject(error);
+            });
+    });
+}
 
         function animate() {
             requestAnimationFrame(animate);
@@ -2118,15 +2144,9 @@ function loadPlants(lightState) {
 
         // Inizializza quando il documento è pronto
         if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', function() {
-                // Inizializza prima il loader
-                initLoader();
-                // Poi inizia il pre-caricamento degli asset
-                setTimeout(preloadAssets, 100);
-            });
+            document.addEventListener('DOMContentLoaded', init);
         } else {
-            initLoader();
-            setTimeout(preloadAssets, 100);
+            init();
         }
     </script>
 </body>
