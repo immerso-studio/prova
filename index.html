@@ -1391,17 +1391,41 @@ function setupParallaxEvents() {
         }
     });
 
-    // Mobile - Touch movement
+    // Mobile - Touch movement - MODIFICATO PER DISABILITARE PARALLASSE
     let isTouching = false;
-    let lastTouchX = 0;
-    let lastTouchY = 0;
-    let touchStartTime = 0;
 
+    document.addEventListener('touchstart', (event) => {
+        if (!isTransitioning) {
+            // Controlla se il tocco è su un bottone
+            const isButtonTouch = event.target.closest('.arrow-btn') || 
+                                event.target.closest('.toggle-switch') ||
+                                event.target.closest('.toggle-controls-btn') ||
+                                event.target.closest('.expand-btn');
+            
+            if (!isButtonTouch) {
+                isTouching = true;
+                // Resetta immediatamente la camera quando si tocca lo schermo
+                targetCameraX = 0;
+                targetCameraY = 0;
+            }
+        }
+    });
 
+    document.addEventListener('touchmove', (event) => {
+        // DISABILITATO - Non fare nulla durante il movimento touch
+        if (isTouching) {
+            event.preventDefault(); // Previeni scrolling
+        }
+    });
 
+    document.addEventListener('touchend', (event) => {
+        isTouching = false;
+        // Mantieni la camera resettata
+        targetCameraX = 0;
+        targetCameraY = 0;
+    });
 
-
-    // Reset camera quando il mouse esce dalla finestra
+    // Reset camera quando il mouse esce dalla finestra (solo desktop)
     document.addEventListener('mouseleave', () => {
         targetCameraX = 0;
         targetCameraY = 0;
