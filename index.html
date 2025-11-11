@@ -1376,7 +1376,7 @@ function showStartButton() {
         }
 
 function setupParallaxEvents() {
-    // Desktop - Mouse movement (MANTENUTO COSÌ COME È)
+    // Desktop - Mouse movement
     document.addEventListener('mousemove', (event) => {
         if (!isTransitioning) {
             mouseX = (event.clientX / window.innerWidth) * 2 - 1;
@@ -1391,62 +1391,15 @@ function setupParallaxEvents() {
         }
     });
 
-    // Mobile - Touch movement (MODIFICATO)
+    // Mobile - Touch movement
     let isTouching = false;
     let lastTouchX = 0;
     let lastTouchY = 0;
     let touchStartTime = 0;
-    let isParallaxEnabled = false; // Nuova variabile per controllare se il parallasse è attivo
 
-    document.addEventListener('touchstart', (event) => {
-        if (!isTransitioning) {
-            // PER DISABILITARE COMPLETAMENTE IL PARALLASSE MOBILE:
-            isParallaxEnabled = false;
-            targetCameraX = 0;
-            targetCameraY = 0;
-            
-            // Mantieni il resto per gestire i click sui bottoni
-            const touchDuration = Date.now() - touchStartTime;
-            const isButtonTouch = event.target.closest('.arrow-btn') || 
-                                event.target.closest('.toggle-switch') ||
-                                event.target.closest('.toggle-controls-btn') ||
-                                event.target.closest('.expand-btn');
-            
-            if (isButtonTouch && touchDuration < 300) {
-                targetCameraX = 0;
-                targetCameraY = 0;
-            }
-            
-            event.preventDefault();
-        }
-    });
 
-    document.addEventListener('touchmove', (event) => {
-        // Completamente disabilitato per mobile
-        // if (!isTransitioning && isTouching && isParallaxEnabled) {
-        //     // Codice parallasse commentato
-        // }
-        
-        // Solo per prevenire lo scroll accidentale
-        event.preventDefault();
-    });
 
-    document.addEventListener('touchend', (event) => {
-        const touchDuration = Date.now() - touchStartTime;
-        
-        // Se è stato un tocco breve (click) o su un bottone, resetta la camera
-        if (touchDuration < 300 || event.target.closest('.arrow-btn') || 
-            event.target.closest('.toggle-switch') ||
-            event.target.closest('.toggle-controls-btn') ||
-            event.target.closest('.expand-btn')) {
-            
-            targetCameraX = 0;
-            targetCameraY = 0;
-        }
-        
-        isTouching = false;
-        isParallaxEnabled = false;
-    });
+
 
     // Reset camera quando il mouse esce dalla finestra
     document.addEventListener('mouseleave', () => {
