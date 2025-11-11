@@ -1376,7 +1376,7 @@ function showStartButton() {
         }
 
 function setupParallaxEvents() {
-    // Desktop - Mouse movement
+    // Desktop - Mouse movement (MANTENUTO COSÌ COME È)
     document.addEventListener('mousemove', (event) => {
         if (!isTransitioning) {
             mouseX = (event.clientX / window.innerWidth) * 2 - 1;
@@ -1391,65 +1391,61 @@ function setupParallaxEvents() {
         }
     });
 
-    // Mobile - Touch movement
+    // Mobile - Touch movement (MODIFICATO)
     let isTouching = false;
     let lastTouchX = 0;
     let lastTouchY = 0;
     let touchStartTime = 0;
+    let isParallaxEnabled = false; // Nuova variabile per controllare se il parallasse è attivo
 
     document.addEventListener('touchstart', (event) => {
         if (!isTransitioning) {
-            // Controlla se il tocco è su un bottone
+            // PER DISABILITARE COMPLETAMENTE IL PARALLASSE MOBILE:
+            isParallaxEnabled = false;
+            targetCameraX = 0;
+            targetCameraY = 0;
+            
+            // Mantieni il resto per gestire i click sui bottoni
+            const touchDuration = Date.now() - touchStartTime;
             const isButtonTouch = event.target.closest('.arrow-btn') || 
                                 event.target.closest('.toggle-switch') ||
                                 event.target.closest('.toggle-controls-btn') ||
                                 event.target.closest('.expand-btn');
             
-            if (!isButtonTouch) {
-                isTouching = true;
-                const touch = event.touches[0];
-                lastTouchX = touch.clientX;
-                lastTouchY = touch.clientY;
-                touchStartTime = Date.now();
+            if (isButtonTouch && touchDuration < 300) {
+                targetCameraX = 0;
+                targetCameraY = 0;
             }
+            
             event.preventDefault();
         }
     });
 
     document.addEventListener('touchmove', (event) => {
-        if (!isTransitioning && isTouching) {
-            const touch = event.touches[0];
-            const deltaX = touch.clientX - lastTouchX;
-            const deltaY = touch.clientY - lastTouchY;
-            
-            // Calcola movimento parallasse basato su movimento touch
-            targetCameraX += deltaX * 0.0001;
-            targetCameraY += deltaY * 0.0001;
-            
-            // Limita il movimento
-            targetCameraX = Math.max(-1, Math.min(1, targetCameraX));
-            targetCameraY = Math.max(-0.8, Math.min(0.8, targetCameraY));
-            
-            lastTouchX = touch.clientX;
-            lastTouchY = touch.clientY;
-            event.preventDefault();
-        }
+        // Completamente disabilitato per mobile
+        // if (!isTransitioning && isTouching && isParallaxEnabled) {
+        //     // Codice parallasse commentato
+        // }
+        
+        // Solo per prevenire lo scroll accidentale
+        event.preventDefault();
     });
 
     document.addEventListener('touchend', (event) => {
-        // Se il tocco è stato breve (click) e su un bottone, resetta la camera
         const touchDuration = Date.now() - touchStartTime;
-        const isButtonTouch = event.target.closest('.arrow-btn') || 
-                            event.target.closest('.toggle-switch') ||
-                            event.target.closest('.toggle-controls-btn') ||
-                            event.target.closest('.expand-btn');
         
-        if (isButtonTouch && touchDuration < 300) {
+        // Se è stato un tocco breve (click) o su un bottone, resetta la camera
+        if (touchDuration < 300 || event.target.closest('.arrow-btn') || 
+            event.target.closest('.toggle-switch') ||
+            event.target.closest('.toggle-controls-btn') ||
+            event.target.closest('.expand-btn')) {
+            
             targetCameraX = 0;
             targetCameraY = 0;
         }
         
         isTouching = false;
+        isParallaxEnabled = false;
     });
 
     // Reset camera quando il mouse esce dalla finestra
