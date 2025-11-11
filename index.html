@@ -1378,6 +1378,11 @@ function showStartButton() {
 function setupParallaxEvents() {
     // Desktop - Mouse movement
     document.addEventListener('mousemove', (event) => {
+        // Ignora mousemove se è stato generato da un touch
+        if (event.sourceCapabilities && event.sourceCapabilities.firesTouchEvents) {
+            return;
+        }
+        
         if (!isTransitioning) {
             mouseX = (event.clientX / window.innerWidth) * 2 - 1;
             mouseY = -(event.clientY / window.innerHeight) * 2 + 1;
@@ -1391,7 +1396,7 @@ function setupParallaxEvents() {
         }
     });
 
-    // Mobile - Touch movement - MODIFICATO PER DISABILITARE PARALLASSE
+    // Mobile - Touch events
     let isTouching = false;
 
     document.addEventListener('touchstart', (event) => {
@@ -1404,28 +1409,36 @@ function setupParallaxEvents() {
             
             if (!isButtonTouch) {
                 isTouching = true;
-                // Resetta immediatamente la camera quando si tocca lo schermo
+                // Resetta immediatamente la camera
                 targetCameraX = 0;
                 targetCameraY = 0;
+                currentCameraX = 0;
+                currentCameraY = 0;
             }
         }
-    });
+    }, { passive: false });
 
     document.addEventListener('touchmove', (event) => {
-        // DISABILITATO - Non fare nulla durante il movimento touch
         if (isTouching) {
-            event.preventDefault(); // Previeni scrolling
+            // Mantieni la camera resettata durante il movimento
+            targetCameraX = 0;
+            targetCameraY = 0;
+            currentCameraX = 0;
+            currentCameraY = 0;
+            event.preventDefault();
         }
-    });
+    }, { passive: false });
 
     document.addEventListener('touchend', (event) => {
         isTouching = false;
-        // Mantieni la camera resettata
+        // Forza il reset completo della camera
         targetCameraX = 0;
         targetCameraY = 0;
+        currentCameraX = 0;
+        currentCameraY = 0;
     });
 
-    // Reset camera quando il mouse esce dalla finestra (solo desktop)
+    // Reset camera quando il mouse esce dalla finestra
     document.addEventListener('mouseleave', () => {
         targetCameraX = 0;
         targetCameraY = 0;
