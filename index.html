@@ -65,8 +65,8 @@
             width: 90%;
             text-align: center;
             opacity: 0;
-            min-height: 300px; /* ALTEZZA MINIMA per stabilizzare il layout */
-            position: relative; /* AGGIUNGI per il posizionamento del bottone */
+            min-height: 300px;
+            position: relative;
         }
 
         .loader-logo {
@@ -84,14 +84,13 @@
             gap: 12px;
             opacity: 1;
             transition: opacity 0.5s ease;
-            height: 50px; /* ALTEZZA FISSA per mantenere lo spazio */
+            height: 50px;
             position: relative;
         }
 
         .progress-section.hidden {
             opacity: 0;
             pointer-events: none;
-            /* RIMUOVI height: 0 e overflow: hidden */
         }
 
         .progress-container {
@@ -131,7 +130,7 @@
         }
 
         .company-logo {
-            width: 150px; /* Più piccolo del logo platek (120px) */
+            width: 150px;
             height: auto;
             object-fit: contain;
             filter: brightness(0) invert(1);
@@ -169,7 +168,7 @@
         #start-button:hover {
             background: rgba(255, 255, 255, 0.25);
             transform: translate(-50%, -50%) scale(1.05);
-            gap: 12px; /* Leggera animazione dello spazio */
+            gap: 12px;
         }
 
         #start-button:active {
@@ -181,10 +180,9 @@
         }
 
         #start-button:hover svg {
-            transform: translateX(3px); /* Leggera animazione della freccia */
+            transform: translateX(3px);
         }
 
-        /* Stile Glass Frosted per i controlli */
         .glass-frosted {
             background: rgba(255, 255, 255, 0.15);
             backdrop-filter: blur(20px) saturate(180%);
@@ -243,7 +241,6 @@
             overflow: hidden;
             cursor: pointer;
             z-index: 100;
-            /* AGGIUNGI: Altezza fissa per prevenire il salto */
             min-height: 70px;
         }
 
@@ -305,14 +302,11 @@
             opacity: 0;
             max-height: 0;
             overflow: hidden;
-            /* AGGIUNGI: Rimuovi margin e usa padding per spaziatura interna */
             margin: 0;
             padding: 0;
-            /* AGGIUNGI: Transizione più fluida */
             transition: opacity 0.3s ease, max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        /* AGGIUNGI queste regole per quando la scheda è espansa */
         #product-info.expanded .additional-info {
             margin-top: 15px;
         }
@@ -337,7 +331,7 @@
             text-align: right;
         }
 
-        /*.price-tag {
+        .price-tag {
             background: linear-gradient(135deg, rgba(255,215,0,0.2), rgba(255,215,0,0.1));
             padding: 8px 15px;
             border-radius: 12px;
@@ -389,7 +383,7 @@
             font-weight: 600;
         }
 
-        /* Toggle Switch Styles - Improved */
+        /* Toggle Switch Styles */
         .toggle-container {
             display: flex;
             align-items: center;
@@ -529,6 +523,128 @@
             color: rgba(255, 255, 255, 0.6);
         }
 
+        /* Audio Controls Section */
+        .audio-section {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .audio-controls {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .audio-toggle {
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .audio-toggle:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: scale(1.05);
+        }
+
+        .audio-toggle:active {
+            transform: scale(0.95);
+        }
+
+        .audio-toggle.active {
+            background: rgba(255, 215, 0, 0.15);
+            border-color: rgba(255, 215, 0, 0.4);
+        }
+
+        .audio-waves {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 3px;
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+        .wave-bar {
+            width: 3px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 2px;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-origin: center bottom;
+        }
+
+        .wave-bar.muted {
+            width: 16px;
+            height: 3px;
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 2px;
+            transform: scaleX(0.8);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .audio-toggle.active .wave-bar:nth-child(1) {
+            animation: waveAnimation 1.2s ease-in-out infinite alternate;
+            height: 8px;
+        }
+
+        .audio-toggle.active .wave-bar:nth-child(2) {
+            animation: waveAnimation 1.2s ease-in-out infinite alternate 0.2s;
+            height: 16px;
+        }
+
+        .audio-toggle.active .wave-bar:nth-child(3) {
+            animation: waveAnimation 1.2s ease-in-out infinite alternate 0.4s;
+            height: 12px;
+        }
+
+        .audio-toggle.active .wave-bar:nth-child(4) {
+            animation: waveAnimation 1.2s ease-in-out infinite alternate 0.6s;
+            height: 20px;
+        }
+
+        .audio-toggle.active .wave-bar:nth-child(5) {
+            animation: waveAnimation 1.2s ease-in-out infinite alternate 0.8s;
+            height: 14px;
+        }
+
+        @keyframes waveAnimation {
+            0% {
+                transform: scaleY(0.6);
+            }
+            100% {
+                transform: scaleY(1.2);
+            }
+        }
+
+        .audio-toggle:not(.active) .wave-bar {
+            height: 3px !important;
+            transform: scaleY(1) !important;
+            animation: none !important;
+        }
+
+        .audio-toggle:not(.active) .wave-bar:nth-child(1),
+        .audio-toggle:not(.active) .wave-bar:nth-child(2),
+        .audio-toggle:not(.active) .wave-bar:nth-child(3),
+        .audio-toggle:not(.active) .wave-bar:nth-child(4),
+        .audio-toggle:not(.active) .wave-bar:nth-child(5) {
+            width: 3px;
+            height: 3px;
+            background: rgba(255, 255, 255, 0.6);
+        }
+
         .loading {
             position: absolute;
             top: 50%;
@@ -540,10 +656,10 @@
             padding: 0 20px;
         }
 
-        /* Toggle Controls Button - POSIZIONATO AL CENTRO IN ALTO ALLA SCHEDA */
+        /* Toggle Controls Button */
         .toggle-controls-btn {
             position: absolute;
-            bottom: 180px; /* Metà fuori e metà sopra la scheda */
+            bottom: 180px;
             left: 50%;
             transform: translateX(-50%);
             width: 100px;
@@ -573,7 +689,6 @@
             transform: translateX(-50%) scale(0.95);
         }
 
-        /* Stato quando i controlli sono nascosti */
         #controls.hidden + .toggle-controls-btn {
             top: auto;
             bottom: 10px;
@@ -653,7 +768,20 @@
                 height: 30px;
             }
 
-            /* Loader mobile */
+            .audio-section {
+                top: 12px;
+                right: 12px;
+            }
+            
+            .audio-toggle {
+                width: 40px;
+                height: 40px;
+            }
+            
+            .wave-bar {
+                width: 2.5px;
+            }
+
             .loader-content {
                 padding: 30px 20px;
                 gap: 25px;
@@ -736,7 +864,21 @@
                 bottom: 10px;
             }
 
-            /* Loader mobile piccolo */
+            .audio-section {
+                top: 10px;
+                right: 10px;
+            }
+            
+            .audio-toggle {
+                width: 36px;
+                height: 36px;
+            }
+            
+            .wave-bar {
+                width: 2px;
+                gap: 2px;
+            }
+
             .loader-content {
                 padding: 25px 15px;
                 gap: 20px;
@@ -781,7 +923,6 @@
             }
         }
 
-        /* Orientamento landscape per mobile */
         @media (max-height: 500px) and (orientation: landscape) {
             #product-info {
                 top: 10px;
@@ -814,7 +955,16 @@
                 bottom: 15px;
             }
 
-            /* Loader landscape */
+            .audio-section {
+                top: 8px;
+                right: 8px;
+            }
+            
+            .audio-toggle {
+                width: 32px;
+                height: 32px;
+            }
+
             .loader-content {
                 padding: 20px;
                 gap: 20px;
@@ -827,7 +977,6 @@
             }
         }
 
-        /* Supporto per touch devices */
         @media (hover: none) and (pointer: coarse) {
             .arrow-btn:hover {
                 transform: none;
@@ -850,14 +999,24 @@
                 background: rgba(255, 255, 255, 0.25);
                 transform: translate(-50%, -50%) scale(0.95);
             }
+
+            .audio-toggle:hover {
+                background: rgba(255, 255, 255, 0.1);
+                transform: scale(1);
+            }
+
+            .audio-toggle:active {
+                background: rgba(255, 255, 255, 0.15);
+                transform: scale(0.95);
+            }
         }
 
-        /* Migliora il comportamento touch per i bottoni */
         @media (hover: none) and (pointer: coarse) {
             .arrow-btn,
             .toggle-switch,
             .toggle-controls-btn,
-            .expand-btn {
+            .expand-btn,
+            .audio-toggle {
                 touch-action: manipulation;
                 -webkit-tap-highlight-color: transparent;
             }
@@ -895,6 +1054,24 @@
     <div id="canvas-container">
         <div class="loading">Caricamento...</div>
     </div>
+
+    <!-- Audio Elements - OTTIMIZZATI -->
+    <audio id="ambient-audio" loop preload="metadata">
+        <source src="assets/audio/ambient-sound.mp3" type="audio/mpeg">
+        <source src="assets/audio/ambient-sound.ogg" type="audio/ogg">
+    </audio>
+    
+    <!-- Audio per bottoni freccia - OTTIMIZZATO -->
+    <audio id="button-audio" preload="auto">
+        <source src="assets/audio/button-click.mp3" type="audio/mpeg">
+        <source src="assets/audio/button-click.ogg" type="audio/ogg">
+    </audio>
+    
+    <!-- Audio per toggle switch - OTTIMIZZATO -->
+    <audio id="toggle-switch-audio" preload="auto">
+        <source src="assets/audio/toggle-switch.mp3" type="audio/mpeg">
+        <source src="assets/audio/toggle-switch.ogg" type="audio/ogg">
+    </audio>
 
     <div id="product-info" class="glass-frosted">
         <div class="product-header">
@@ -935,6 +1112,21 @@
     </div>
 
     <div id="controls" class="glass-frosted">
+        <!-- Controlli Audio -->
+        <div class="audio-section">
+            <div class="audio-controls">
+                <div class="audio-toggle" id="audio-toggle">
+                    <div class="audio-waves">
+                        <div class="wave-bar"></div>
+                        <div class="wave-bar"></div>
+                        <div class="wave-bar"></div>
+                        <div class="wave-bar"></div>
+                        <div class="wave-bar"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="slider-container">
             <!-- Indicatore stato luce -->
             <div class="power-indicator">
@@ -974,7 +1166,7 @@
         </div>
     </div>
 
-    <!-- Bottone toggle POSIZIONATO AL CENTRO IN ALTO ALLA SCHEDA CONTROLS -->
+    <!-- Bottone toggle controlli -->
     <button class="toggle-controls-btn glass-frosted" id="toggle-controls-btn">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
             xmlns="http://www.w3.org/2000/svg">
@@ -994,8 +1186,10 @@
         let isTransitioning = false;
         let loader, textureLoader;
         let currentProductIndex = 0;
-        let isLightOn = false; // Stato luce: false = spenta, true = accesa
-        let controlsVisible = true; // Stato visibilità controlli
+        let isLightOn = false;
+        let controlsVisible = true;
+        let ambientAudio, buttonAudio, toggleSwitchAudio;
+        let isAudioEnabled = false;
         
         // Variabili per effetto parallasse
         let mouseX = 0;
@@ -1013,7 +1207,7 @@
         let originalCameraRotation = new THREE.Euler();
         let useSceneCamera = false;
 
-        // Aggiungi questa variabile globale all'inizio con le altre variabili
+        // Variabili per le piante
         let plantsTransitionInProgress = false;
         let currentPlantsSprite = null;
         let newPlantsSprite = null;
@@ -1024,15 +1218,13 @@
         let allAssetsLoaded = false;
         let progressInterval;
 
-        
-
-        // Configurazione prodotti con rotazione personalizzata
+        // Configurazione prodotti
         const products = [
             { 
                 name: 'Team Round', 
                 shortName: 'Team Round',
-                modelOff: 'assets/1/Prova_export_6_circle_giorno.glb',    // Luce spenta
-                modelOn: 'assets/1/Prova_export_6_circle_sera.glb',     // Luce accesa
+                modelOff: 'assets/1/Prova_export_6_circle_giorno.glb',
+                modelOn: 'assets/1/Prova_export_6_circle_sera.glb',
                 scale: 15,
                 rotation: { x: 0, y: 0, z: 0 },
                 material: 'Alluminio anodizzato',
@@ -1043,8 +1235,8 @@
             { 
                 name: 'Team Small', 
                 shortName: 'Team Small',
-                modelOff: 'assets/1/Prova_export_6_square_giorno.glb',    // Luce spenta
-                modelOn: 'assets/1/Prova_export_6_square_sera.glb',     // Luce accesa
+                modelOff: 'assets/1/Prova_export_6_square_giorno.glb',
+                modelOn: 'assets/1/Prova_export_6_square_sera.glb',
                 scale: 15,
                 rotation: { x: 0, y: 0, z: 0 },
                 material: 'Alluminio anodizzato',
@@ -1055,8 +1247,8 @@
             { 
                 name: 'Team Medium', 
                 shortName: 'Team Medium',
-                modelOff: 'assets/1/Prova_export_6_rettangular_giorno.glb',    // Luce spenta
-                modelOn: 'assets/1/Prova_export_6_rettangular_sera.glb',     // Luce accesa
+                modelOff: 'assets/1/Prova_export_6_rettangular_giorno.glb',
+                modelOn: 'assets/1/Prova_export_6_rettangular_sera.glb',
                 scale: 15,
                 rotation: { x: 0, y: 0, z: 0 },
                 material: 'Alluminio anodizzato',
@@ -1070,24 +1262,139 @@
         function initLoader() {
             const startButton = document.getElementById('start-button');
             
-            // Calcola il numero totale di asset da caricare
             totalAssets = calculateTotalAssets();
-            
-            // Avvia l'animazione di entrata
             startEntranceAnimation();
             
-            // Event listener per il pulsante start
             startButton.addEventListener('click', () => {
                 hideLoader();
+                startAmbientAudio();
+                initUISounds(); // Inizializza i suoni UI dopo il click start
             });
             
             console.log(`Totale asset da caricare: ${totalAssets}`);
         }
 
+        // Inizializza i suoni UI
+        function initUISounds() {
+            // Audio per bottoni freccia
+            buttonAudio = document.getElementById('button-audio');
+            buttonAudio.volume = 0.3;
+            buttonAudio.preload = 'auto';
+            
+            // Audio per toggle switch
+            toggleSwitchAudio = document.getElementById('toggle-switch-audio');
+            toggleSwitchAudio.volume = 0.4;
+            toggleSwitchAudio.preload = 'auto';
+            
+            console.log('Suoni UI inizializzati');
+        }
+
+        // Funzione per riprodurre suono bottoni
+        function playButtonSound() {
+            if (!buttonAudio || !isAudioEnabled) return;
+            
+            try {
+                buttonAudio.currentTime = 0;
+                buttonAudio.play().catch(e => {
+                    // Silenzia gli errori di autoplay per i suoni UI
+                    console.log('Audio bottone non riprodotto:', e);
+                });
+            } catch (error) {
+                console.log('Errore riproduzione audio bottone:', error);
+            }
+        }
+
+        // Funzione per riprodurre suono toggle
+        function playToggleSound() {
+            if (!toggleSwitchAudio || !isAudioEnabled) return;
+            
+            try {
+                toggleSwitchAudio.currentTime = 0;
+                toggleSwitchAudio.play().catch(e => {
+                    console.log('Audio toggle non riprodotto:', e);
+                });
+            } catch (error) {
+                console.log('Errore riproduzione audio toggle:', error);
+            }
+        }
+
+        // Inizializza e avvia l'audio ambientale
+        function startAmbientAudio() {
+            ambientAudio = document.getElementById('ambient-audio');
+            
+            ambientAudio.volume = 0.3;
+            ambientAudio.preload = 'metadata';
+            
+            const playAudio = () => {
+                ambientAudio.play().then(() => {
+                    console.log('Audio ambientale avviato');
+                    isAudioEnabled = true;
+                    updateAudioControls();
+                }).catch(error => {
+                    console.log('Autoplay non consentito, audio in pausa:', error);
+                    isAudioEnabled = false;
+                    updateAudioControls();
+                });
+            };
+            
+            if (ambientAudio.readyState >= 2) {
+                playAudio();
+            } else {
+                ambientAudio.addEventListener('loadeddata', playAudio);
+            }
+            
+            ambientAudio.addEventListener('error', (e) => {
+                console.error('Errore nel caricamento dell\'audio:', e);
+                document.getElementById('audio-toggle').style.display = 'none';
+            });
+        }
+
+        // Gestione toggle audio
+        function toggleAudioState() {
+            if (!ambientAudio) return;
+            
+            if (isAudioEnabled) {
+                ambientAudio.pause();
+                isAudioEnabled = false;
+            } else {
+                ambientAudio.play().then(() => {
+                    isAudioEnabled = true;
+                    restartAudioAnimation();
+                }).catch(error => {
+                    console.error('Errore nella riproduzione audio:', error);
+                });
+            }
+            
+            updateAudioControls();
+        }
+
+        // Funzione per riavviare l'animazione
+        function restartAudioAnimation() {
+            const audioToggle = document.getElementById('audio-toggle');
+            const waveBars = audioToggle.querySelectorAll('.wave-bar');
+            
+            audioToggle.classList.remove('active');
+            void audioToggle.offsetWidth;
+            audioToggle.classList.add('active');
+            
+            console.log('Animazione audio riavviata');
+        }
+
+        // Aggiorna l'interfaccia dei controlli audio
+        function updateAudioControls() {
+            const audioToggle = document.getElementById('audio-toggle');
+            
+            if (isAudioEnabled) {
+                audioToggle.classList.add('active');
+                restartAudioAnimation();
+            } else {
+                audioToggle.classList.remove('active');
+            }
+        }
+
         // Calcola il numero totale di asset da caricare
         function calculateTotalAssets() {
-            // Per un caricamento fluido, consideriamo un numero fisso di asset principali
-            return 8; // HDRI, ambiente, piante diurne/notturne, 3 prodotti (on/off)
+            return 8;
         }
 
         // Animazione di entrata del loader
@@ -1096,12 +1403,10 @@
             const loaderLogo = document.querySelector('.loader-logo');
             const progressSection = document.getElementById('progress-section');
             const companyCredit = document.querySelector('.company-credit');
-            const companyLogo = document.querySelector('.company-logo'); // AGGIUNTO
+            const companyLogo = document.querySelector('.company-logo');
             
-            // Timeline per l'entrata
             const entranceTimeline = gsap.timeline();
             
-            // Prima fade in della scheda loader-content
             entranceTimeline.fromTo(loaderContent, 
                 {
                     opacity: 0,
@@ -1117,7 +1422,6 @@
                 }
             );
             
-            // Logo - fade in con scale
             entranceTimeline.fromTo(loaderLogo, 
                 {
                     opacity: 0,
@@ -1132,7 +1436,6 @@
                 "-=0.5"
             );
             
-            // Progress section - fade in
             entranceTimeline.fromTo(progressSection, 
                 {
                     opacity: 0,
@@ -1147,7 +1450,6 @@
                 "-=0.7"
             );
             
-            // Company credit - fade in
             entranceTimeline.fromTo(companyCredit, 
                 {
                     opacity: 0
@@ -1160,7 +1462,6 @@
                 "-=0.3"
             );
             
-            // Company logo - fade in separato (OPZIONALE - per effetto più elegante)
             entranceTimeline.fromTo(companyLogo, 
                 {
                     opacity: 0,
@@ -1175,7 +1476,6 @@
                 "-=0.2"
             );
             
-            // Avvia l'animazione della barra di progresso dopo l'entrata
             entranceTimeline.call(startProgressAnimation);
         }
 
@@ -1185,15 +1485,12 @@
             const progressBar = document.getElementById('progress-bar');
             const loaderText = document.getElementById('loader-text');
             
-            // Simula un caricamento fluido e veloce
             progressInterval = setInterval(() => {
-                progress += Math.random() * 8 + 2; // Incremento variabile tra 2-10%
+                progress += Math.random() * 8 + 2;
                 
                 if (progress >= 100) {
                     progress = 100;
                     clearInterval(progressInterval);
-                    
-                    // Mostra il pulsante start con animazione
                     showStartButton();
                 }
                 
@@ -1202,59 +1499,53 @@
             }, 200);
         }
 
-// Mostra il pulsante start con animazione
-function showStartButton() {
-    const startButton = document.getElementById('start-button');
-    const progressSection = document.getElementById('progress-section');
-    
-    // Timeline per la transizione al pulsante start
-    const transitionTimeline = gsap.timeline();
-    
-    // Fade out SOLO della sezione di progresso (mantenendo lo spazio)
-    transitionTimeline.to(progressSection, {
-        duration: 0.5,
-        opacity: 0,
-        ease: "power2.in",
-        onComplete: () => {
-            progressSection.classList.add('hidden');
+        // Mostra il pulsante start con animazione
+        function showStartButton() {
+            const startButton = document.getElementById('start-button');
+            const progressSection = document.getElementById('progress-section');
+            
+            const transitionTimeline = gsap.timeline();
+            
+            transitionTimeline.to(progressSection, {
+                duration: 0.5,
+                opacity: 0,
+                ease: "power2.in",
+                onComplete: () => {
+                    progressSection.classList.add('hidden');
+                }
+            });
+            
+            transitionTimeline.fromTo(startButton, 
+                {
+                    opacity: 0,
+                    scale: 0.8
+                },
+                {
+                    duration: 0.8,
+                    opacity: 1,
+                    visibility: 'visible',
+                    scale: 1,
+                    ease: "back.out(1.7)"
+                },
+                "-=0.2"
+            );
+            
+            transitionTimeline.to(startButton, {
+                duration: 2,
+                scale: 1.05,
+                repeat: -1,
+                yoyo: true,
+                ease: "sine.inOut"
+            }, "+=0.5");
         }
-    });
-    
-    // Fade in del pulsante start (centrale nella scheda)
-    transitionTimeline.fromTo(startButton, 
-        {
-            opacity: 0,
-            scale: 0.8
-        },
-        {
-            duration: 0.8,
-            opacity: 1,
-            visibility: 'visible',
-            scale: 1,
-            ease: "back.out(1.7)"
-        },
-        "-=0.2"
-    );
-    
-    // Piccola animazione di "breathing" per il pulsante
-    transitionTimeline.to(startButton, {
-        duration: 2,
-        scale: 1.05,
-        repeat: -1,
-        yoyo: true,
-        ease: "sine.inOut"
-    }, "+=0.5");
-}
 
         // Nasconde il loader con animazione
         function hideLoader() {
             const loader = document.getElementById('loader');
             const loaderContent = document.querySelector('.loader-content');
             
-            // Timeline per l'uscita
             const exitTimeline = gsap.timeline();
             
-            // Fade out del contenuto
             exitTimeline.to(loaderContent, {
                 duration: 0.6,
                 opacity: 0,
@@ -1262,7 +1553,6 @@ function showStartButton() {
                 ease: "power2.in"
             });
             
-            // Fade out del loader
             exitTimeline.to(loader, {
                 duration: 0.8,
                 opacity: 0,
@@ -1277,25 +1567,20 @@ function showStartButton() {
         function initApp() {
             const container = document.getElementById('canvas-container');
             
-            // Inizializza loader CON DRACO
             loader = new THREE.GLTFLoader();
             
-            // CONFIGURA DRACO LOADER
             const dracoLoader = new THREE.DRACOLoader();
             dracoLoader.setDecoderPath('https://www.gstatic.com/draco/v1/decoders/');
             loader.setDRACOLoader(dracoLoader);
             
             textureLoader = new THREE.TextureLoader();
             
-            // Scena
             scene = new THREE.Scene();
             scene.background = new THREE.Color(0x0a0a0a);
 
-            // Camera temporanea - sarà sostituita dalla camera del GLB
             camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
             camera.position.set(0, 2, 6);
 
-            // Renderer
             renderer = new THREE.WebGLRenderer({ 
                 antialias: true,
                 alpha: true,
@@ -1310,182 +1595,165 @@ function showStartButton() {
             renderer.outputEncoding = THREE.sRGBEncoding;
             container.appendChild(renderer.domElement);
 
-            // Setup event listeners per parallasse - SOLO DESKTOP
             setupParallaxEvents();
-
-            // Carica HDRI
             loadHDRI();
-
-            // Carica l'ambiente con la camera dal GLB
             loadEnvironmentWithCamera();
-
-            // Carica le piante PNG iniziali (luce spenta)
             loadPlants(isLightOn);
-
-            // Carica primo prodotto
             loadProduct(0);
 
-            // Nascondi loading
             document.querySelector('.loading').style.display = 'none';
-
-            // Animazione iniziale della scheda
             animateProductInfo();
-
-            // Aggiorna indicatore luce
             updateLightIndicator();
-
-            // Event listeners per UI
             setupEventListeners();
 
             window.addEventListener('resize', onWindowResize);
-
             animate();
         }
 
-function setupParallaxEvents() {
-    // Desktop - Mouse movement
-    document.addEventListener('mousemove', (event) => {
-        // Ignora mousemove se è stato generato da un touch
-        if (event.sourceCapabilities && event.sourceCapabilities.firesTouchEvents) {
-            return;
-        }
-        
-        if (!isTransitioning) {
-            mouseX = (event.clientX / window.innerWidth) * 2 - 1;
-            mouseY = -(event.clientY / window.innerHeight) * 2 + 1;
-            
-            // Calcola target position con effetto parallasse più leggero
-            targetCameraX = mouseX * 0.05;
-            targetCameraY = mouseY * 0.05;
-            
-            isMouseMoving = true;
-            lastMouseMoveTime = Date.now();
-        }
-    });
+        function setupParallaxEvents() {
+            document.addEventListener('mousemove', (event) => {
+                if (event.sourceCapabilities && event.sourceCapabilities.firesTouchEvents) {
+                    return;
+                }
+                
+                if (!isTransitioning) {
+                    mouseX = (event.clientX / window.innerWidth) * 2 - 1;
+                    mouseY = -(event.clientY / window.innerHeight) * 2 + 1;
+                    
+                    targetCameraX = mouseX * 0.05;
+                    targetCameraY = mouseY * 0.05;
+                    
+                    isMouseMoving = true;
+                    lastMouseMoveTime = Date.now();
+                }
+            });
 
-    // Mobile - Touch events
-    let isTouching = false;
+            let isTouching = false;
 
-    document.addEventListener('touchstart', (event) => {
-        if (!isTransitioning) {
-            // Controlla se il tocco è su un bottone
-            const isButtonTouch = event.target.closest('.arrow-btn') || 
-                                event.target.closest('.toggle-switch') ||
-                                event.target.closest('.toggle-controls-btn') ||
-                                event.target.closest('.expand-btn');
-            
-            if (!isButtonTouch) {
-                isTouching = true;
-                // Resetta immediatamente la camera
+            document.addEventListener('touchstart', (event) => {
+                if (!isTransitioning) {
+                    const isButtonTouch = event.target.closest('.arrow-btn') || 
+                                        event.target.closest('.toggle-switch') ||
+                                        event.target.closest('.toggle-controls-btn') ||
+                                        event.target.closest('.expand-btn') ||
+                                        event.target.closest('.audio-toggle');
+                    
+                    if (!isButtonTouch) {
+                        isTouching = true;
+                        targetCameraX = 0;
+                        targetCameraY = 0;
+                        currentCameraX = 0;
+                        currentCameraY = 0;
+                    }
+                }
+            }, { passive: false });
+
+            document.addEventListener('touchmove', (event) => {
+                if (isTouching) {
+                    targetCameraX = 0;
+                    targetCameraY = 0;
+                    currentCameraX = 0;
+                    currentCameraY = 0;
+                    event.preventDefault();
+                }
+            }, { passive: false });
+
+            document.addEventListener('touchend', (event) => {
+                isTouching = false;
                 targetCameraX = 0;
                 targetCameraY = 0;
                 currentCameraX = 0;
                 currentCameraY = 0;
-            }
+            });
+
+            document.addEventListener('mouseleave', () => {
+                targetCameraX = 0;
+                targetCameraY = 0;
+            });
         }
-    }, { passive: false });
 
-    document.addEventListener('touchmove', (event) => {
-        if (isTouching) {
-            // Mantieni la camera resettata durante il movimento
-            targetCameraX = 0;
-            targetCameraY = 0;
-            currentCameraX = 0;
-            currentCameraY = 0;
-            event.preventDefault();
+        function setupEventListeners() {
+            // Frecce con suono
+            document.getElementById('prev-btn').addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                playButtonSound(); // AGGIUNTO SUONO
+                const newIndex = currentProductIndex > 0 ? currentProductIndex - 1 : products.length - 1;
+                loadProduct(newIndex);
+            });
+
+            document.getElementById('next-btn').addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                playButtonSound(); // AGGIUNTO SUONO
+                const newIndex = currentProductIndex < products.length - 1 ? currentProductIndex + 1 : 0;
+                loadProduct(newIndex);
+            });
+
+            // Toggle luce con suono
+            document.getElementById('light-toggle').addEventListener('change', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                playToggleSound(); // AGGIUNTO SUONO
+                isLightOn = e.target.checked;
+                console.log('Stato luce:', isLightOn ? 'ACCESA' : 'SPENTA');
+                updateLightIndicator();
+                loadProduct(currentProductIndex);
+                loadPlants(isLightOn);
+            });
+
+            // Toggle audio
+            document.getElementById('audio-toggle').addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                toggleAudioState();
+            });
+
+            // Espandi/contrai scheda info
+            const expandBtn = document.getElementById('expand-btn');
+            const productInfo = document.getElementById('product-info');
+            
+            expandBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                toggleProductInfo();
+            });
+
+            productInfo.addEventListener('click', (e) => {
+                if (e.target === productInfo) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    toggleProductInfo();
+                }
+            });
+
+            // Toggle controlli
+            document.getElementById('toggle-controls-btn').addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                toggleControls();
+            });
+
+            // Prevenire zoom su doppio tap
+            let lastTouchEnd = 0;
+            document.addEventListener('touchend', function (event) {
+                const now = (new Date()).getTime();
+                if (now - lastTouchEnd <= 300) {
+                    event.preventDefault();
+                }
+                lastTouchEnd = now;
+            }, false);
         }
-    }, { passive: false });
-
-    document.addEventListener('touchend', (event) => {
-        isTouching = false;
-        // Forza il reset completo della camera
-        targetCameraX = 0;
-        targetCameraY = 0;
-        currentCameraX = 0;
-        currentCameraY = 0;
-    });
-
-    // Reset camera quando il mouse esce dalla finestra
-    document.addEventListener('mouseleave', () => {
-        targetCameraX = 0;
-        targetCameraY = 0;
-    });
-}
-
-function setupEventListeners() {
-    // Frecce
-    document.getElementById('prev-btn').addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        const newIndex = currentProductIndex > 0 ? currentProductIndex - 1 : products.length - 1;
-        loadProduct(newIndex);
-    });
-
-    document.getElementById('next-btn').addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        const newIndex = currentProductIndex < products.length - 1 ? currentProductIndex + 1 : 0;
-        loadProduct(newIndex);
-    });
-
-    // Toggle luce
-    document.getElementById('light-toggle').addEventListener('change', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        isLightOn = e.target.checked;
-        console.log('Stato luce:', isLightOn ? 'ACCESA' : 'SPENTA');
-        updateLightIndicator();
-        loadProduct(currentProductIndex);
-        loadPlants(isLightOn);
-    });
-
-    // Espandi/contrai scheda info
-    const expandBtn = document.getElementById('expand-btn');
-    const productInfo = document.getElementById('product-info');
-    
-    expandBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        toggleProductInfo();
-    });
-
-    productInfo.addEventListener('click', (e) => {
-        if (e.target === productInfo) {
-            e.preventDefault();
-            e.stopPropagation();
-            toggleProductInfo();
-        }
-    });
-
-    // Toggle controlli
-    document.getElementById('toggle-controls-btn').addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        toggleControls();
-    });
-
-    // Prevenire zoom su doppio tap
-    let lastTouchEnd = 0;
-    document.addEventListener('touchend', function (event) {
-        const now = (new Date()).getTime();
-        if (now - lastTouchEnd <= 300) {
-            event.preventDefault();
-        }
-        lastTouchEnd = now;
-    }, false);
-}
 
         function toggleControls() {
             const controls = document.getElementById('controls');
             const toggleBtn = document.getElementById('toggle-controls-btn');
             
             if (controlsVisible) {
-                // Nascondi controlli
                 controls.classList.add('hidden');
                 toggleBtn.innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 15L12 9L18 15" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
                 controlsVisible = false;
             } else {
-                // Mostra controlli
                 controls.classList.remove('hidden');
                 toggleBtn.innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 9L12 15L18 9" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
                 controlsVisible = true;
@@ -1507,102 +1775,91 @@ function setupEventListeners() {
             }
         }
 
-function toggleProductInfo() {
-    const expandBtn = document.getElementById('expand-btn');
-    const productInfo = document.getElementById('product-info');
-    const additionalInfo = document.querySelector('.additional-info');
-    const isExpanding = !productInfo.classList.contains('expanded');
+        function toggleProductInfo() {
+            const expandBtn = document.getElementById('expand-btn');
+            const productInfo = document.getElementById('product-info');
+            const additionalInfo = document.querySelector('.additional-info');
+            const isExpanding = !productInfo.classList.contains('expanded');
 
-    if (isExpanding) {
-        // Prepara per l'espansione
-        productInfo.classList.add('expanded');
-        expandBtn.classList.add('expanded');
-        
-        // Mostra additionalInfo per misurare l'altezza
-        additionalInfo.style.display = "block";
-        additionalInfo.style.maxHeight = "none";
-        const fullHeight = additionalInfo.scrollHeight + "px";
-        additionalInfo.style.maxHeight = "0";
+            if (isExpanding) {
+                productInfo.classList.add('expanded');
+                expandBtn.classList.add('expanded');
+                
+                additionalInfo.style.display = "block";
+                additionalInfo.style.maxHeight = "none";
+                const fullHeight = additionalInfo.scrollHeight + "px";
+                additionalInfo.style.maxHeight = "0";
 
-        // Timeline per animazione fluida - APERTURA
-        const tl = gsap.timeline();
+                const tl = gsap.timeline();
 
-        // Animazione principale: altezza e opacità
-        tl.to(additionalInfo, {
-            duration: 0.4,
-            opacity: 1,
-            maxHeight: fullHeight,
-            ease: "power2.out"
-        })
-        // Contenuto con timing identico alla chiusura
-        .to('.info-row', {
-            duration: 0.25,
-            opacity: 1,
-            y: 0,
-            stagger: 0.05,
-            ease: "back.out(1.2)"
-        }, "-=0.3")
-        .to('.price-tag', {
-            duration: 0.25,
-            opacity: 1,
-            y: 0,
-            ease: "back.out(1.2)"
-        }, "-=0.2");
+                tl.to(additionalInfo, {
+                    duration: 0.4,
+                    opacity: 1,
+                    maxHeight: fullHeight,
+                    ease: "power2.out"
+                })
+                .to('.info-row', {
+                    duration: 0.25,
+                    opacity: 1,
+                    y: 0,
+                    stagger: 0.05,
+                    ease: "back.out(1.2)"
+                }, "-=0.3")
+                .to('.price-tag', {
+                    duration: 0.25,
+                    opacity: 1,
+                    y: 0,
+                    ease: "back.out(1.2)"
+                }, "-=0.2");
 
-        // Solo su desktop, anima la larghezza
-        if (window.innerWidth > 768) {
-            tl.to(productInfo, {
-                duration: 0.4,
-                width: '600px',
-                ease: "power2.out"
-            }, "-=0.2");
-        }
+                if (window.innerWidth > 768) {
+                    tl.to(productInfo, {
+                        duration: 0.4,
+                        width: '600px',
+                        ease: "power2.out"
+                    }, "-=0.2");
+                }
 
-    } else {
-        // Timeline per la chiusura - STESSO TIMING DELL'APERTURA
-        const tl = gsap.timeline({
-            onComplete: () => {
-                productInfo.classList.remove('expanded');
-                expandBtn.classList.remove('expanded');
-                additionalInfo.style.display = "none";
+            } else {
+                const tl = gsap.timeline({
+                    onComplete: () => {
+                        productInfo.classList.remove('expanded');
+                        expandBtn.classList.remove('expanded');
+                        additionalInfo.style.display = "none";
+                    }
+                });
+
+                tl.to(additionalInfo, {
+                    duration: 0.4,
+                    opacity: 0,
+                    maxHeight: 0,
+                    ease: "power2.in"
+                })
+                .to('.price-tag', {
+                    duration: 0.25,
+                    opacity: 0,
+                    y: 10,
+                    ease: "power2.in"
+                }, "-=0.3")
+                .to('.info-row', {
+                    duration: 0.25,
+                    opacity: 0,
+                    y: 10,
+                    stagger: 0.05,
+                    ease: "power2.in"
+                }, "-=0.2");
+
+                if (window.innerWidth > 768) {
+                    tl.to(productInfo, {
+                        duration: 0.4,
+                        width: '320px',
+                        ease: "power2.in"
+                    }, "-=0.2");
+                }
             }
-        });
-
-        // Animazione principale: altezza e opacità (stesso timing apertura)
-        tl.to(additionalInfo, {
-            duration: 0.4,
-            opacity: 0,
-            maxHeight: 0,
-            ease: "power2.in"
-        })
-        // Contenuto con timing identico all'apertura
-        .to('.price-tag', {
-            duration: 0.25,
-            opacity: 0,
-            y: 10,
-            ease: "power2.in"
-        }, "-=0.3")
-        .to('.info-row', {
-            duration: 0.25,
-            opacity: 0,
-            y: 10,
-            stagger: 0.05,
-            ease: "power2.in"
-        }, "-=0.2");
-
-        // Solo su desktop, riduci la larghezza (stesso timing apertura)
-        if (window.innerWidth > 768) {
-            tl.to(productInfo, {
-                duration: 0.4,
-                width: '320px',
-                ease: "power2.in"
-            }, "-=0.2");
         }
-    }
-}
 
         function animateProductInfo() {
-            // Animazione di entrata della scheda prodotto
             gsap.fromTo('#product-info', 
                 {
                     y: -50,
@@ -1617,7 +1874,6 @@ function toggleProductInfo() {
                 }
             );
             
-            // Animazione a scaglioni per il contenuto
             const timeline = gsap.timeline({ delay: 0.8 });
             
             timeline.fromTo('.product-name', 
@@ -1638,7 +1894,6 @@ function toggleProductInfo() {
             const productInfo = document.getElementById('product-info');
             const isExpanded = productInfo.classList.contains('expanded');
             
-            // Prepara le additional-info se la scheda è espansa
             if (isExpanded) {
                 const infoRows = document.querySelectorAll('.info-row');
                 const priceTag = document.querySelector('.price-tag');
@@ -1649,10 +1904,8 @@ function toggleProductInfo() {
                 });
             }
             
-            // Aggiorna immediatamente il contenuto
             updateProductInfo(currentProductIndex);
             
-            // Crea una timeline per l'animazione
             const changeTimeline = gsap.timeline();
             
             changeTimeline.to(productName, {
@@ -1668,7 +1921,6 @@ function toggleProductInfo() {
                 ease: "back.out(1.2)"
             });
 
-            // Se la scheda è espansa, anima le additional-info
             if (isExpanded) {
                 const infoRows = document.querySelectorAll('.info-row');
                 const priceTag = document.querySelector('.price-tag');
@@ -1696,7 +1948,6 @@ function toggleProductInfo() {
             document.getElementById('product-name').textContent = product.name;
             document.getElementById('current-product-name').textContent = product.shortName;
             
-            // Funzione per sostituire \n con <br>
             const formatTextWithLineBreaks = (text) => {
                 return text.replace(/\n/g, '<br>');
             };
@@ -1705,7 +1956,7 @@ function toggleProductInfo() {
             document.getElementById('dimensions-value').innerHTML = formatTextWithLineBreaks(product.dimensions);
             document.getElementById('power-value').innerHTML = formatTextWithLineBreaks(product.power);
             document.getElementById('color-temp-value').innerHTML = formatTextWithLineBreaks(product.colorTemp);
-            document.getElementById('price-value').textContent = product.price; // Prezzo senza HTML
+            document.getElementById('price-value').textContent = product.price;
         }
 
         function loadHDRI() {
@@ -1718,17 +1969,14 @@ function toggleProductInfo() {
                     
                     texture.mapping = THREE.EquirectangularReflectionMapping;
                     
-                    // Crea environment map
                     const pmremGenerator = new THREE.PMREMGenerator(renderer);
                     pmremGenerator.compileEquirectangularShader();
                     
                     envMap = pmremGenerator.fromEquirectangular(texture).texture;
                     
-                    // Applica l'envMap alla scena
                     scene.environment = envMap;
                     scene.background = envMap;
                     
-                    // Pulisci
                     texture.dispose();
                     pmremGenerator.dispose();
                     
@@ -1761,45 +2009,36 @@ function toggleProductInfo() {
         }
 
         function loadEnvironmentWithCamera() {
-            // Carica il GLB che contiene la camera
             loader.load(
-                'assets/camera.glb', // Usa il primo GLB che contiene la camera
+                'assets/camera.glb',
                 (gltf) => {
                     environmentMesh = gltf.scene;
                     
-                    // Configura l'ambiente
                     environmentMesh.position.set(0, 0, 6)
                     environmentMesh.scale.set(18, 18, 18)
                     
-                    // Cerca una camera nel GLB
                     let cameraFound = false;
                     gltf.scene.traverse((child) => {
                         if (child.isCamera) {
                             console.log('Camera trovata nel GLB:', child);
                             sceneCamera = child;
                             
-                            // Salva la posizione e rotazione originale della camera
                             originalCameraPosition.copy(sceneCamera.position);
                             originalCameraRotation.copy(sceneCamera.rotation);
                             
-                            // Regola i piani di clipping per evitare problemi
                             if (sceneCamera.isPerspectiveCamera) {
-                                sceneCamera.near = 0.1;  // Piano near molto vicino
-                                sceneCamera.far = 1000;  // Piano far molto lontano
-                                
-                                // *** MODIFICA LA LUNGHEZZA FOCALE QUI ***
-                                sceneCamera.fov = 20; // Cambia questo valore (default: 50)
+                                sceneCamera.near = 0.1;
+                                sceneCamera.far = 1000;
+                                sceneCamera.fov = 20;
                                 
                                 console.log('Piani di clipping regolati:', sceneCamera.near, sceneCamera.far);
                                 console.log('FOV impostato a:', sceneCamera.fov);
                             }
                             
-                            // Usa la camera del GLB invece di quella creata
                             camera = sceneCamera;
                             useSceneCamera = true;
                             cameraFound = true;
                             
-                            // Aggiorna il rapporto d'aspetto
                             camera.aspect = window.innerWidth / window.innerHeight;
                             camera.updateProjectionMatrix();
                             
@@ -1824,7 +2063,6 @@ function toggleProductInfo() {
         }
 
         function createBasicEnvironment() {
-            // Pavimento riflettente di fallback
             const floorGeometry = new THREE.CircleGeometry(15, 32);
             const floorMaterial = new THREE.MeshStandardMaterial({ 
                 color: 0x1a1a1a,
@@ -1842,9 +2080,7 @@ function toggleProductInfo() {
             console.log('Ambiente base creato con successo');
         }
 
-        // Sostituisci la funzione loadPlants con questa versione
         function loadPlants(lightState) {
-            // Previeni transizioni multiple simultanee
             if (plantsTransitionInProgress) return;
             plantsTransitionInProgress = true;
             
@@ -1855,38 +2091,30 @@ function toggleProductInfo() {
                 (texture) => {
                     texture.encoding = THREE.sRGBEncoding;
                     
-                    // Crea il nuovo sprite con la nuova texture
                     const newMaterial = new THREE.SpriteMaterial({
                         map: texture,
                         transparent: true,
                         alphaTest: 0,
-                        opacity: 0 // Inizia trasparente
+                        opacity: 0
                     });
                     
                     newPlantsSprite = new THREE.Sprite(newMaterial);
                     newPlantsSprite.position.set(-5, 2, 0);
                     newPlantsSprite.scale.set(150, 130, 0);
                     
-                    // Aggiungi il nuovo sprite alla scena (sovrapposto al vecchio)
                     scene.add(newPlantsSprite);
                     
-                    // Se c'è uno sprite corrente, fade out graduale
                     if (currentPlantsSprite) {
-                        // Animazione: fade in del nuovo e fade out del vecchio
                         const timeline = gsap.timeline({
                             onComplete: () => {
-                                // Rimuovi il vecchio sprite dalla scena
                                 scene.remove(currentPlantsSprite);
-                                // Pulisci il materiale vecchio
                                 if (currentPlantsSprite.material.map) currentPlantsSprite.material.map.dispose();
                                 currentPlantsSprite.material.dispose();
-                                // Il nuovo sprite diventa quello corrente
                                 currentPlantsSprite = newPlantsSprite;
                                 plantsTransitionInProgress = false;
                             }
                         });
                         
-                        // Fade in del nuovo sprite e fade out del vecchio contemporaneamente
                         timeline.to(newPlantsSprite.material, {
                             opacity: 1,
                             duration: 1.0,
@@ -1896,10 +2124,9 @@ function toggleProductInfo() {
                             opacity: 0,
                             duration: 1.0,
                             ease: "power2.inOut"
-                        }, 0); // Inizia allo stesso tempo
+                        }, 0);
                         
                     } else {
-                        // Prima volta - mostra immediatamente
                         newPlantsSprite.material.opacity = 1;
                         currentPlantsSprite = newPlantsSprite;
                         plantsTransitionInProgress = false;
@@ -1928,13 +2155,11 @@ function toggleProductInfo() {
                     (gltf) => {
                         const model = gltf.scene;
                         
-                        // Abilita ombre per tutti i mesh
                         model.traverse((child) => {
                             if (child.isMesh) {
                                 child.castShadow = true;
                                 child.receiveShadow = true;
                                 
-                                // Migliora i materiali con envMap
                                 if (child.material) {
                                     child.material.envMap = envMap;
                                     child.material.envMapIntensity = 1.0;
@@ -1947,19 +2172,15 @@ function toggleProductInfo() {
                             }
                         });
                         
-                        // Centra il modello
                         const box = new THREE.Box3().setFromObject(model);
                         const center = box.getCenter(new THREE.Vector3());
                         model.position.sub(center);
                         
-                        // Posiziona sopra il pavimento
                         model.position.y = 0;
                         
-                        // Applica la scala fissa per questo prodotto
                         const scale = product.scale;
                         model.scale.set(scale, scale, scale);
                         
-                        // Applica la rotazione personalizzata
                         const rotation = product.rotation;
                         model.rotation.set(rotation.x, rotation.y, rotation.z);
                         
@@ -1983,31 +2204,25 @@ function toggleProductInfo() {
             
             currentProductIndex = index;
 
-            // Mostra loading
             const loadingEl = document.querySelector('.loading');
             loadingEl.style.display = 'block';
             loadingEl.textContent = '';
 
             createGeometry(index)
                 .then((newMesh) => {
-                    // Applica la scala immediatamente
                     const scale = products[index].scale;
                     newMesh.scale.set(scale, scale, scale);
                     
-                    // Aggiungi alla scena
                     scene.add(newMesh);
 
-                    // Rimuovi il vecchio mesh se esiste
                     if (currentMesh) {
                         scene.remove(currentMesh);
                     }
 
-                    // Imposta immediatamente il nuovo mesh come corrente
                     currentMesh = newMesh;
                     isTransitioning = false;
                     loadingEl.style.display = 'none';
                     
-                    // Aggiorna UI immediatamente
                     updateProductInfo(index);
                     
                     console.log('Prodotto cambiato immediatamente');
@@ -2022,48 +2237,41 @@ function toggleProductInfo() {
                 });
         }
 
-function animate() {
-    requestAnimationFrame(animate);
+        function animate() {
+            requestAnimationFrame(animate);
 
-    // Smooth camera movement per effetto parallasse
-    if (!isTransitioning && useSceneCamera) {
-        // Interpolazione smooth della posizione camera
-        currentCameraX += (targetCameraX - currentCameraX) * 0.1;
-        currentCameraY += (targetCameraY - currentCameraY) * 0.1;
-        
-        // Applica movimento parallasse alla camera del GLB
-        // Usiamo la posizione originale come base e aggiungiamo l'offset parallasse
-        camera.position.x = originalCameraPosition.x + currentCameraX;
-        camera.position.y = originalCameraPosition.y + currentCameraY;
-        camera.position.z = originalCameraPosition.z;
-        
-        // Manteniamo la rotazione originale della camera del GLB
-        camera.rotation.copy(originalCameraRotation);
-        
-        // Reset graduale se il mouse non si muove da un po'
-        if (isMouseMoving && Date.now() - lastMouseMoveTime > 1000) {
-            isMouseMoving = false;
-            targetCameraX = 0;
-            targetCameraY = 0;
-        }
-    } else if (!isTransitioning) {
-        // Fallback per quando non c'è camera nel GLB
-        currentCameraX += (targetCameraX - currentCameraX) * 0.1;
-        currentCameraY += (targetCameraY - currentCameraY) * 0.1;
-        
-        camera.position.x = currentCameraX;
-        camera.position.y = 2 + currentCameraY;
-        camera.lookAt(currentCameraX * 0.3, currentCameraY * 0.2, 0);
-        
-        if (isMouseMoving && Date.now() - lastMouseMoveTime > 1000) {
-            isMouseMoving = false;
-            targetCameraX = 0;
-            targetCameraY = 0;
-        }
-    }
+            if (!isTransitioning && useSceneCamera) {
+                currentCameraX += (targetCameraX - currentCameraX) * 0.1;
+                currentCameraY += (targetCameraY - currentCameraY) * 0.1;
+                
+                camera.position.x = originalCameraPosition.x + currentCameraX;
+                camera.position.y = originalCameraPosition.y + currentCameraY;
+                camera.position.z = originalCameraPosition.z;
+                
+                camera.rotation.copy(originalCameraRotation);
+                
+                if (isMouseMoving && Date.now() - lastMouseMoveTime > 1000) {
+                    isMouseMoving = false;
+                    targetCameraX = 0;
+                    targetCameraY = 0;
+                }
+            } else if (!isTransitioning) {
+                currentCameraX += (targetCameraX - currentCameraX) * 0.1;
+                currentCameraY += (targetCameraY - currentCameraY) * 0.1;
+                
+                camera.position.x = currentCameraX;
+                camera.position.y = 2 + currentCameraY;
+                camera.lookAt(currentCameraX * 0.3, currentCameraY * 0.2, 0);
+                
+                if (isMouseMoving && Date.now() - lastMouseMoveTime > 1000) {
+                    isMouseMoving = false;
+                    targetCameraX = 0;
+                    targetCameraY = 0;
+                }
+            }
 
-    renderer.render(scene, camera);
-}
+            renderer.render(scene, camera);
+        }
 
         function onWindowResize() {
             camera.aspect = window.innerWidth / window.innerHeight;
@@ -2076,12 +2284,10 @@ function animate() {
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', () => {
                 initLoader();
-                // Inizia il caricamento degli asset in background
                 initApp();
             });
         } else {
             initLoader();
-            // Inizia il caricamento degli asset in background
             initApp();
         }
     </script>
