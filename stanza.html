@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Mostra 3D Sedie</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            overflow: hidden;
+            background: #F5F5F5;
+            touch-action: none;
+        }
+
+        #container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+
+        .panel {
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            position: absolute;
+            z-index: 10;
+        }
+
+        #product-info-panel {
+            top: 16px;
+            right: 16px;
+            left: 16px;
+            width: auto;
+            padding: 20px;
+            transform: translateY(-150%);
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        @media (min-width: 768px) {
+            #product-info-panel {
+                top: 24px;
+                right: 24px;
+                left: auto;
+                width: 320px;
+                max-height: 80vh;
+                transform: translateX(350px);
+            }
+        }
+
+        #product-info-panel.visible {
+            transform: translateY(0);
+        }
+
+        @media (min-width: 768px) {
+            #product-info-panel.visible {
+                transform: translateX(0);
+            }
+        }
+
+        .product-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+
+        .product-header h3 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #111827;
+            margin-right: 16px;
+        }
+
+        @media (min-width: 768px) {
+            .product-header h3 {
+                font-size: 20px;
+            }
+        }
+
+        .close-btn {
+            width: 32px;
+            height: 32px;
+            border: none;
+            border-radius: 50%;
+            background: #f3f4f6;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+        }
+
+        .close-btn:hover {
+            background: #e5e7eb;
+            transform: scale(1.1);
+        }
+
+        .product-description {
+            font-size: 14px;
+            color: #6b7280;
+            line-height: 1.6;
+            margin-bottom: 16px;
+        }
+
+        .product-details {
+            border-top: 1px solid #e5e7eb;
+            padding-top: 16px;
+        }
+
+        .detail-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+
+        @media (min-width: 768px) {
+            .detail-item {
+                font-size: 14px;
+            }
+        }
+
+        .detail-label {
+            color: #6b7280;
+        }
+
+        .detail-value {
+            color: #111827;
+            font-weight: 500;
+        }
+
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #111827;
+            font-size: 16px;
+            z-index: 100;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 12px 24px;
+            border-radius: 8px;
+            backdrop-filter: blur(10px);
+        }
+
+        .interactive-point {
+            position: absolute;
+            width: 44px;
+            height: 44px;
+            border: none;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 20;
+            font-size: 22px;
+            font-weight: bold;
+            color: #111827;
+            pointer-events: auto;
+            opacity: 1;
+            transition: opacity 0.4s ease-in-out, transform 0.2s ease;
+            touch-action: manipulation;
+        }
+
+        @media (min-width: 768px) {
+            .interactive-point {
+                width: 40px;
+                height: 40px;
+                font-size: 20px;
+            }
+        }
+
+        .interactive-point:hover {
+            transform: scale(1.1);
+            background: white;
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+        }
+
+        .mobile-instruction {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-size: 14px;
+            color: #6b7280;
+            text-align: center;
+            z-index: 15;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            display: none;
+        }
+
+        @media (max-width: 767px) {
+            .mobile-instruction {
+                display: block;
+            }
+        }
+
+        /* Scrollbar personalizzata per mobile */
+        #product-info-panel::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        #product-info-panel::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 2px;
+        }
+
+        #product-info-panel::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 2px;
+        }
+
+        #product-info-panel::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <div class="loading" id="loading">Caricamento modelli 3D...</div>
+        <div class="mobile-instruction" id="mobile-instruction">
+            👆 Tocca i punti + per vedere i dettagli
+        </div>
+    </div>
+
+    <div id="product-info-panel" class="panel">
+        <div class="product-header">
+            <h3 id="product-title">Sedia Moderna</h3>
+            <button class="close-btn" onclick="closeProductInfo()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+        <div class="product-description" id="product-description">
+            Design contemporaneo che unisce estetica e funzionalità. Realizzata con materiali di alta qualità per garantire comfort e durata nel tempo.
+        </div>
+        <div class="product-details">
+            <div class="detail-item">
+                <span class="detail-label">Dimensioni:</span>
+                <span class="detail-value" id="product-dimensions">120 x 85 x 60 cm</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Materiali:</span>
+                <span class="detail-value" id="product-materials">Tessuto premium, struttura in metallo</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Peso:</span>
+                <span class="detail-value" id="product-weight">8.5 kg</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Prezzo:</span>
+                <span class="detail-value" id="product-price">€ 299</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const chairs = [
+            { 
+                id: 0, 
+                name: 'Sedia Moderna', 
+                file: 'assets/sedie/sedia-1.glb', 
+                position: { x: -2, y: 0, z: 0 },
+                description: 'Design contemporaneo che unisce estetica e funzionalità. Realizzata con materiali di alta qualità per garantire comfort e durata nel tempo.',
+                dimensions: '120 x 85 x 60 cm',
+                materials: 'Tessuto premium, struttura in metallo',
+                weight: '8.5 kg',
+                price: '€ 299'
+            },
+            { 
+                id: 1, 
+                name: 'Poltrona Comfort', 
+                file: 'assets/sedie/sedia-2.glb', 
+                position: { x: 0, y: 0, z: 0 },
+                description: 'Poltrona ergonomica progettata per il massimo comfort. Ideale per lunghe sessioni di lavoro o relax.',
+                dimensions: '110 x 95 x 70 cm',
+                materials: 'Pelle sintetica, struttura in legno',
+                weight: '12.3 kg',
+                price: '€ 459'
+            },
+            { 
+                id: 2, 
+                name: 'Divano Elegante', 
+                file: 'assets/sedie/sedia-3.glb', 
+                position: { x: 2, y: 0, z: 0 },
+                description: 'Divano elegante con linee pulite e design raffinato. Perfetto per arredare il tuo salotto con stile.',
+                dimensions: '180 x 90 x 75 cm',
+                materials: 'Tessuto jacquard, struttura in legno massello',
+                weight: '25.7 kg',
+                price: '€ 899'
+            }
+        ];
+
+        // Posizioni dei punti interattivi ottimizzate per mobile
+        const interactivePoints = [
+            { chairId: 0, position: { x: -2, y: 1.2, z: 0.8 } },
+            { chairId: 1, position: { x: 0, y: 1.2, z: 0.8 } },
+            { chairId: 2, position: { x: 2, y: 1.2, z: 0.8 } }
+        ];
+
+        let currentView = 'overview';
+        let scene, camera, renderer, chairMeshes = [], environmentMesh;
+        let targetCameraPos, currentCameraPos, targetLookAt, currentLookAt;
+        let loader;
+        let interactivePointElements = [];
+        let cameraAnimationSpeed = 0.08;
+        let isAnimating = false;
+        let isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+        // Posizioni camera ottimizzate per mobile
+        const cameraPositions = {
+            overview: { 
+                x: 0, 
+                y: isMobile ? 2 : 1.5, 
+                z: isMobile ? 6 : 5, 
+                lookAt: { x: 0, y: 0.5, z: 0 } 
+            },
+            chair1: { 
+                x: -2, 
+                y: isMobile ? 1.2 : 1, 
+                z: isMobile ? 3 : 2, 
+                lookAt: { x: -2, y: 0.5, z: 0 } 
+            },
+            chair2: { 
+                x: 0, 
+                y: isMobile ? 1.2 : 1, 
+                z: isMobile ? 3 : 2, 
+                lookAt: { x: 0, y: 0.5, z: 0 } 
+            },
+            chair3: { 
+                x: 2, 
+                y: isMobile ? 1.2 : 1, 
+                z: isMobile ? 3 : 2, 
+                lookAt: { x: 2, y: 0.5, z: 0 } 
+            }
+        };
+
+        function init() {
+            const container = document.getElementById('container');
+
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0xF5F5F5);
+
+            // Camera ottimizzata per mobile
+            camera = new THREE.PerspectiveCamera(
+                isMobile ? 50 : 45,
+                window.innerWidth / window.innerHeight,
+                0.1,
+                1000
+            );
+            camera.position.set(
+                cameraPositions.overview.x,
+                cameraPositions.overview.y,
+                cameraPositions.overview.z
+            );
+            camera.lookAt(
+                cameraPositions.overview.lookAt.x,
+                cameraPositions.overview.lookAt.y,
+                cameraPositions.overview.lookAt.z
+            );
+
+            renderer = new THREE.WebGLRenderer({ 
+                antialias: true, 
+                alpha: true,
+                powerPreference: "high-performance"
+            });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobile ? 1.5 : 2));
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            container.appendChild(renderer.domElement);
+
+            // Ottimizzazione luci per mobile
+            const ambientLight = new THREE.AmbientLight(0xffffff, isMobile ? 0.7 : 0.6);
+            scene.add(ambientLight);
+
+            const mainLight = new THREE.DirectionalLight(0xffffff, isMobile ? 0.9 : 0.8);
+            mainLight.position.set(5, 10, 5);
+            mainLight.castShadow = !isMobile; // Disabilita shadows su mobile per performance
+            if (!isMobile) {
+                mainLight.shadow.mapSize.width = 2048;
+                mainLight.shadow.mapSize.height = 2048;
+            }
+            scene.add(mainLight);
+
+            const fillLight = new THREE.DirectionalLight(0xffffff, isMobile ? 0.4 : 0.3);
+            fillLight.position.set(-5, 5, -5);
+            scene.add(fillLight);
+
+            loader = new THREE.GLTFLoader();
+            
+            // Carica l'ambiente
+            loadEnvironment();
+            
+            // Carica tutte le sedie
+            loadAllChairs();
+
+            targetCameraPos = { ...cameraPositions.overview };
+            currentCameraPos = {
+                x: camera.position.x,
+                y: camera.position.y,
+                z: camera.position.z
+            };
+            targetLookAt = { ...cameraPositions.overview.lookAt };
+            currentLookAt = { ...targetLookAt };
+
+            // Gestione eventi touch e resize
+            window.addEventListener('resize', onWindowResize);
+            document.addEventListener('touchstart', onTouchStart, { passive: true });
+            
+            // Nascondi istruzioni dopo 5 secondi
+            setTimeout(() => {
+                const instruction = document.getElementById('mobile-instruction');
+                if (instruction) {
+                    instruction.style.opacity = '0';
+                    setTimeout(() => {
+                        instruction.style.display = 'none';
+                    }, 500);
+                }
+            }, 5000);
+
+            animate();
+        }
+
+        function onTouchStart(e) {
+            // Previene lo zoom su doppio tap
+            if (e.touches.length > 1) {
+                e.preventDefault();
+            }
+        }
+
+        function loadEnvironment() {
+            loader.load('assets/sedie/contesto.glb', function(gltf) {
+                environmentMesh = gltf.scene;
+                environmentMesh.traverse(function(node) {
+                    if (node.isMesh) {
+                        node.castShadow = !isMobile;
+                        node.receiveShadow = !isMobile;
+                    }
+                });
+                scene.add(environmentMesh);
+                
+                // Crea i punti interattivi dopo che l'ambiente è stato caricato
+                createInteractivePoints();
+            }, undefined, function(error) {
+                console.error('Errore nel caricamento dell\'ambiente:', error);
+                createDefaultGround();
+                createInteractivePoints();
+            });
+        }
+
+        function createDefaultGround() {
+            const groundGeometry = new THREE.PlaneGeometry(20, 20);
+            const groundMaterial = new THREE.ShadowMaterial({ opacity: 0.15 });
+            const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+            ground.rotation.x = -Math.PI / 2;
+            ground.receiveShadow = !isMobile;
+            scene.add(ground);
+        }
+
+        function createInteractivePoints() {
+            const container = document.getElementById('container');
+            
+            interactivePoints.forEach((point, index) => {
+                const pointElement = document.createElement('button');
+                pointElement.className = 'interactive-point';
+                pointElement.innerHTML = '+';
+                pointElement.dataset.chairId = point.chairId;
+                pointElement.setAttribute('aria-label', `Visualizza dettagli ${chairs[point.chairId].name}`);
+                
+                // Evento ottimizzato per mobile
+                pointElement.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    const chairId = parseInt(this.dataset.chairId);
+                    
+                    // Nasconde tutti i punti interattivi con transizione di opacità
+                    hideAllInteractivePoints();
+                    
+                    // Piccolo delay prima di zoomare sulla sedia
+                    setTimeout(() => {
+                        zoomToChair(chairId);
+                    }, 300);
+                });
+                
+                container.appendChild(pointElement);
+                interactivePointElements.push(pointElement);
+                
+                // Posiziona il punto nello spazio 3D
+                updateInteractivePointPosition(pointElement, point.position);
+            });
+        }
+
+        function updateInteractivePointPosition(element, worldPosition) {
+            // Converte le coordinate 3D in coordinate dello schermo
+            const vector = new THREE.Vector3(
+                worldPosition.x,
+                worldPosition.y,
+                worldPosition.z
+            );
+            
+            vector.project(camera);
+            
+            const x = (vector.x * 0.5 + 0.5) * window.innerWidth;
+            const y = (-(vector.y * 0.5) + 0.5) * window.innerHeight;
+            
+            // Assicura che i punti rimangano dentro lo schermo su mobile
+            const safeX = Math.max(30, Math.min(window.innerWidth - 30, x - 22));
+            const safeY = Math.max(30, Math.min(window.innerHeight - 30, y - 22));
+            
+            element.style.left = `${safeX}px`;
+            element.style.top = `${safeY}px`;
+        }
+
+        function updateAllInteractivePoints() {
+            interactivePoints.forEach((point, index) => {
+                if (interactivePointElements[index]) {
+                    updateInteractivePointPosition(interactivePointElements[index], point.position);
+                }
+            });
+        }
+
+        function hideAllInteractivePoints() {
+            interactivePointElements.forEach(point => {
+                point.style.opacity = '0';
+                point.style.pointerEvents = 'none';
+            });
+        }
+
+        function showAllInteractivePoints() {
+            interactivePointElements.forEach(point => {
+                point.style.opacity = '1';
+                point.style.pointerEvents = 'auto';
+            });
+        }
+
+        function loadAllChairs() {
+            const loadingElement = document.getElementById('loading');
+            loadingElement.style.display = 'block';
+            
+            let chairsLoaded = 0;
+            const totalChairs = chairs.length;
+
+            chairs.forEach(chair => {
+                loader.load(chair.file, function(gltf) {
+                    const chairMesh = gltf.scene;
+                    
+                    chairMesh.position.set(chair.position.x, chair.position.y, chair.position.z);
+                    
+                    // Ottimizzazione per mobile
+                    chairMesh.traverse(function(node) {
+                        if (node.isMesh) {
+                            node.castShadow = !isMobile;
+                            node.receiveShadow = !isMobile;
+                        }
+                    });
+                    
+                    scene.add(chairMesh);
+                    chairMeshes[chair.id] = chairMesh;
+                    
+                    chairsLoaded++;
+                    if (chairsLoaded === totalChairs) {
+                        loadingElement.style.display = 'none';
+                    }
+                }, undefined, function(error) {
+                    console.error('Errore nel caricamento della sedia:', error);
+                    createDefaultChair(chair);
+                    
+                    chairsLoaded++;
+                    if (chairsLoaded === totalChairs) {
+                        loadingElement.style.display = 'none';
+                    }
+                });
+            });
+        }
+
+        function createDefaultChair(chair) {
+            const chairGroup = new THREE.Group();
+            
+            const seatGeometry = new THREE.BoxGeometry(1.2, 0.1, 1.2);
+            const material = new THREE.MeshStandardMaterial({
+                color: 0xD4D4D8,
+                roughness: 0.6,
+                metalness: 0.1
+            });
+            const seat = new THREE.Mesh(seatGeometry, material);
+            seat.position.y = 0.5;
+            seat.castShadow = !isMobile;
+            seat.receiveShadow = !isMobile;
+            chairGroup.add(seat);
+
+            const backGeometry = new THREE.BoxGeometry(1.2, 1, 0.1);
+            const back = new THREE.Mesh(backGeometry, material);
+            back.position.set(0, 1, -0.55);
+            back.castShadow = !isMobile;
+            back.receiveShadow = !isMobile;
+            chairGroup.add(back);
+
+            const legGeometry = new THREE.CylinderGeometry(0.03, 0.03, 0.5);
+            const legMaterial = new THREE.MeshStandardMaterial({
+                color: 0x2C2C2C,
+                roughness: 0.3,
+                metalness: 0.7
+            });
+            
+            const legPositions = [
+                [-0.5, 0.25, -0.5],
+                [0.5, 0.25, -0.5],
+                [-0.5, 0.25, 0.5],
+                [0.5, 0.25, 0.5]
+            ];
+
+            legPositions.forEach(pos => {
+                const leg = new THREE.Mesh(legGeometry, legMaterial);
+                leg.position.set(pos[0], pos[1], pos[2]);
+                leg.castShadow = !isMobile;
+                chairGroup.add(leg);
+            });
+
+            chairGroup.position.set(chair.position.x, chair.position.y, chair.position.z);
+            scene.add(chairGroup);
+            chairMeshes[chair.id] = chairGroup;
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            if (!isAnimating) {
+                // Interpolazione più smooth con easing personalizzato
+                const dx = targetCameraPos.x - currentCameraPos.x;
+                const dy = targetCameraPos.y - currentCameraPos.y;
+                const dz = targetCameraPos.z - currentCameraPos.z;
+                
+                const lookDx = targetLookAt.x - currentLookAt.x;
+                const lookDy = targetLookAt.y - currentLookAt.y;
+                const lookDz = targetLookAt.z - currentLookAt.z;
+                
+                // Easing più smooth
+                const easeFactor = isMobile ? 0.06 : 0.08;
+                const distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
+                
+                if (distance > 0.01) {
+                    currentCameraPos.x += dx * easeFactor;
+                    currentCameraPos.y += dy * easeFactor;
+                    currentCameraPos.z += dz * easeFactor;
+                    
+                    currentLookAt.x += lookDx * easeFactor;
+                    currentLookAt.y += lookDy * easeFactor;
+                    currentLookAt.z += lookDz * easeFactor;
+                } else {
+                    currentCameraPos.x = targetCameraPos.x;
+                    currentCameraPos.y = targetCameraPos.y;
+                    currentCameraPos.z = targetCameraPos.z;
+                    
+                    currentLookAt.x = targetLookAt.x;
+                    currentLookAt.y = targetLookAt.y;
+                    currentLookAt.z = targetLookAt.z;
+                }
+            }
+
+            camera.position.set(currentCameraPos.x, currentCameraPos.y, currentCameraPos.z);
+            camera.lookAt(currentLookAt.x, currentLookAt.y, currentLookAt.z);
+
+            // Aggiorna le posizioni dei punti interattivi
+            updateAllInteractivePoints();
+
+            renderer.render(scene, camera);
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            
+            // Aggiorna le posizioni dei punti interattivi quando la finestra viene ridimensionata
+            updateAllInteractivePoints();
+        }
+
+        function zoomToChair(chairIndex) {
+            const chair = chairs[chairIndex];
+            
+            // Animazione più smooth della camera
+            isAnimating = true;
+            
+            // Piccolo delay per un effetto più naturale
+            setTimeout(() => {
+                targetCameraPos = { ...cameraPositions[`chair${chairIndex + 1}`] };
+                targetLookAt = { ...cameraPositions[`chair${chairIndex + 1}`].lookAt };
+                
+                // Mostra la scheda informativa del prodotto con un piccolo ritardo
+                setTimeout(() => {
+                    showProductInfo(chair);
+                    isAnimating = false;
+                }, 400);
+            }, 100);
+            
+            currentView = 'detail';
+        }
+
+        function showProductInfo(chair) {
+            document.getElementById('product-title').textContent = chair.name;
+            document.getElementById('product-description').textContent = chair.description;
+            document.getElementById('product-dimensions').textContent = chair.dimensions;
+            document.getElementById('product-materials').textContent = chair.materials;
+            document.getElementById('product-weight').textContent = chair.weight;
+            document.getElementById('product-price').textContent = chair.price;
+            
+            const panel = document.getElementById('product-info-panel');
+            panel.classList.add('visible');
+        }
+
+        function closeProductInfo() {
+            const panel = document.getElementById('product-info-panel');
+            panel.classList.remove('visible');
+            
+            // Torna alla vista panoramica con un piccolo delay
+            setTimeout(() => {
+                setCameraView('overview');
+                
+                // Ripristina tutti i punti interattivi dopo che la camera si è mossa
+                setTimeout(() => {
+                    showAllInteractivePoints();
+                }, 500);
+            }, 200);
+        }
+
+        function setCameraView(view) {
+            currentView = view;
+            targetCameraPos = { ...cameraPositions[view] };
+            targetLookAt = { ...cameraPositions[view].lookAt };
+        }
+
+        // Inizializza quando il documento è pronto
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init();
+        }
+    </script>
+</body>
+</html>

@@ -2,647 +2,158 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Configuratore Illuminazione 3D</title>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Mostra 3D Sedie</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
         }
 
         body {
-            font-family: 'Inter', sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
             overflow: hidden;
-            background: #0a0a0a;
-            color: #fff;
-            touch-action: pan-x pan-y;
-            cursor: grab;
+            background: #F5F5F5;
+            touch-action: none;
         }
 
-        body:active {
-            cursor: grabbing;
-        }
-
-        #canvas-container {
+        #container {
             width: 100vw;
             height: 100vh;
             position: relative;
+            cursor: grab;
         }
 
-        /* Loader Styles */
-        #loader {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(10, 10, 10, 1);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            transition: opacity 0.8s ease, visibility 0.8s ease;
+        #container.grabbing {
+            cursor: grabbing;
         }
 
-        #loader.hidden {
-            opacity: 0;
-            visibility: hidden;
-            pointer-events: none;
+        #container.detail-view {
+            cursor: grab;
         }
 
-        .loader-content {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 30px;
-            padding: 40px;
-            border-radius: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            max-width: 400px;
-            width: 90%;
-            text-align: center;
-            opacity: 0;
-            min-height: 300px;
-            position: relative;
+        #container.detail-view.grabbing {
+            cursor: grabbing;
         }
 
-        .loader-logo {
-            width: 170px;
-            height: 170px;
-            object-fit: contain;
-            filter: brightness(0) invert(1);
-            opacity: 0;
-        }
-
-        .progress-section {
-            width: 100%;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            opacity: 1;
-            transition: opacity 0.5s ease;
-            height: 50px;
-            position: relative;
-        }
-
-        .progress-section.hidden {
-            opacity: 0;
-            pointer-events: none;
-        }
-
-        .progress-container {
-            width: 100%;
-            height: 4px;
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 2px;
-            overflow: hidden;
-        }
-
-        .progress-bar {
-            height: 100%;
-            background: linear-gradient(90deg, #FFD700, #FFA500);
-            width: 0%;
-            transition: width 0.3s ease;
-            border-radius: 2px;
-        }
-
-        .loader-text {
-            font-size: 14px;
-            color: rgba(255, 255, 255, 0.8);
-            font-weight: 400;
-            transition: opacity 0.3s ease;
-        }
-
-        .company-credit {
-            margin-top: 20px;
-            padding-top: 20px;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-            font-size: 12px;
-            color: rgba(255, 255, 255, 0.6);
-            opacity: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .company-logo {
-            width: 150px;
-            height: auto;
-            object-fit: contain;
-            filter: brightness(0) invert(1);
-        }
-
-        .company-text {
-            font-size: 12px;
-            color: rgba(255, 255, 255, 0.6);
-        }
-
-        #start-button {
-            padding: 12px 25px;
-            background: rgba(255, 255, 255, 0.15);
+        .panel {
+            background: rgba(255, 255, 255, 0.98);
             backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 5px;
-            color: white;
-            font-family: 'Inter', sans-serif;
-            font-size: 16px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            opacity: 0;
-            visibility: hidden;
-            position: absolute;
-            top: calc(50% + 20px);
-            left: 50%;
-            transform: translate(-50%, -50%);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        #start-button:hover {
-            background: rgba(255, 255, 255, 0.25);
-            transform: translate(-50%, -50%) scale(1.05);
-            gap: 12px;
-        }
-
-        #start-button:active {
-            transform: translate(-50%, -50%) scale(0.95);
-        }
-
-        #start-button svg {
-            transition: transform 0.3s ease;
-        }
-
-        #start-button:hover svg {
-            transform: translateX(3px);
-        }
-
-        .glass-frosted {
-            background: rgba(255, 255, 255, 0.15);
-            backdrop-filter: blur(20px) saturate(180%);
-            -webkit-backdrop-filter: blur(20px) saturate(180%);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.36);
-        }
-
-        #controls {
-            position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            padding: 20px 30px;
             border-radius: 16px;
-            z-index: 100;
-            width: 90%;
-            max-width: 600px;
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
-        }
-
-        #controls.hidden {
-            transform: translateX(-50%) translateY(100px);
-            opacity: 0;
-            pointer-events: none;
-        }
-
-        .controls-section {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .section-title {
-            font-size: 12px;
-            color: rgba(255, 255, 255, 0.7);
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            font-weight: 500;
-            text-align: center;
-            margin-bottom: 4px;
-        }
-
-        #product-info {
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
             position: absolute;
-            top: 20px;
-            left: 20px;
-            padding: 20px;
-            border-radius: 5px;
-            max-width: 320px;
-            width: calc(100% - 40px);
-            transition: border-radius 0.4s ease;
-            overflow: hidden;
-            cursor: pointer;
-            z-index: 100;
-            min-height: 70px;
+            z-index: 10;
         }
 
-        #product-info.fullscreen {
-            border-radius: 5px !important;
+        #product-info-panel {
+            top: 16px;
+            right: 16px;
+            left: 16px;
+            width: auto;
+            padding: 20px;
+            transform: translateY(-150%);
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        @media (min-width: 768px) {
+            #product-info-panel {
+                top: 24px;
+                right: 24px;
+                left: auto;
+                width: 320px;
+                max-height: 80vh;
+                transform: translateX(350px);
+            }
+        }
+
+        #product-info-panel.visible {
+            transform: translateY(0);
+        }
+
+        @media (min-width: 768px) {
+            #product-info-panel.visible {
+                transform: translateX(0);
+            }
         }
 
         .product-header {
             display: flex;
-            justify-content: space-between;
             align-items: flex-start;
-            gap: 15px;
+            justify-content: space-between;
+            margin-bottom: 16px;
         }
 
-        .product-title-container {
-            flex: 1;
-            padding: 7px 0px 0px 0px;
+        .product-header h3 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #111827;
+            margin-right: 16px;
         }
 
-        .expand-btn {
-            background: rgba(255, 255, 255, 0.2);
-            border: none;
-            border-radius: 50%;
+        @media (min-width: 768px) {
+            .product-header h3 {
+                font-size: 20px;
+            }
+        }
+
+        .close-btn {
             width: 32px;
             height: 32px;
-            color: white;
-            font-size: 14px;
+            border: none;
+            border-radius: 50%;
+            background: #f3f4f6;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
             transition: all 0.3s ease;
             flex-shrink: 0;
-            margin-top: 5px;
         }
 
-        .expand-btn:hover {
-            background: rgba(255, 255, 255, 0.3);
+        .close-btn:hover {
+            background: #e5e7eb;
             transform: scale(1.1);
         }
 
-        .expand-btn.expanded {
-            transform: rotate(180deg);
-        }
-
-        .product-name {
-            font-family: 'Playfair Display', serif;
-            font-size: 28px;
-            margin-bottom: 12px;
-            color: rgba(255, 255, 255, 0.95);
-            font-weight: 700;
-            line-height: 1.1;
-        }
-
-        .additional-info {
+        .product-description {
             font-size: 14px;
-            color: rgba(255, 255, 255, 0.7);
-            line-height: 1.5;
-            opacity: 0;
-            max-height: 0;
-            overflow: hidden;
-            margin: 0;
-            padding: 0;
-            transition: opacity 0.3s ease, max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            color: #6b7280;
+            line-height: 1.6;
+            margin-bottom: 16px;
         }
 
-        #product-info.expanded .additional-info {
-            margin-top: 15px;
+        .product-details {
+            border-top: 1px solid #e5e7eb;
+            padding-top: 16px;
         }
 
-        .info-row {
+        .detail-item {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 10px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            opacity: 0;
-            transform: translateY(10px);
-        }
-
-        .info-label {
-            font-weight: 500;
-            color: rgba(255, 255, 255, 0.8);
-        }
-
-        .info-value {
-            color: rgba(255, 255, 255, 0.7);
-            text-align: right;
-        }
-
-        .price-tag {
-            background: linear-gradient(135deg, rgba(255,215,0,0.2), rgba(255,215,0,0.1));
-            padding: 8px 15px;
-            border-radius: 12px;
-            margin-top: 10px;
-            display: inline-block;
-            border: 1px solid rgba(255,215,0,0.3);
-            opacity: 0;
-            transform: translateY(10px);
-        }
-
-        /* Power Switch Section */
-        .power-section {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .power-indicator {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 15px;
-            justify-content: center;
-        }
-
-        .power-dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            background-color: rgba(255, 255, 255, 0.3);
-            transition: all 0.3s ease;
-        }
-
-        .power-dot.active {
-            background-color: #FFD700;
-            box-shadow: 0 0 12px #FFD700;
-        }
-
-        .power-status {
+            margin-bottom: 8px;
             font-size: 13px;
-            font-weight: 500;
-            color: rgba(255, 255, 255, 0.7);
-            transition: all 0.3s ease;
         }
 
-        .power-status.active {
-            color: #FFD700;
-            font-weight: 600;
-        }
-
-        /* Toggle Switch Styles */
-        .toggle-container {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 15px;
-            margin-bottom: 15px;
-        }
-
-        .toggle-label {
-            font-size: 12px;
-            color: rgba(255, 255, 255, 0.7);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 15px;
-            position: relative;
-        }
-
-        .toggle-label.active {
-            color: #FFD700;
-            font-weight: 600;
-        }
-
-        .toggle-switch {
-            position: relative;
-            display: inline-block;
-            width: 70px;
-            height: 34px;
-        }
-
-        .toggle-switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-
-        .toggle-slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            transition: .4s;
-            border-radius: 34px;
-            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
-        }
-
-        .toggle-slider:before {
-            position: absolute;
-            content: "";
-            height: 26px;
-            width: 26px;
-            left: 4px;
-            bottom: 3px;
-            background: linear-gradient(135deg, #f5f5f5, #e0e0e0);
-            transition: .4s;
-            border-radius: 50%;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-        }
-
-        input:checked + .toggle-slider {
-            background: linear-gradient(135deg, rgba(255,215,0,0.6), rgba(255,215,0,0.3));
-            border-color: rgba(255, 215, 0, 0.6);
-        }
-
-        input:checked + .toggle-slider:before {
-            transform: translateX(36px);
-            background: linear-gradient(135deg, #FFD700, #FFA500);
-            box-shadow: 0 0 8px rgba(255, 215, 0, 0.8);
-        }
-
-        /* Product Slider Section */
-        .product-slider-section {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .slider-wrapper {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 15px;
-        }
-
-        .arrow-btn {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            color: rgba(255, 255, 255, 0.9);
-            font-size: 18px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            user-select: none;
-            flex-shrink: 0;
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-        }
-
-        .arrow-btn:hover {
-            background: rgba(255, 255, 255, 0.2);
-            border-color: rgba(255, 255, 255, 0.3);
-            transform: scale(1.1);
-        }
-
-        .arrow-btn:active {
-            transform: scale(0.95);
-        }
-
-        .current-product-display {
-            flex: 1;
-            text-align: center;
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-
-        .current-product-name {
-            font-size: 28px;
-            color: rgba(255, 255, 255, 0.9);
-            font-weight: 500;
-        }
-
-        .product-counter {
-            font-size: 12px;
-            color: rgba(255, 255, 255, 0.6);
-        }
-
-        /* Audio Controls Section */
-        .audio-section {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .audio-controls {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .audio-toggle {
-            width: 44px;
-            height: 44px;
-            border-radius: 10px;
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .audio-toggle:hover {
-            background: rgba(255, 255, 255, 0.15);
-            transform: scale(1.05);
-        }
-
-        .audio-toggle:active {
-            transform: scale(0.95);
-        }
-
-        .audio-toggle.active {
-            background: rgba(255, 215, 0, 0.15);
-            border-color: rgba(255, 215, 0, 0.4);
-        }
-
-        .audio-waves {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 3px;
-            width: 100%;
-            height: 100%;
-            position: relative;
-        }
-
-        .wave-bar {
-            width: 3px;
-            background: rgba(255, 255, 255, 0.9);
-            border-radius: 2px;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            transform-origin: center bottom;
-        }
-
-        .wave-bar.muted {
-            width: 16px;
-            height: 3px;
-            background: rgba(255, 255, 255, 0.6);
-            border-radius: 2px;
-            transform: scaleX(0.8);
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .audio-toggle.active .wave-bar:nth-child(1) {
-            animation: waveAnimation 1.2s ease-in-out infinite alternate;
-            height: 8px;
-        }
-
-        .audio-toggle.active .wave-bar:nth-child(2) {
-            animation: waveAnimation 1.2s ease-in-out infinite alternate 0.2s;
-            height: 16px;
-        }
-
-        .audio-toggle.active .wave-bar:nth-child(3) {
-            animation: waveAnimation 1.2s ease-in-out infinite alternate 0.4s;
-            height: 12px;
-        }
-
-        .audio-toggle.active .wave-bar:nth-child(4) {
-            animation: waveAnimation 1.2s ease-in-out infinite alternate 0.6s;
-            height: 20px;
-        }
-
-        .audio-toggle.active .wave-bar:nth-child(5) {
-            animation: waveAnimation 1.2s ease-in-out infinite alternate 0.8s;
-            height: 14px;
-        }
-
-        @keyframes waveAnimation {
-            0% {
-                transform: scaleY(0.6);
-            }
-            100% {
-                transform: scaleY(1.2);
+        @media (min-width: 768px) {
+            .detail-item {
+                font-size: 14px;
             }
         }
 
-        .audio-toggle:not(.active) .wave-bar {
-            height: 3px !important;
-            transform: scaleY(1) !important;
-            animation: none !important;
+        .detail-label {
+            color: #6b7280;
         }
 
-        .audio-toggle:not(.active) .wave-bar:nth-child(1),
-        .audio-toggle:not(.active) .wave-bar:nth-child(2),
-        .audio-toggle:not(.active) .wave-bar:nth-child(3),
-        .audio-toggle:not(.active) .wave-bar:nth-child(4),
-        .audio-toggle:not(.active) .wave-bar:nth-child(5) {
-            width: 3px;
-            height: 3px;
-            background: rgba(255, 255, 255, 0.6);
+        .detail-value {
+            color: #111827;
+            font-weight: 500;
         }
 
         .loading {
@@ -650,1626 +161,778 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
+            color: #111827;
             font-size: 16px;
-            color: rgba(255, 255, 255, 0.9);
-            text-align: center;
-            padding: 0 20px;
+            z-index: 100;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 12px 24px;
+            border-radius: 8px;
+            backdrop-filter: blur(10px);
         }
 
-        /* Toggle Controls Button */
-        .toggle-controls-btn {
+        .interactive-point {
             position: absolute;
-            bottom: 180px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 100px;
-            height: 25px;
-            border-radius: 5px;
-            background: rgba(255, 255, 255, 0.15);
-            backdrop-filter: blur(20px) saturate(180%);
-            -webkit-backdrop-filter: blur(20px) saturate(180%);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-bottom: none;
-            color: rgba(255, 255, 255, 0.9);
-            font-size: 16px;
-            cursor: pointer;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            width: 44px;
+            height: 44px;
+            border: none;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
             display: flex;
             align-items: center;
             justify-content: center;
-            z-index: 102;
+            cursor: pointer;
+            z-index: 20;
+            font-size: 22px;
+            font-weight: bold;
+            color: #111827;
+            pointer-events: auto;
+            opacity: 0;
+            transition: opacity 0.4s ease-in-out, transform 0.2s ease;
+            touch-action: manipulation;
+            -webkit-user-select: none;
+            user-select: none;
         }
 
-        .toggle-controls-btn:hover {
-            background: rgba(255, 255, 255, 0.25);
-            transform: translateX(-50%) scale(1.1);
+        @media (min-width: 768px) {
+            .interactive-point {
+                width: 40px;
+                height: 40px;
+                font-size: 20px;
+            }
         }
 
-        .toggle-controls-btn:active {
-            transform: translateX(-50%) scale(0.95);
+        .interactive-point.visible {
+            opacity: 1;
         }
 
-        #controls.hidden + .toggle-controls-btn {
-            top: auto;
-            bottom: 10px;
+        .interactive-point:hover {
+            transform: scale(1.1);
+            background: white;
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+        }
+
+        .mobile-instruction {
+            position: absolute;
+            bottom: 20px;
             left: 50%;
             transform: translateX(-50%);
-            border-radius: 5px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            height: 30px;
-            width: 100px;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-size: 14px;
+            color: #6b7280;
+            text-align: center;
+            z-index: 15;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            display: none;
         }
 
-        /* Media Queries per dispositivi mobili */
-        @media (max-width: 768px) {
-            #controls {
-                bottom: 15px;
-                padding: 16px 20px;
-                width: 95%;
-                border-radius: 14px;
-                gap: 14px;
-            }
-            
-            #product-info {
-                top: 15px;
-                left: 15px;
-                right: 15px;
-                padding: 15px;
-                max-width: none;
-                width: calc(100% - 30px);
-            }
-            
-            .product-name {
-                font-size: 22px;
-            }
-            
-            .section-title {
-                font-size: 11px;
-            }
-            
-            .arrow-btn {
-                width: 50px;
-                height: 50px;
-                font-size: 16px;
-            }
-            
-            .current-product-name {
-                font-size: 20px;
-            }
-            
-            #product-info.expanded {
-                width: calc(100% - 30px) !important;
-                max-width: none !important;
-            }
-
-            .toggle-switch {
-                width: 65px;
-                height: 32px;
-            }
-
-            .toggle-slider:before {
-                height: 24px;
-                width: 24px;
-            }
-
-            input:checked + .toggle-slider:before {
-                transform: translateX(33px);
-            }
-
-            .toggle-controls-btn {
-                width: 100px;
-                height: 30px;
-                font-size: 14px;
-            }
-
-            #controls.hidden + .toggle-controls-btn {
-                bottom: 10px;
-                width: 100px;
-                height: 30px;
-            }
-
-            .audio-section {
-                top: 12px;
-                right: 12px;
-            }
-            
-            .audio-toggle {
-                width: 40px;
-                height: 40px;
-            }
-            
-            .wave-bar {
-                width: 2.5px;
-            }
-
-            .loader-content {
-                padding: 30px 20px;
-                gap: 25px;
-            }
-
-            .loader-logo {
-                width: 150px;
-                height: 200px;
+        @media (max-width: 767px) {
+            .mobile-instruction {
+                display: block;
             }
         }
 
-        @media (max-width: 480px) {
-            #controls {
-                padding: 14px 16px;
-                bottom: 20px;
-                border-radius: 12px;
-                gap: 12px;
-            }
-            
-            #product-info {
-                top: 10px;
-                left: 10px;
-                right: 10px;
-                padding: 12px;
-                max-width: none;
-                width: calc(100% - 20px);
-            }
-            
-            .product-name {
-                font-size: 20px;
-                margin-bottom: 8px;
-            }
-            
-            .slider-wrapper {
-                gap: 12px;
-            }
-            
-            .arrow-btn {
-                width: 44px;
-                height: 44px;
-                font-size: 14px;
-            }
-            
-            .current-product-name {
-                font-size: 16px;
-            }
-            
-            .section-title {
-                font-size: 10px;
-            }
-            
-            #product-info.expanded {
-                width: calc(100% - 20px) !important;
-                max-width: none !important;
-            }
-
-            .toggle-switch {
-                width: 60px;
-                height: 30px;
-            }
-
-            .toggle-slider:before {
-                height: 22px;
-                width: 22px;
-            }
-
-            input:checked + .toggle-slider:before {
-                transform: translateX(30px);
-            }
-
-            .toggle-controls-btn {
-                width: 80px;
-                height: 25px;
-                font-size: 12px;
-            }
-
-            #controls.hidden + .toggle-controls-btn {
-                width: 80px;
-                height: 25px;
-                bottom: 10px;
-            }
-
-            .audio-section {
-                top: 10px;
-                right: 10px;
-            }
-            
-            .audio-toggle {
-                width: 36px;
-                height: 36px;
-            }
-            
-            .wave-bar {
-                width: 2px;
-                gap: 2px;
-            }
-
-            .loader-content {
-                padding: 25px 15px;
-                gap: 20px;
-            }
-
-            .loader-logo {
-                width: 140px;
-                height: 200px;
-            }
-
-            #start-button {
-                padding: 18px 35px;
-                font-size: 14px;
-            }
+        .rotation-instruction {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-size: 14px;
+            color: #6b7280;
+            text-align: center;
+            z-index: 15;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
         }
 
-        @media (max-width: 360px) {
-            .slider-wrapper {
-                gap: 10px;
-            }
-            
-            .current-product-name {
-                font-size: 15px;
-            }
-            
-            .product-name {
-                font-size: 18px;
-            }
-            
-            .arrow-btn {
-                width: 40px;
-                height: 40px;
-            }
-
-            .loader-content {
-                padding: 20px 15px;
-            }
-
-            .loader-logo {
-                width: 150px;
-                height: 150px;
-            }
+        .rotation-instruction.visible {
+            opacity: 1;
         }
 
-        @media (max-height: 500px) and (orientation: landscape) {
-            #product-info {
-                top: 10px;
-                left: 10px;
-                right: 10px;
-                padding: 10px;
-                max-width: none;
-                width: calc(100% - 20px);
-            }
-            
-            #controls {
-                bottom: 20px;
-                padding: 12px 15px;
-                gap: 10px;
-            }
-            
-            .product-name {
-                font-size: 16px;
-            }
-            
-            .section-title {
-                margin-bottom: 2px;
-            }
-            
-            .toggle-controls-btn {
-                top: -12px;
-            }
-            
-            #controls.hidden + .toggle-controls-btn {
-                bottom: 15px;
-            }
-
-            .audio-section {
-                top: 8px;
-                right: 8px;
-            }
-            
-            .audio-toggle {
-                width: 32px;
-                height: 32px;
-            }
-
-            .loader-content {
-                padding: 20px;
-                gap: 20px;
-                max-width: 350px;
-            }
-
-            .loader-logo {
-                width: 80px;
-                height: 80px;
-            }
+        /* Scrollbar personalizzata per mobile */
+        #product-info-panel::-webkit-scrollbar {
+            width: 4px;
         }
 
-        @media (hover: none) and (pointer: coarse) {
-            .arrow-btn:hover {
-                transform: none;
-            }
-            
-            .arrow-btn:active {
-                transform: scale(0.95);
-            }
-            
-            body {
-                cursor: default;
-            }
-
-            #start-button:hover {
-                transform: translate(-50%, -50%);
-                background: rgba(255, 255, 255, 0.15);
-            }
-
-            #start-button:active {
-                background: rgba(255, 255, 255, 0.25);
-                transform: translate(-50%, -50%) scale(0.95);
-            }
-
-            .audio-toggle:hover {
-                background: rgba(255, 255, 255, 0.1);
-                transform: scale(1);
-            }
-
-            .audio-toggle:active {
-                background: rgba(255, 255, 255, 0.15);
-                transform: scale(0.95);
-            }
+        #product-info-panel::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 2px;
         }
 
-        @media (hover: none) and (pointer: coarse) {
-            .arrow-btn,
-            .toggle-switch,
-            .toggle-controls-btn,
-            .expand-btn,
-            .audio-toggle {
-                touch-action: manipulation;
-                -webkit-tap-highlight-color: transparent;
-            }
-            
-            .toggle-switch * {
-                touch-action: pan-y;
-            }
+        #product-info-panel::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 2px;
+        }
+
+        #product-info-panel::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
         }
     </style>
 </head>
 <body>
-    <!-- Loader -->
-    <div id="loader">
-        <div class="loader-content">
-            <img src="assets/loghi/platek.webp" alt="Logo Azienda" class="loader-logo">
-            <div class="progress-section" id="progress-section">
-                <div class="progress-container">
-                    <div class="progress-bar" id="progress-bar"></div>
-                </div>
-                <div class="loader-text" id="loader-text"></div>
-            </div>
-            <button id="start-button">
-                START
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M9 6L15 12L9 18" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-            </button>
-            <div class="company-credit">
-                <div class="company-text">Realizzato da:</div>
-                <img src="assets/loghi/immerso.webp" alt="Immerso Logo" class="company-logo">
-            </div>
+    <div id="container">
+        <div class="loading" id="loading">Caricamento modelli 3D...</div>
+        <div class="mobile-instruction" id="mobile-instruction">
+            👆 Tocca i punti + per vedere i dettagli<br>
+            ↔️ Scorri per esplorare la collezione
+        </div>
+        <div class="rotation-instruction" id="rotation-instruction">
+            ↔️ Trascina per ruotare la sedia
         </div>
     </div>
 
-    <div id="canvas-container">
-        <div class="loading">Caricamento...</div>
-    </div>
-
-    <!-- Audio Elements - OTTIMIZZATI -->
-    <audio id="ambient-audio" loop preload="metadata">
-        <source src="assets/audio/ambient-sound.mp3" type="audio/mpeg">
-        <source src="assets/audio/ambient-sound.ogg" type="audio/ogg">
-    </audio>
-    
-    <!-- Audio per bottoni freccia - OTTIMIZZATO -->
-    <audio id="button-audio" preload="auto">
-        <source src="assets/audio/button-click.mp3" type="audio/mpeg">
-        <source src="assets/audio/button-click.ogg" type="audio/ogg">
-    </audio>
-    
-    <!-- Audio per toggle switch - OTTIMIZZATO -->
-    <audio id="toggle-switch-audio" preload="auto">
-        <source src="assets/audio/toggle-switch.mp3" type="audio/mpeg">
-        <source src="assets/audio/toggle-switch.ogg" type="audio/ogg">
-    </audio>
-
-    <div id="product-info" class="glass-frosted">
+    <div id="product-info-panel" class="panel">
         <div class="product-header">
-            <div class="product-title-container">
-                <div class="product-name" id="product-name">Lampada Cubo Moderna</div>
-            </div>
-            <button class="expand-btn" id="expand-btn">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
-                    xmlns="http://www.w3.org/2000/svg">
-                    <path d="M6 9L12 15L18 9"
-                        stroke="white" stroke-width="2"
-                        stroke-linecap="round" stroke-linejoin="round"/>
+            <h3 id="product-title">Sedia Moderna</h3>
+            <button class="close-btn" onclick="closeProductInfo()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
                 </svg>
             </button>
         </div>
-        
-        <div class="additional-info" id="additional-info">
-            <div class="info-row">
-                <span class="info-label">Materiale:</span>
-                <span class="info-value" id="material-value">Alluminio anodizzato</span>
+        <div class="product-description" id="product-description">
+            Design contemporaneo che unisce estetica e funzionalità. Realizzata con materiali di alta qualità per garantire comfort e durata nel tempo.
+        </div>
+        <div class="product-details">
+            <div class="detail-item">
+                <span class="detail-label">Dimensioni:</span>
+                <span class="detail-value" id="product-dimensions">120 x 85 x 60 cm</span>
             </div>
-            <div class="info-row">
-                <span class="info-label">Dimensioni:</span>
-                <span class="info-value" id="dimensions-value">30x30x30 cm</span>
+            <div class="detail-item">
+                <span class="detail-label">Materiali:</span>
+                <span class="detail-value" id="product-materials">Tessuto premium, struttura in metallo</span>
             </div>
-            <div class="info-row">
-                <span class="info-label">Potenza:</span>
-                <span class="info-value" id="power-value">15W LED</span>
+            <div class="detail-item">
+                <span class="detail-label">Peso:</span>
+                <span class="detail-value" id="product-weight">8.5 kg</span>
             </div>
-            <div class="info-row">
-                <span class="info-label">Temperatura colore:</span>
-                <span class="info-value" id="color-temp-value">3000K (caldo)</span>
-            </div>
-            <div class="price-tag">
-                <span class="info-value" id="price-value">€ 149,00</span>
+            <div class="detail-item">
+                <span class="detail-label">Prezzo:</span>
+                <span class="detail-value" id="product-price">€ 299</span>
             </div>
         </div>
     </div>
 
-    <div id="controls" class="glass-frosted">
-        <!-- Controlli Audio -->
-        <div class="audio-section">
-            <div class="audio-controls">
-                <div class="audio-toggle" id="audio-toggle">
-                    <div class="audio-waves">
-                        <div class="wave-bar"></div>
-                        <div class="wave-bar"></div>
-                        <div class="wave-bar"></div>
-                        <div class="wave-bar"></div>
-                        <div class="wave-bar"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="slider-container">
-            <!-- Indicatore stato luce -->
-            <div class="power-indicator">
-                <div class="power-dot" id="power-dot"></div>
-                <span class="toggle-label" id="power-status">LUCE SPENTA</span>
-            </div>
-
-            <!-- Toggle per accensione luce -->
-            <div class="toggle-container">
-                <span class="toggle-label">OFF</span>
-                <label class="toggle-switch">
-                    <input type="checkbox" id="light-toggle">
-                    <span class="toggle-slider"></span>
-                </label>
-                <span class="toggle-label">ON</span>
-            </div>
-
-            <div class="slider-wrapper">
-                <div class="arrow-btn" id="prev-btn">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
-                        xmlns="http://www.w3.org/2000/svg">
-                        <path d="M15 6L9 12L15 18"
-                        stroke="white" stroke-width="2"
-                        stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                </div>
-                <div class="current-product-name" id="current-product-name">Lampada Cubo</div>
-                <div class="arrow-btn" id="next-btn">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
-                        xmlns="http://www.w3.org/2000/svg">
-                        <path d="M9 6L15 12L9 18"
-                        stroke="white" stroke-width="2"
-                        stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Bottone toggle controlli -->
-    <button class="toggle-controls-btn glass-frosted" id="toggle-controls-btn">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
-            xmlns="http://www.w3.org/2000/svg">
-            <path d="M6 9L12 15L18 9"
-                stroke="white" stroke-width="2"
-                stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-    </button>
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/DRACOLoader.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/RGBELoader.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <script>
-        let scene, camera, renderer, currentMesh, envMap, environmentMesh, plantsSprite;
-        let isTransitioning = false;
-        let loader, textureLoader;
-        let currentProductIndex = 0;
-        let isLightOn = false;
-        let controlsVisible = true;
-        let ambientAudio, buttonAudio, toggleSwitchAudio;
-        let isAudioEnabled = false;
-        
-        // Variabili per effetto parallasse
-        let mouseX = 0;
-        let mouseY = 0;
-        let targetCameraX = 0;
-        let targetCameraY = 0;
-        let currentCameraX = 0;
-        let currentCameraY = 0;
-        let isMouseMoving = false;
-        let lastMouseMoveTime = 0;
-
-        // Variabili per la camera del GLB
-        let sceneCamera = null;
-        let originalCameraPosition = new THREE.Vector3();
-        let originalCameraRotation = new THREE.Euler();
-        let useSceneCamera = false;
-
-        // Variabili per le piante
-        let plantsTransitionInProgress = false;
-        let currentPlantsSprite = null;
-        let newPlantsSprite = null;
-
-        // Variabili per il loader
-        let assetsLoaded = 0;
-        let totalAssets = 0;
-        let allAssetsLoaded = false;
-        let progressInterval;
-
-        // Configurazione prodotti
-        const products = [
+        const chairs = [
             { 
-                name: 'Team Round', 
-                shortName: 'Team Round',
-                modelOff: 'assets/1/Prova_export_6_circle_giorno.glb',
-                modelOn: 'assets/1/Prova_export_6_circle_sera.glb',
-                scale: 15,
-                rotation: { x: 0, y: 0, z: 0 },
-                material: 'Alluminio anodizzato',
-                dimensions: 'Ø 160mm',
-                power: '220-240V 50/60hz',
-                colorTemp: '2700K 800 lm (¹) \n 3000K 800 lm (¹) \n 4000K su richiesta'
+                id: 0, 
+                name: 'Sedia Moderna', 
+                file: 'assets/sedie/sedia-1.glb', 
+                position: { x: -5, y: 0, z: 0 },
+                description: 'Design contemporaneo che unisce estetica e funzionalità. Realizzata con materiali di alta qualità per garantire comfort e durata nel tempo.',
+                dimensions: '120 x 85 x 60 cm',
+                materials: 'Tessuto premium, struttura in metallo',
+                weight: '8.5 kg',
+                price: '€ 299'
             },
             { 
-                name: 'Team Small', 
-                shortName: 'Team Small',
-                modelOff: 'assets/1/Prova_export_6_square_giorno.glb',
-                modelOn: 'assets/1/Prova_export_6_square_sera.glb',
-                scale: 15,
-                rotation: { x: 0, y: 0, z: 0 },
-                material: 'Alluminio anodizzato',
-                dimensions: '140x140x30mm',
-                power: '220-240V 50/60hz',
-                colorTemp: '2700K 800 lm (¹) \n 3000K 800 lm (¹) \n 4000K su richiesta'
+                id: 1, 
+                name: 'Poltrona Comfort', 
+                file: 'assets/sedie/sedia-2.glb', 
+                position: { x: -3, y: 0, z: 0 },
+                description: 'Poltrona ergonomica progettata per il massimo comfort. Ideale per lunghe sessioni di lavoro o relax.',
+                dimensions: '110 x 95 x 70 cm',
+                materials: 'Pelle sintetica, struttura in legno',
+                weight: '12.3 kg',
+                price: '€ 459'
             },
             { 
-                name: 'Team Medium', 
-                shortName: 'Team Medium',
-                modelOff: 'assets/1/Prova_export_6_rettangular_giorno.glb',
-                modelOn: 'assets/1/Prova_export_6_rettangular_sera.glb',
-                scale: 15,
-                rotation: { x: 0, y: 0, z: 0 },
-                material: 'Alluminio anodizzato',
-                dimensions: '140x160x30mm',
-                power: '220-240V 50/60hz',
-                colorTemp: '2700K 800 lm (¹) \n 3000K 800 lm (¹) \n 4000K su richiesta'
+                id: 2, 
+                name: 'Divano Elegante', 
+                file: 'assets/sedie/sedia-3.glb', 
+                position: { x: -1, y: 0, z: 0 },
+                description: 'Divano elegante con linee pulite e design raffinato. Perfetto per arredare il tuo salotto con stile.',
+                dimensions: '180 x 90 x 75 cm',
+                materials: 'Tessuto jacquard, struttura in legno massello',
+                weight: '25.7 kg',
+                price: '€ 899'
+            },
+            { 
+                id: 3, 
+                name: 'Sedia Design', 
+                file: 'assets/sedie/sedia-4.glb', 
+                position: { x: 1, y: 0, z: 0 },
+                description: 'Sedia dal design innovativo e avanguardista. Perfetta per ambienti moderni e ricercati.',
+                dimensions: '115 x 80 x 55 cm',
+                materials: 'Plastica riciclata, base cromata',
+                weight: '7.2 kg',
+                price: '€ 349'
+            },
+            { 
+                id: 4, 
+                name: 'Poltrona Executive', 
+                file: 'assets/sedie/sedia-5.glb', 
+                position: { x: 3, y: 0, z: 0 },
+                description: 'Poltrona executive di alta gamma. Elegante e confortevole, ideale per uffici dirigenziali.',
+                dimensions: '125 x 100 x 80 cm',
+                materials: 'Pelle full-grain, struttura in alluminio',
+                weight: '18.5 kg',
+                price: '€ 1.299'
+            },
+            { 
+                id: 5, 
+                name: 'Sedia Scandinava', 
+                file: 'assets/sedie/sedia-6.glb', 
+                position: { x: 5, y: 0, z: 0 },
+                description: 'Sedia in stile scandinavo con linee essenziali e naturali. Design minimal e funzionale.',
+                dimensions: '105 x 75 x 50 cm',
+                materials: 'Legno di faggio, tessuto naturale',
+                weight: '6.8 kg',
+                price: '€ 279'
             }
         ];
 
-        // Funzione per inizializzare il loader
-        function initLoader() {
-            const startButton = document.getElementById('start-button');
-            
-            totalAssets = calculateTotalAssets();
-            startEntranceAnimation();
-            
-            startButton.addEventListener('click', () => {
-                hideLoader();
-                startAmbientAudio();
-                initUISounds(); // Inizializza i suoni UI dopo il click start
-            });
-            
-            console.log(`Totale asset da caricare: ${totalAssets}`);
-        }
+        // Posizioni dei punti interattivi
+        const interactivePoints = [
+            { chairId: 0, position: { x: -5, y: 1.2, z: 0.8 } },
+            { chairId: 1, position: { x: -3, y: 1.2, z: 0.8 } },
+            { chairId: 2, position: { x: -1, y: 1.2, z: 0.8 } },
+            { chairId: 3, position: { x: 1, y: 1.2, z: 0.8 } },
+            { chairId: 4, position: { x: 3, y: 1.2, z: 0.8 } },
+            { chairId: 5, position: { x: 5, y: 1.2, z: 0.8 } }
+        ];
 
-        // Inizializza i suoni UI
-        function initUISounds() {
-            // Audio per bottoni freccia
-            buttonAudio = document.getElementById('button-audio');
-            buttonAudio.volume = 0.3;
-            buttonAudio.preload = 'auto';
-            
-            // Audio per toggle switch
-            toggleSwitchAudio = document.getElementById('toggle-switch-audio');
-            toggleSwitchAudio.volume = 0.4;
-            toggleSwitchAudio.preload = 'auto';
-            
-            console.log('Suoni UI inizializzati');
-        }
+        let currentView = 'overview';
+        let scene, camera, renderer, chairMeshes = [], environmentMesh;
+        let targetCameraPos, currentCameraPos, targetLookAt, currentLookAt;
+        let loader;
+        let interactivePointElements = [];
+        let cameraAnimationSpeed = 0.08;
+        let isAnimating = false;
+        let isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        
+        // Variabili per il controllo della camera laterale
+        let isDragging = false;
+        let previousMouseX = 0;
+        let cameraOffsetX = 0;
+        const cameraBounds = { min: -6, max: 6 }; // Limiti movimento laterale
 
-        // Funzione per riprodurre suono bottoni
-        function playButtonSound() {
-            if (!buttonAudio || !isAudioEnabled) return;
-            
-            try {
-                buttonAudio.currentTime = 0;
-                buttonAudio.play().catch(e => {
-                    // Silenzia gli errori di autoplay per i suoni UI
-                    console.log('Audio bottone non riprodotto:', e);
-                });
-            } catch (error) {
-                console.log('Errore riproduzione audio bottone:', error);
-            }
-        }
+        // Variabili per la rotazione delle sedie in modalità dettaglio
+        let isRotating = false;
+        let previousRotationX = 0;
+        let currentChairRotation = 0;
+        let currentChairId = null;
 
-        // Funzione per riprodurre suono toggle
-        function playToggleSound() {
-            if (!toggleSwitchAudio || !isAudioEnabled) return;
-            
-            try {
-                toggleSwitchAudio.currentTime = 0;
-                toggleSwitchAudio.play().catch(e => {
-                    console.log('Audio toggle non riprodotto:', e);
-                });
-            } catch (error) {
-                console.log('Errore riproduzione audio toggle:', error);
-            }
-        }
+        // Posizioni camera - ora la camera si muove solo sull'asse X
+        const cameraBasePosition = { 
+            x: 0, 
+            y: isMobile ? 2 : 1.5, 
+            z: isMobile ? 8 : 6
+        };
 
-        // Inizializza e avvia l'audio ambientale
-        function startAmbientAudio() {
-            ambientAudio = document.getElementById('ambient-audio');
-            
-            ambientAudio.volume = 0.3;
-            ambientAudio.preload = 'metadata';
-            
-            const playAudio = () => {
-                ambientAudio.play().then(() => {
-                    console.log('Audio ambientale avviato');
-                    isAudioEnabled = true;
-                    updateAudioControls();
-                }).catch(error => {
-                    console.log('Autoplay non consentito, audio in pausa:', error);
-                    isAudioEnabled = false;
-                    updateAudioControls();
-                });
-            };
-            
-            if (ambientAudio.readyState >= 2) {
-                playAudio();
-            } else {
-                ambientAudio.addEventListener('loadeddata', playAudio);
-            }
-            
-            ambientAudio.addEventListener('error', (e) => {
-                console.error('Errore nel caricamento dell\'audio:', e);
-                document.getElementById('audio-toggle').style.display = 'none';
-            });
-        }
+        const cameraPositions = {
+            overview: cameraBasePosition,
+            chair1: { x: -5, y: 1.2, z: 3 },
+            chair2: { x: -3, y: 1.2, z: 3 },
+            chair3: { x: -1, y: 1.2, z: 3 },
+            chair4: { x: 1, y: 1.2, z: 3 },
+            chair5: { x: 3, y: 1.2, z: 3 },
+            chair6: { x: 5, y: 1.2, z: 3 }
+        };
 
-        // Gestione toggle audio
-        function toggleAudioState() {
-            if (!ambientAudio) return;
-            
-            if (isAudioEnabled) {
-                ambientAudio.pause();
-                isAudioEnabled = false;
-            } else {
-                ambientAudio.play().then(() => {
-                    isAudioEnabled = true;
-                    restartAudioAnimation();
-                }).catch(error => {
-                    console.error('Errore nella riproduzione audio:', error);
-                });
-            }
-            
-            updateAudioControls();
-        }
+        function init() {
+            const container = document.getElementById('container');
 
-        // Funzione per riavviare l'animazione
-        function restartAudioAnimation() {
-            const audioToggle = document.getElementById('audio-toggle');
-            const waveBars = audioToggle.querySelectorAll('.wave-bar');
-            
-            audioToggle.classList.remove('active');
-            void audioToggle.offsetWidth;
-            audioToggle.classList.add('active');
-            
-            console.log('Animazione audio riavviata');
-        }
-
-        // Aggiorna l'interfaccia dei controlli audio
-        function updateAudioControls() {
-            const audioToggle = document.getElementById('audio-toggle');
-            
-            if (isAudioEnabled) {
-                audioToggle.classList.add('active');
-                restartAudioAnimation();
-            } else {
-                audioToggle.classList.remove('active');
-            }
-        }
-
-        // Calcola il numero totale di asset da caricare
-        function calculateTotalAssets() {
-            return 8;
-        }
-
-        // Animazione di entrata del loader
-        function startEntranceAnimation() {
-            const loaderContent = document.querySelector('.loader-content');
-            const loaderLogo = document.querySelector('.loader-logo');
-            const progressSection = document.getElementById('progress-section');
-            const companyCredit = document.querySelector('.company-credit');
-            const companyLogo = document.querySelector('.company-logo');
-            
-            const entranceTimeline = gsap.timeline();
-            
-            entranceTimeline.fromTo(loaderContent, 
-                {
-                    opacity: 0,
-                    scale: 0.9,
-                    y: 20
-                },
-                {
-                    opacity: 1,
-                    scale: 1,
-                    y: 0,
-                    duration: 1.0,
-                    ease: "power2.out"
-                }
-            );
-            
-            entranceTimeline.fromTo(loaderLogo, 
-                {
-                    opacity: 0,
-                    scale: 0.8
-                },
-                {
-                    opacity: 1,
-                    scale: 1,
-                    duration: 1.2,
-                    ease: "back.out(1.7)"
-                },
-                "-=0.5"
-            );
-            
-            entranceTimeline.fromTo(progressSection, 
-                {
-                    opacity: 0,
-                    y: 20
-                },
-                {
-                    opacity: 1,
-                    y: 0,
-                    duration: 0.8,
-                    ease: "power2.out"
-                },
-                "-=0.7"
-            );
-            
-            entranceTimeline.fromTo(companyCredit, 
-                {
-                    opacity: 0
-                },
-                {
-                    opacity: 1,
-                    duration: 0.6,
-                    ease: "power2.out"
-                },
-                "-=0.3"
-            );
-            
-            entranceTimeline.fromTo(companyLogo, 
-                {
-                    opacity: 0,
-                    scale: 0.9
-                },
-                {
-                    opacity: 1,
-                    scale: 1,
-                    duration: 0.8,
-                    ease: "power2.out"
-                },
-                "-=0.2"
-            );
-            
-            entranceTimeline.call(startProgressAnimation);
-        }
-
-        // Avvia l'animazione della barra di progresso
-        function startProgressAnimation() {
-            let progress = 0;
-            const progressBar = document.getElementById('progress-bar');
-            const loaderText = document.getElementById('loader-text');
-            
-            progressInterval = setInterval(() => {
-                progress += Math.random() * 8 + 2;
-                
-                if (progress >= 100) {
-                    progress = 100;
-                    clearInterval(progressInterval);
-                    showStartButton();
-                }
-                
-                progressBar.style.width = `${progress}%`;
-                loaderText.textContent = `Caricamento in corso... ${Math.round(progress)}%`;
-            }, 200);
-        }
-
-        // Mostra il pulsante start con animazione
-        function showStartButton() {
-            const startButton = document.getElementById('start-button');
-            const progressSection = document.getElementById('progress-section');
-            
-            const transitionTimeline = gsap.timeline();
-            
-            transitionTimeline.to(progressSection, {
-                duration: 0.5,
-                opacity: 0,
-                ease: "power2.in",
-                onComplete: () => {
-                    progressSection.classList.add('hidden');
-                }
-            });
-            
-            transitionTimeline.fromTo(startButton, 
-                {
-                    opacity: 0,
-                    scale: 0.8
-                },
-                {
-                    duration: 0.8,
-                    opacity: 1,
-                    visibility: 'visible',
-                    scale: 1,
-                    ease: "back.out(1.7)"
-                },
-                "-=0.2"
-            );
-            
-            transitionTimeline.to(startButton, {
-                duration: 2,
-                scale: 1.05,
-                repeat: -1,
-                yoyo: true,
-                ease: "sine.inOut"
-            }, "+=0.5");
-        }
-
-        // Nasconde il loader con animazione
-        function hideLoader() {
-            const loader = document.getElementById('loader');
-            const loaderContent = document.querySelector('.loader-content');
-            
-            const exitTimeline = gsap.timeline();
-            
-            exitTimeline.to(loaderContent, {
-                duration: 0.6,
-                opacity: 0,
-                scale: 0.9,
-                ease: "power2.in"
-            });
-            
-            exitTimeline.to(loader, {
-                duration: 0.8,
-                opacity: 0,
-                ease: "power2.inOut",
-                onComplete: () => {
-                    loader.classList.add('hidden');
-                }
-            });
-        }
-
-        // Inizializza l'applicazione principale
-        function initApp() {
-            const container = document.getElementById('canvas-container');
-            
-            loader = new THREE.GLTFLoader();
-            
-            const dracoLoader = new THREE.DRACOLoader();
-            dracoLoader.setDecoderPath('https://www.gstatic.com/draco/v1/decoders/');
-            loader.setDRACOLoader(dracoLoader);
-            
-            textureLoader = new THREE.TextureLoader();
-            
             scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x0a0a0a);
+            scene.background = new THREE.Color(0xF5F5F5);
 
-            camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.set(0, 2, 6);
+            // Camera con posizione base
+            camera = new THREE.PerspectiveCamera(
+                isMobile ? 50 : 45,
+                window.innerWidth / window.innerHeight,
+                0.1,
+                1000
+            );
+            updateCameraPosition();
 
             renderer = new THREE.WebGLRenderer({ 
-                antialias: true,
+                antialias: true, 
                 alpha: true,
                 powerPreference: "high-performance"
             });
             renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobile ? 1.5 : 2));
             renderer.shadowMap.enabled = true;
             renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-            renderer.toneMapping = THREE.ACESFilmicToneMapping;
-            renderer.toneMappingExposure = 1;
-            renderer.outputEncoding = THREE.sRGBEncoding;
             container.appendChild(renderer.domElement);
 
-            setupParallaxEvents();
-            loadHDRI();
-            loadEnvironmentWithCamera();
-            loadPlants(isLightOn);
-            loadProduct(0);
+            // Ottimizzazione luci
+            const ambientLight = new THREE.AmbientLight(0xffffff, isMobile ? 0.7 : 0.6);
+            scene.add(ambientLight);
 
-            document.querySelector('.loading').style.display = 'none';
-            animateProductInfo();
-            updateLightIndicator();
-            setupEventListeners();
+            const mainLight = new THREE.DirectionalLight(0xffffff, isMobile ? 0.9 : 0.8);
+            mainLight.position.set(5, 10, 5);
+            mainLight.castShadow = !isMobile;
+            if (!isMobile) {
+                mainLight.shadow.mapSize.width = 2048;
+                mainLight.shadow.mapSize.height = 2048;
+            }
+            scene.add(mainLight);
 
-            window.addEventListener('resize', onWindowResize);
+            const fillLight = new THREE.DirectionalLight(0xffffff, isMobile ? 0.4 : 0.3);
+            fillLight.position.set(-5, 5, -5);
+            scene.add(fillLight);
+
+            loader = new THREE.GLTFLoader();
+            
+            // Carica l'ambiente
+            loadEnvironment();
+            
+            // Carica tutte le sedie
+            loadAllChairs();
+
+            // Inizializza posizioni camera con la posizione attuale
+            currentCameraPos = { ...camera.position };
+            currentLookAt = { x: camera.position.x, y: 0.5, z: 0 };
+            targetCameraPos = { ...currentCameraPos };
+            targetLookAt = { ...currentLookAt };
+
+            // Setup event listeners per il controllo camera
+            setupCameraControls();
+
+            // Nascondi istruzioni dopo 5 secondi
+            setTimeout(() => {
+                const instruction = document.getElementById('mobile-instruction');
+                if (instruction) {
+                    instruction.style.opacity = '0';
+                    setTimeout(() => {
+                        instruction.style.display = 'none';
+                    }, 500);
+                }
+            }, 5000);
+
             animate();
         }
 
-        function setupParallaxEvents() {
-            document.addEventListener('mousemove', (event) => {
-                if (event.sourceCapabilities && event.sourceCapabilities.firesTouchEvents) {
-                    return;
+        function updateCameraPosition() {
+            // Calcola la posizione della camera con offset laterale
+            const cameraX = cameraBasePosition.x + cameraOffsetX;
+            
+            camera.position.set(
+                cameraX,
+                cameraBasePosition.y,
+                cameraBasePosition.z
+            );
+            
+            // La camera guarda sempre avanti (lungo l'asse Z)
+            camera.lookAt(cameraX, 0.5, 0);
+        }
+
+        function setupCameraControls() {
+            const container = document.getElementById('container');
+
+            // Mouse controls
+            container.addEventListener('mousedown', onMouseDown);
+            container.addEventListener('mousemove', onMouseMove);
+            container.addEventListener('mouseup', onMouseUp);
+            
+            // Touch controls
+            container.addEventListener('touchstart', onTouchStart, { passive: true });
+            container.addEventListener('touchmove', onTouchMove, { passive: false });
+            container.addEventListener('touchend', onTouchEnd);
+
+            // Prevenire il context menu
+            container.addEventListener('contextmenu', (e) => e.preventDefault());
+        }
+
+        function onMouseDown(event) {
+            if (currentView === 'overview') {
+                // Drag della camera in modalità panoramica
+                isDragging = true;
+                previousMouseX = event.clientX;
+                document.getElementById('container').classList.add('grabbing');
+            } else if (currentView === 'detail') {
+                // Rotazione della sedia in modalità dettaglio
+                isRotating = true;
+                previousRotationX = event.clientX;
+                document.getElementById('container').classList.add('grabbing');
+                
+                // Mostra istruzioni rotazione
+                const rotationInstruction = document.getElementById('rotation-instruction');
+                rotationInstruction.classList.add('visible');
+            }
+        }
+
+        function onMouseMove(event) {
+            if (currentView === 'overview' && isDragging) {
+                // Movimento camera laterale in panoramica
+                const deltaX = event.clientX - previousMouseX;
+                
+                cameraOffsetX -= deltaX * 0.01;
+                cameraOffsetX = Math.max(cameraBounds.min, Math.min(cameraBounds.max, cameraOffsetX));
+                
+                updateCameraPosition();
+                
+                currentCameraPos = { ...camera.position };
+                currentLookAt = { x: camera.position.x, y: 0.5, z: 0 };
+                
+                previousMouseX = event.clientX;
+            } else if (currentView === 'detail' && isRotating && currentChairId !== null) {
+                // Rotazione sedia in dettaglio
+                const deltaX = event.clientX - previousRotationX;
+                
+                // Aggiorna la rotazione della sedia
+                currentChairRotation += deltaX * 0.01;
+                
+                // Applica la rotazione alla sedia corrente
+                const chairMesh = chairMeshes[currentChairId];
+                if (chairMesh) {
+                    chairMesh.rotation.y = currentChairRotation;
                 }
                 
-                if (!isTransitioning) {
-                    mouseX = (event.clientX / window.innerWidth) * 2 - 1;
-                    mouseY = -(event.clientY / window.innerHeight) * 2 + 1;
-                    
-                    targetCameraX = mouseX * 0.05;
-                    targetCameraY = mouseY * 0.05;
-                    
-                    isMouseMoving = true;
-                    lastMouseMoveTime = Date.now();
+                previousRotationX = event.clientX;
+            }
+        }
+
+        function onMouseUp() {
+            isDragging = false;
+            isRotating = false;
+            document.getElementById('container').classList.remove('grabbing');
+            
+            // Nascondi istruzioni rotazione
+            const rotationInstruction = document.getElementById('rotation-instruction');
+            rotationInstruction.classList.remove('visible');
+        }
+
+        function onTouchStart(event) {
+            // Controlla se il touch è su un punto interattivo
+            const touch = event.touches[0];
+            const element = document.elementFromPoint(touch.clientX, touch.clientY);
+            
+            if (element && element.classList.contains('interactive-point')) {
+                // Se è un punto interattivo, gestisci il click
+                event.preventDefault();
+                element.click();
+                return;
+            }
+            
+            if (currentView === 'overview' && event.touches.length === 1) {
+                // Drag della camera in modalità panoramica
+                event.preventDefault();
+                isDragging = true;
+                previousMouseX = event.touches[0].clientX;
+            } else if (currentView === 'detail' && event.touches.length === 1) {
+                // Rotazione della sedia in modalità dettaglio
+                event.preventDefault();
+                isRotating = true;
+                previousRotationX = event.touches[0].clientX;
+                
+                // Mostra istruzioni rotazione
+                const rotationInstruction = document.getElementById('rotation-instruction');
+                rotationInstruction.classList.add('visible');
+            }
+        }
+
+        function onTouchMove(event) {
+            if (currentView === 'overview' && isDragging && event.touches.length === 1) {
+                // Movimento camera laterale in panoramica
+                event.preventDefault();
+                const deltaX = event.touches[0].clientX - previousMouseX;
+                
+                cameraOffsetX -= deltaX * 0.01;
+                cameraOffsetX = Math.max(cameraBounds.min, Math.min(cameraBounds.max, cameraOffsetX));
+                
+                updateCameraPosition();
+                
+                currentCameraPos = { ...camera.position };
+                currentLookAt = { x: camera.position.x, y: 0.5, z: 0 };
+                
+                previousMouseX = event.touches[0].clientX;
+            } else if (currentView === 'detail' && isRotating && event.touches.length === 1 && currentChairId !== null) {
+                // Rotazione sedia in dettaglio
+                event.preventDefault();
+                const deltaX = event.touches[0].clientX - previousRotationX;
+                
+                // Aggiorna la rotazione della sedia
+                currentChairRotation += deltaX * 0.01;
+                
+                // Applica la rotazione alla sedia corrente
+                const chairMesh = chairMeshes[currentChairId];
+                if (chairMesh) {
+                    chairMesh.rotation.y = currentChairRotation;
                 }
-            });
+                
+                previousRotationX = event.touches[0].clientX;
+            }
+        }
 
-            let isTouching = false;
+        function onTouchEnd() {
+            isDragging = false;
+            isRotating = false;
+            
+            // Nascondi istruzioni rotazione
+            const rotationInstruction = document.getElementById('rotation-instruction');
+            rotationInstruction.classList.remove('visible');
+        }
 
-            document.addEventListener('touchstart', (event) => {
-                if (!isTransitioning) {
-                    const isButtonTouch = event.target.closest('.arrow-btn') || 
-                                        event.target.closest('.toggle-switch') ||
-                                        event.target.closest('.toggle-controls-btn') ||
-                                        event.target.closest('.expand-btn') ||
-                                        event.target.closest('.audio-toggle');
-                    
-                    if (!isButtonTouch) {
-                        isTouching = true;
-                        targetCameraX = 0;
-                        targetCameraY = 0;
-                        currentCameraX = 0;
-                        currentCameraY = 0;
+        function isPointInViewport(worldPosition) {
+            const vector = new THREE.Vector3(
+                worldPosition.x,
+                worldPosition.y,
+                worldPosition.z
+            );
+            
+            vector.project(camera);
+            
+            // Controlla se il punto è nel viewport (-1 to 1)
+            return vector.x >= -1 && vector.x <= 1 && 
+                   vector.y >= -1 && vector.y <= 1 && 
+                   vector.z >= 0 && vector.z <= 1;
+        }
+
+        function loadEnvironment() {
+            loader.load('assets/sedie/contest.glb', function(gltf) {
+                environmentMesh = gltf.scene;
+                environmentMesh.traverse(function(node) {
+                    if (node.isMesh) {
+                        node.castShadow = !isMobile;
+                        node.receiveShadow = !isMobile;
                     }
-                }
-            }, { passive: false });
-
-            document.addEventListener('touchmove', (event) => {
-                if (isTouching) {
-                    targetCameraX = 0;
-                    targetCameraY = 0;
-                    currentCameraX = 0;
-                    currentCameraY = 0;
-                    event.preventDefault();
-                }
-            }, { passive: false });
-
-            document.addEventListener('touchend', (event) => {
-                isTouching = false;
-                targetCameraX = 0;
-                targetCameraY = 0;
-                currentCameraX = 0;
-                currentCameraY = 0;
-            });
-
-            document.addEventListener('mouseleave', () => {
-                targetCameraX = 0;
-                targetCameraY = 0;
+                });
+                scene.add(environmentMesh);
+                
+                createInteractivePoints();
+            }, undefined, function(error) {
+                console.error('Errore nel caricamento dell\'ambiente:', error);
+                createDefaultGround();
+                createInteractivePoints();
             });
         }
 
-        function setupEventListeners() {
-            // Frecce con suono
-            document.getElementById('prev-btn').addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                playButtonSound(); // AGGIUNTO SUONO
-                const newIndex = currentProductIndex > 0 ? currentProductIndex - 1 : products.length - 1;
-                loadProduct(newIndex);
-            });
+        function createDefaultGround() {
+            const groundGeometry = new THREE.PlaneGeometry(30, 30);
+            const groundMaterial = new THREE.ShadowMaterial({ opacity: 0.15 });
+            const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+            ground.rotation.x = -Math.PI / 2;
+            ground.receiveShadow = !isMobile;
+            scene.add(ground);
+        }
 
-            document.getElementById('next-btn').addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                playButtonSound(); // AGGIUNTO SUONO
-                const newIndex = currentProductIndex < products.length - 1 ? currentProductIndex + 1 : 0;
-                loadProduct(newIndex);
-            });
-
-            // Toggle luce con suono
-            document.getElementById('light-toggle').addEventListener('change', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                playToggleSound(); // AGGIUNTO SUONO
-                isLightOn = e.target.checked;
-                console.log('Stato luce:', isLightOn ? 'ACCESA' : 'SPENTA');
-                updateLightIndicator();
-                loadProduct(currentProductIndex);
-                loadPlants(isLightOn);
-            });
-
-            // Toggle audio
-            document.getElementById('audio-toggle').addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                toggleAudioState();
-            });
-
-            // Espandi/contrai scheda info
-            const expandBtn = document.getElementById('expand-btn');
-            const productInfo = document.getElementById('product-info');
+        function createInteractivePoints() {
+            const container = document.getElementById('container');
             
-            expandBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                toggleProductInfo();
-            });
-
-            productInfo.addEventListener('click', (e) => {
-                if (e.target === productInfo) {
+            interactivePoints.forEach((point, index) => {
+                const pointElement = document.createElement('button');
+                pointElement.className = 'interactive-point';
+                pointElement.innerHTML = '+';
+                pointElement.dataset.chairId = point.chairId;
+                pointElement.setAttribute('aria-label', `Visualizza dettagli ${chairs[point.chairId].name}`);
+                
+                // Evento click per desktop e mobile
+                pointElement.addEventListener('click', function(e) {
                     e.preventDefault();
                     e.stopPropagation();
-                    toggleProductInfo();
-                }
-            });
-
-            // Toggle controlli
-            document.getElementById('toggle-controls-btn').addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                toggleControls();
-            });
-
-            // Prevenire zoom su doppio tap
-            let lastTouchEnd = 0;
-            document.addEventListener('touchend', function (event) {
-                const now = (new Date()).getTime();
-                if (now - lastTouchEnd <= 300) {
-                    event.preventDefault();
-                }
-                lastTouchEnd = now;
-            }, false);
-        }
-
-        function toggleControls() {
-            const controls = document.getElementById('controls');
-            const toggleBtn = document.getElementById('toggle-controls-btn');
-            
-            if (controlsVisible) {
-                controls.classList.add('hidden');
-                toggleBtn.innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 15L12 9L18 15" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-                controlsVisible = false;
-            } else {
-                controls.classList.remove('hidden');
-                toggleBtn.innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 9L12 15L18 9" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-                controlsVisible = true;
-            }
-        }
-
-        function updateLightIndicator() {
-            const powerDot = document.getElementById('power-dot');
-            const powerStatus = document.getElementById('power-status');
-            
-            if (isLightOn) {
-                powerDot.classList.add('active');
-                powerStatus.textContent = 'LUCE ACCESA';
-                powerStatus.style.color = '#FFD700';
-            } else {
-                powerDot.classList.remove('active');
-                powerStatus.textContent = 'LUCE SPENTA';
-                powerStatus.style.color = 'rgba(255, 255, 255, 0.7)';
-            }
-        }
-
-        function toggleProductInfo() {
-            const expandBtn = document.getElementById('expand-btn');
-            const productInfo = document.getElementById('product-info');
-            const additionalInfo = document.querySelector('.additional-info');
-            const isExpanding = !productInfo.classList.contains('expanded');
-
-            if (isExpanding) {
-                productInfo.classList.add('expanded');
-                expandBtn.classList.add('expanded');
-                
-                additionalInfo.style.display = "block";
-                additionalInfo.style.maxHeight = "none";
-                const fullHeight = additionalInfo.scrollHeight + "px";
-                additionalInfo.style.maxHeight = "0";
-
-                const tl = gsap.timeline();
-
-                tl.to(additionalInfo, {
-                    duration: 0.4,
-                    opacity: 1,
-                    maxHeight: fullHeight,
-                    ease: "power2.out"
-                })
-                .to('.info-row', {
-                    duration: 0.25,
-                    opacity: 1,
-                    y: 0,
-                    stagger: 0.05,
-                    ease: "back.out(1.2)"
-                }, "-=0.3")
-                .to('.price-tag', {
-                    duration: 0.25,
-                    opacity: 1,
-                    y: 0,
-                    ease: "back.out(1.2)"
-                }, "-=0.2");
-
-                if (window.innerWidth > 768) {
-                    tl.to(productInfo, {
-                        duration: 0.4,
-                        width: '600px',
-                        ease: "power2.out"
-                    }, "-=0.2");
-                }
-
-            } else {
-                const tl = gsap.timeline({
-                    onComplete: () => {
-                        productInfo.classList.remove('expanded');
-                        expandBtn.classList.remove('expanded');
-                        additionalInfo.style.display = "none";
-                    }
+                    
+                    const chairId = parseInt(this.dataset.chairId);
+                    hideAllInteractivePoints();
+                    
+                    setTimeout(() => {
+                        zoomToChair(chairId);
+                    }, 300);
                 });
-
-                tl.to(additionalInfo, {
-                    duration: 0.4,
-                    opacity: 0,
-                    maxHeight: 0,
-                    ease: "power2.in"
-                })
-                .to('.price-tag', {
-                    duration: 0.25,
-                    opacity: 0,
-                    y: 10,
-                    ease: "power2.in"
-                }, "-=0.3")
-                .to('.info-row', {
-                    duration: 0.25,
-                    opacity: 0,
-                    y: 10,
-                    stagger: 0.05,
-                    ease: "power2.in"
-                }, "-=0.2");
-
-                if (window.innerWidth > 768) {
-                    tl.to(productInfo, {
-                        duration: 0.4,
-                        width: '320px',
-                        ease: "power2.in"
-                    }, "-=0.2");
-                }
-            }
-        }
-
-        function animateProductInfo() {
-            gsap.fromTo('#product-info', 
-                {
-                    y: -50,
-                    opacity: 0
-                },
-                {
-                    y: 0,
-                    opacity: 1,
-                    duration: 0.8,
-                    ease: "back.out(1.2)",
-                    delay: 0.5
-                }
-            );
-            
-            const timeline = gsap.timeline({ delay: 0.8 });
-            
-            timeline.fromTo('.product-name', 
-                {
-                    y: -20,
-                    opacity: 0
-                },
-                {
-                    y: 0,
-                    opacity: 1,
-                    duration: 0.6
-                }
-            );
-        }
-
-        function animateProductChange() {
-            const productName = document.getElementById('product-name');
-            const productInfo = document.getElementById('product-info');
-            const isExpanded = productInfo.classList.contains('expanded');
-            
-            if (isExpanded) {
-                const infoRows = document.querySelectorAll('.info-row');
-                const priceTag = document.querySelector('.price-tag');
                 
-                gsap.set([...infoRows, priceTag], {
-                    opacity: 0,
-                    y: 10
-                });
-            }
-            
-            updateProductInfo(currentProductIndex);
-            
-            const changeTimeline = gsap.timeline();
-            
-            changeTimeline.to(productName, {
-                duration: 0.15,
-                opacity: 0,
-                y: -8,
-                ease: "power2.in"
-            })
-            .to(productName, {
-                duration: 0.3,
-                opacity: 1,
-                y: 0,
-                ease: "back.out(1.2)"
+                // Evento touchstart aggiuntivo per mobile
+                pointElement.addEventListener('touchstart', function(e) {
+                    e.stopPropagation(); // Previene il drag della camera
+                }, { passive: true });
+                
+                container.appendChild(pointElement);
+                interactivePointElements.push(pointElement);
+                
+                updateInteractivePointPosition(pointElement, point.position);
             });
+        }
 
-            if (isExpanded) {
-                const infoRows = document.querySelectorAll('.info-row');
-                const priceTag = document.querySelector('.price-tag');
-                
-                changeTimeline
-                    .to(infoRows, {
-                        duration: 0.5,
-                        opacity: 1,
-                        y: 0,
-                        stagger: 0.1,
-                        ease: "back.out(1.2)"
-                    }, "+=0.1")
-                    .to(priceTag, {
-                        duration: 0.5,
-                        opacity: 1,
-                        y: 0,
-                        ease: "back.out(1.2)"
-                    }, "-=0.3");
+        function updateInteractivePointPosition(element, worldPosition) {
+            const vector = new THREE.Vector3(
+                worldPosition.x,
+                worldPosition.y,
+                worldPosition.z
+            );
+            
+            vector.project(camera);
+            
+            const x = (vector.x * 0.5 + 0.5) * window.innerWidth;
+            const y = (-(vector.y * 0.5) + 0.5) * window.innerHeight;
+            
+            const safeX = Math.max(30, Math.min(window.innerWidth - 30, x - 22));
+            const safeY = Math.max(30, Math.min(window.innerHeight - 30, y - 22));
+            
+            element.style.left = `${safeX}px`;
+            element.style.top = `${safeY}px`;
+            
+            // Controlla visibilità
+            const isVisible = isPointInViewport(worldPosition);
+            if (isVisible && currentView === 'overview') {
+                element.classList.add('visible');
+            } else {
+                element.classList.remove('visible');
             }
         }
 
-        function updateProductInfo(index) {
-            const product = products[index];
-            
-            document.getElementById('product-name').textContent = product.name;
-            document.getElementById('current-product-name').textContent = product.shortName;
-            
-            const formatTextWithLineBreaks = (text) => {
-                return text.replace(/\n/g, '<br>');
-            };
-            
-            document.getElementById('material-value').innerHTML = formatTextWithLineBreaks(product.material);
-            document.getElementById('dimensions-value').innerHTML = formatTextWithLineBreaks(product.dimensions);
-            document.getElementById('power-value').innerHTML = formatTextWithLineBreaks(product.power);
-            document.getElementById('color-temp-value').innerHTML = formatTextWithLineBreaks(product.colorTemp);
-            document.getElementById('price-value').textContent = product.price;
-        }
-
-        function loadHDRI() {
-            const rgbeLoader = new THREE.RGBELoader();
-            rgbeLoader.setDataType(THREE.HalfFloatType);
-            
-            rgbeLoader.load(
-                'https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/industrial_sunset_puresky_1k.hdr',
-                function(texture) {
-                    
-                    texture.mapping = THREE.EquirectangularReflectionMapping;
-                    
-                    const pmremGenerator = new THREE.PMREMGenerator(renderer);
-                    pmremGenerator.compileEquirectangularShader();
-                    
-                    envMap = pmremGenerator.fromEquirectangular(texture).texture;
-                    
-                    scene.environment = envMap;
-                    scene.background = envMap;
-                    
-                    texture.dispose();
-                    pmremGenerator.dispose();
-                    
-                    console.log('HDRI caricato con successo');
-                },
-                undefined,
-                function(error) {
-                    console.error('Errore nel caricamento HDRI:', error);
-                    createFallbackEnvironment();
+        function updateAllInteractivePoints() {
+            interactivePoints.forEach((point, index) => {
+                if (interactivePointElements[index]) {
+                    updateInteractivePointPosition(interactivePointElements[index], point.position);
                 }
-            );
+            });
         }
 
-        function createFallbackEnvironment() {
-            const cubeTextureLoader = new THREE.CubeTextureLoader();
-            const urls = [
-                'https://threejs.org/examples/textures/cube/pisa/px.png',
-                'https://threejs.org/examples/textures/cube/pisa/nx.png',
-                'https://threejs.org/examples/textures/cube/pisa/py.png',
-                'https://threejs.org/examples/textures/cube/pisa/ny.png',
-                'https://threejs.org/examples/textures/cube/pisa/pz.png',
-                'https://threejs.org/examples/textures/cube/pisa/nz.png'
-            ];
-            
-            envMap = cubeTextureLoader.load(urls);
-            envMap.encoding = THREE.sRGBEncoding;
-            
-            scene.environment = envMap;
-            scene.background = envMap;
+        function hideAllInteractivePoints() {
+            interactivePointElements.forEach(point => {
+                point.classList.remove('visible');
+                point.style.pointerEvents = 'none';
+            });
         }
 
-        function loadEnvironmentWithCamera() {
-            loader.load(
-                'assets/camera.glb',
-                (gltf) => {
-                    environmentMesh = gltf.scene;
+        function showAllInteractivePoints() {
+            interactivePointElements.forEach(point => {
+                point.style.pointerEvents = 'auto';
+                // La visibilità sarà gestita da updateAllInteractivePoints
+            });
+        }
+
+        function loadAllChairs() {
+            const loadingElement = document.getElementById('loading');
+            loadingElement.style.display = 'block';
+            
+            let chairsLoaded = 0;
+            const totalChairs = chairs.length;
+
+            chairs.forEach(chair => {
+                loader.load(chair.file, function(gltf) {
+                    const chairMesh = gltf.scene;
                     
-                    environmentMesh.position.set(0, 0, 6)
-                    environmentMesh.scale.set(18, 18, 18)
+                    chairMesh.position.set(chair.position.x, chair.position.y, chair.position.z);
                     
-                    let cameraFound = false;
-                    gltf.scene.traverse((child) => {
-                        if (child.isCamera) {
-                            console.log('Camera trovata nel GLB:', child);
-                            sceneCamera = child;
-                            
-                            originalCameraPosition.copy(sceneCamera.position);
-                            originalCameraRotation.copy(sceneCamera.rotation);
-                            
-                            if (sceneCamera.isPerspectiveCamera) {
-                                sceneCamera.near = 0.1;
-                                sceneCamera.far = 1000;
-                                sceneCamera.fov = 20;
-                                
-                                console.log('Piani di clipping regolati:', sceneCamera.near, sceneCamera.far);
-                                console.log('FOV impostato a:', sceneCamera.fov);
-                            }
-                            
-                            camera = sceneCamera;
-                            useSceneCamera = true;
-                            cameraFound = true;
-                            
-                            camera.aspect = window.innerWidth / window.innerHeight;
-                            camera.updateProjectionMatrix();
-                            
-                            console.log('Camera del GLB impostata come camera principale');
+                    chairMesh.traverse(function(node) {
+                        if (node.isMesh) {
+                            node.castShadow = !isMobile;
+                            node.receiveShadow = !isMobile;
                         }
                     });
                     
-                    if (!cameraFound) {
-                        console.warn('Nessuna camera trovata nel GLB, uso camera di default');
-                        createBasicEnvironment();
-                    } else {
-                        scene.add(environmentMesh);
-                        console.log('Ambiente con camera GLB caricato con successo');
+                    scene.add(chairMesh);
+                    chairMeshes[chair.id] = chairMesh;
+                    
+                    chairsLoaded++;
+                    if (chairsLoaded === totalChairs) {
+                        loadingElement.style.display = 'none';
                     }
-                },
-                undefined,
-                (error) => {
-                    console.error('Errore nel caricamento dell\'ambiente con camera:', error);
-                    createBasicEnvironment();
-                }
-            );
-        }
-
-        function createBasicEnvironment() {
-            const floorGeometry = new THREE.CircleGeometry(15, 32);
-            const floorMaterial = new THREE.MeshStandardMaterial({ 
-                color: 0x1a1a1a,
-                roughness: 0.1,
-                metalness: 0.9,
-                envMap: envMap
-            });
-            const floor = new THREE.Mesh(floorGeometry, floorMaterial);
-            floor.rotation.x = -Math.PI / 2;
-            floor.receiveShadow = true;
-            floor.position.y = -1;
-            scene.add(floor);
-
-            environmentMesh = floor;
-            console.log('Ambiente base creato con successo');
-        }
-
-        function loadPlants(lightState) {
-            if (plantsTransitionInProgress) return;
-            plantsTransitionInProgress = true;
-            
-            const plantImage = lightState ? 'assets/piante/3-notte.webp' : 'assets/piante/3-giorno.webp';
-            
-            textureLoader.load(
-                plantImage,
-                (texture) => {
-                    texture.encoding = THREE.sRGBEncoding;
+                }, undefined, function(error) {
+                    console.error('Errore nel caricamento della sedia:', error);
+                    createDefaultChair(chair);
                     
-                    const newMaterial = new THREE.SpriteMaterial({
-                        map: texture,
-                        transparent: true,
-                        alphaTest: 0,
-                        opacity: 0
-                    });
-                    
-                    newPlantsSprite = new THREE.Sprite(newMaterial);
-                    newPlantsSprite.position.set(-5, 2, 0);
-                    newPlantsSprite.scale.set(150, 130, 0);
-                    
-                    scene.add(newPlantsSprite);
-                    
-                    if (currentPlantsSprite) {
-                        const timeline = gsap.timeline({
-                            onComplete: () => {
-                                scene.remove(currentPlantsSprite);
-                                if (currentPlantsSprite.material.map) currentPlantsSprite.material.map.dispose();
-                                currentPlantsSprite.material.dispose();
-                                currentPlantsSprite = newPlantsSprite;
-                                plantsTransitionInProgress = false;
-                            }
-                        });
-                        
-                        timeline.to(newPlantsSprite.material, {
-                            opacity: 1,
-                            duration: 1.0,
-                            ease: "power2.inOut"
-                        })
-                        .to(currentPlantsSprite.material, {
-                            opacity: 0,
-                            duration: 1.0,
-                            ease: "power2.inOut"
-                        }, 0);
-                        
-                    } else {
-                        newPlantsSprite.material.opacity = 1;
-                        currentPlantsSprite = newPlantsSprite;
-                        plantsTransitionInProgress = false;
+                    chairsLoaded++;
+                    if (chairsLoaded === totalChairs) {
+                        loadingElement.style.display = 'none';
                     }
-                    
-                    console.log(`Piante ${lightState ? 'notturne' : 'diurne'} caricate con sovrapposizione`);
-                },
-                undefined,
-                (error) => {
-                    console.error('Errore nel caricamento delle piante PNG:', error);
-                    plantsTransitionInProgress = false;
-                }
-            );
-        }
-
-        function createGeometry(index) {
-            return new Promise((resolve, reject) => {
-                const product = products[index];
-                const modelPath = isLightOn ? product.modelOn : product.modelOff;
-                
-                console.log(`Caricamento prodotto ${index}: ${isLightOn ? 'LUCE ACCESA' : 'LUCE SPENTA'}`);
-                console.log(`Percorso modello: ${modelPath}`);
-                
-                loader.load(
-                    modelPath,
-                    (gltf) => {
-                        const model = gltf.scene;
-                        
-                        model.traverse((child) => {
-                            if (child.isMesh) {
-                                child.castShadow = true;
-                                child.receiveShadow = true;
-                                
-                                if (child.material) {
-                                    child.material.envMap = envMap;
-                                    child.material.envMapIntensity = 1.0;
-                                    child.material.needsUpdate = true;
-                                    
-                                    if (child.material.metalness > 0) {
-                                        child.material.roughness = 0.1;
-                                    }
-                                }
-                            }
-                        });
-                        
-                        const box = new THREE.Box3().setFromObject(model);
-                        const center = box.getCenter(new THREE.Vector3());
-                        model.position.sub(center);
-                        
-                        model.position.y = 0;
-                        
-                        const scale = product.scale;
-                        model.scale.set(scale, scale, scale);
-                        
-                        const rotation = product.rotation;
-                        model.rotation.set(rotation.x, rotation.y, rotation.z);
-                        
-                        resolve(model);
-                    },
-                    (xhr) => {
-                        const percentComplete = (xhr.loaded / xhr.total) * 100;
-                        console.log(modelPath + ' ' + percentComplete.toFixed(0) + '% caricato');
-                    },
-                    (error) => {
-                        console.error('Errore nel caricamento del modello:', error);
-                        reject(error);
-                    }
-                );
-            });
-        }
-
-        function loadProduct(index) {
-            if (isTransitioning) return;
-            isTransitioning = true;
-            
-            currentProductIndex = index;
-
-            const loadingEl = document.querySelector('.loading');
-            loadingEl.style.display = 'block';
-            loadingEl.textContent = '';
-
-            createGeometry(index)
-                .then((newMesh) => {
-                    const scale = products[index].scale;
-                    newMesh.scale.set(scale, scale, scale);
-                    
-                    scene.add(newMesh);
-
-                    if (currentMesh) {
-                        scene.remove(currentMesh);
-                    }
-
-                    currentMesh = newMesh;
-                    isTransitioning = false;
-                    loadingEl.style.display = 'none';
-                    
-                    updateProductInfo(index);
-                    
-                    console.log('Prodotto cambiato immediatamente');
-                })
-                .catch((error) => {
-                    console.error('Errore nel caricamento del prodotto:', error);
-                    isTransitioning = false;
-                    loadingEl.textContent = 'Errore nel caricamento. Verifica che i file GLB siano nella cartella assets/';
-                    setTimeout(() => {
-                        loadingEl.style.display = 'none';
-                    }, 3000);
                 });
+            });
+        }
+
+        function createDefaultChair(chair) {
+            const chairGroup = new THREE.Group();
+            
+            const seatGeometry = new THREE.BoxGeometry(1.2, 0.1, 1.2);
+            const material = new THREE.MeshStandardMaterial({
+                color: 0xD4D4D8,
+                roughness: 0.6,
+                metalness: 0.1
+            });
+            const seat = new THREE.Mesh(seatGeometry, material);
+            seat.position.y = 0.5;
+            seat.castShadow = !isMobile;
+            seat.receiveShadow = !isMobile;
+            chairGroup.add(seat);
+
+            const backGeometry = new THREE.BoxGeometry(1.2, 1, 0.1);
+            const back = new THREE.Mesh(backGeometry, material);
+            back.position.set(0, 1, -0.55);
+            back.castShadow = !isMobile;
+            back.receiveShadow = !isMobile;
+            chairGroup.add(back);
+
+            const legGeometry = new THREE.CylinderGeometry(0.03, 0.03, 0.5);
+            const legMaterial = new THREE.MeshStandardMaterial({
+                color: 0x2C2C2C,
+                roughness: 0.3,
+                metalness: 0.7
+            });
+            
+            const legPositions = [
+                [-0.5, 0.25, -0.5],
+                [0.5, 0.25, -0.5],
+                [-0.5, 0.25, 0.5],
+                [0.5, 0.25, 0.5]
+            ];
+
+            legPositions.forEach(pos => {
+                const leg = new THREE.Mesh(legGeometry, legMaterial);
+                leg.position.set(pos[0], pos[1], pos[2]);
+                leg.castShadow = !isMobile;
+                chairGroup.add(leg);
+            });
+
+            chairGroup.position.set(chair.position.x, chair.position.y, chair.position.z);
+            scene.add(chairGroup);
+            chairMeshes[chair.id] = chairGroup;
         }
 
         function animate() {
             requestAnimationFrame(animate);
 
-            if (!isTransitioning && useSceneCamera) {
-                currentCameraX += (targetCameraX - currentCameraX) * 0.1;
-                currentCameraY += (targetCameraY - currentCameraY) * 0.1;
+            // Animazione smooth della camera
+            if (isAnimating) {
+                const dx = targetCameraPos.x - currentCameraPos.x;
+                const dy = targetCameraPos.y - currentCameraPos.y;
+                const dz = targetCameraPos.z - currentCameraPos.z;
                 
-                camera.position.x = originalCameraPosition.x + currentCameraX;
-                camera.position.y = originalCameraPosition.y + currentCameraY;
-                camera.position.z = originalCameraPosition.z;
+                const lookDx = targetLookAt.x - currentLookAt.x;
+                const lookDy = targetLookAt.y - currentLookAt.y;
+                const lookDz = targetLookAt.z - currentLookAt.z;
                 
-                camera.rotation.copy(originalCameraRotation);
+                const easeFactor = isMobile ? 0.06 : 0.08;
+                const distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
                 
-                if (isMouseMoving && Date.now() - lastMouseMoveTime > 1000) {
-                    isMouseMoving = false;
-                    targetCameraX = 0;
-                    targetCameraY = 0;
+                if (distance > 0.01) {
+                    currentCameraPos.x += dx * easeFactor;
+                    currentCameraPos.y += dy * easeFactor;
+                    currentCameraPos.z += dz * easeFactor;
+                    
+                    currentLookAt.x += lookDx * easeFactor;
+                    currentLookAt.y += lookDy * easeFactor;
+                    currentLookAt.z += lookDz * easeFactor;
+                } else {
+                    currentCameraPos.x = targetCameraPos.x;
+                    currentCameraPos.y = targetCameraPos.y;
+                    currentCameraPos.z = targetCameraPos.z;
+                    
+                    currentLookAt.x = targetLookAt.x;
+                    currentLookAt.y = targetLookAt.y;
+                    currentLookAt.z = targetLookAt.z;
+                    
+                    // Quando l'animazione è completata, resetta isAnimating
+                    isAnimating = false;
                 }
-            } else if (!isTransitioning) {
-                currentCameraX += (targetCameraX - currentCameraX) * 0.1;
-                currentCameraY += (targetCameraY - currentCameraY) * 0.1;
-                
-                camera.position.x = currentCameraX;
-                camera.position.y = 2 + currentCameraY;
-                camera.lookAt(currentCameraX * 0.3, currentCameraY * 0.2, 0);
-                
-                if (isMouseMoving && Date.now() - lastMouseMoveTime > 1000) {
-                    isMouseMoving = false;
-                    targetCameraX = 0;
-                    targetCameraY = 0;
-                }
+
+                camera.position.set(currentCameraPos.x, currentCameraPos.y, currentCameraPos.z);
+                camera.lookAt(currentLookAt.x, currentLookAt.y, currentLookAt.z);
             }
 
+            updateAllInteractivePoints();
             renderer.render(scene, camera);
         }
 
@@ -2277,18 +940,102 @@
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            updateAllInteractivePoints();
         }
 
-        // Inizializza quando il documento è pronto
+        function zoomToChair(chairIndex) {
+            const chair = chairs[chairIndex];
+            
+            // Salva l'ID della sedia corrente
+            currentChairId = chairIndex;
+            currentChairRotation = 0;
+            
+            // Inizia l'animazione dalla posizione corrente DIRETTAMENTE alla posizione di dettaglio
+            isAnimating = true;
+            
+            // Imposta direttamente i target dalla posizione corrente
+            targetCameraPos = { ...cameraPositions[`chair${chairIndex + 1}`] };
+            targetLookAt = { x: chairs[chairIndex].position.x, y: 0.5, z: 0 };
+            
+            // Aggiorna la posizione corrente con quella attuale
+            currentCameraPos = { ...camera.position };
+            currentLookAt = { x: camera.position.x, y: 0.5, z: 0 };
+            
+            // Cambia classe per il cursore
+            document.getElementById('container').classList.add('detail-view');
+            
+            setTimeout(() => {
+                showProductInfo(chair);
+            }, 400);
+            
+            currentView = 'detail';
+        }
+
+        function showProductInfo(chair) {
+            document.getElementById('product-title').textContent = chair.name;
+            document.getElementById('product-description').textContent = chair.description;
+            document.getElementById('product-dimensions').textContent = chair.dimensions;
+            document.getElementById('product-materials').textContent = chair.materials;
+            document.getElementById('product-weight').textContent = chair.weight;
+            document.getElementById('product-price').textContent = chair.price;
+            
+            const panel = document.getElementById('product-info-panel');
+            panel.classList.add('visible');
+        }
+
+        function closeProductInfo() {
+            const panel = document.getElementById('product-info-panel');
+            panel.classList.remove('visible');
+            
+            // Torna alla vista panoramica con animazione smooth dalla posizione corrente
+            setTimeout(() => {
+                setCameraView('overview');
+                showAllInteractivePoints();
+                
+                // Rimuovi classe dettaglio
+                document.getElementById('container').classList.remove('detail-view');
+                
+                // Resetta la rotazione della sedia
+                if (currentChairId !== null) {
+                    const chairMesh = chairMeshes[currentChairId];
+                    if (chairMesh) {
+                        chairMesh.rotation.y = 0;
+                    }
+                    currentChairId = null;
+                    currentChairRotation = 0;
+                }
+            }, 200);
+        }
+
+        function setCameraView(view) {
+            currentView = view;
+            
+            // Aggiorna la posizione corrente con quella attuale della camera
+            currentCameraPos = { ...camera.position };
+            currentLookAt = { x: camera.position.x, y: 0.5, z: 0 };
+            
+            if (view === 'overview') {
+                // Calcola la posizione target per la vista panoramica
+                // mantenendo l'offset X corrente per il movimento laterale
+                targetCameraPos = { 
+                    x: cameraBasePosition.x + cameraOffsetX,
+                    y: cameraBasePosition.y,
+                    z: cameraBasePosition.z
+                };
+                targetLookAt = { x: cameraBasePosition.x + cameraOffsetX, y: 0.5, z: 0 };
+            } else {
+                targetCameraPos = { ...cameraPositions[view] };
+                targetLookAt = { x: chairs[parseInt(view.replace('chair', '')) - 1].position.x, y: 0.5, z: 0 };
+            }
+            
+            // Attiva l'animazione
+            isAnimating = true;
+        }
+
         if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', () => {
-                initLoader();
-                initApp();
-            });
+            document.addEventListener('DOMContentLoaded', init);
         } else {
-            initLoader();
-            initApp();
+            init();
         }
     </script>
 </body>

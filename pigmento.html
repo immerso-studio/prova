@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quadrati Smussati in Gradiente</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #006266; /* Blu petrolio */
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        canvas {
+            display: block;
+        }
+        .info {
+            position: absolute;
+            bottom: 20px;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            color: white;
+            font-size: 14px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+            z-index: 100;
+        }
+    </style>
+</head>
+<body>
+    <div class="info">Passa il mouse sui quadrati per vedere l'effetto hover</div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // Inizializzazione
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setClearColor(0x006266); // Blu petrolio
+        document.body.appendChild(renderer.domElement);
+        
+        // Parametri per la griglia
+        const squareSize = 1;
+        const gap = 0;
+        const borderRadius = 0.15; // Smussatura
+        
+        // Calcola il numero di quadrati per riga e colonna
+        const squaresX = Math.ceil(window.innerWidth / 80);
+        const squaresY = Math.ceil(window.innerHeight / 80);
+        
+        // Array per memorizzare i quadrati
+        const squares = [];
+        
+        // Crea la geometria del quadrato smussato
+        const createRoundedSquareGeometry = (width, height, radius, segments) => {
+            const shape = new THREE.Shape();
+            
+            // Definisci i punti per il quadrato smussato
+            shape.moveTo(-width/2 + radius, -height/2);
+            shape.lineTo(width/2 - radius, -height/2);
+            shape.quadraticCurveTo(width/2, -height/2, width/2, -height/2 + radius);
+            shape.lineTo(width/2, height/2 - radius);
+            shape.quadraticCurveTo(width/2, height/2, width/2 - radius, height/2);
+            shape.lineTo(-width/2 + radius, height/2);
+            shape.quadraticCurveTo(-width/2, height/2, -width/2, height/2 - radius);
+            shape.lineTo(-width/2, -height/2 + radius);
+            shape.quadraticCurveTo(-width/2, -height/2, -width/2 + radius, -height/2);
+            
+            const geometry = new THREE.ShapeGeometry(shape, segments);
+            return geometry;
+        };
+        
+        const squareGeometry = createRoundedSquareGeometry(squareSize, squareSize, borderRadius, 8);
+        
+        // Crea i materiali con gradiente verde-blu
+        for (let y = 0; y < squaresY; y++) {
+            for (let x = 0; x < squaresX; x++) {
+                // Calcola il colore in base alla posizione (gradiente diagonale)
+                const greenValue = 0.7 - (x / squaresX) * 0.5;
+                const blueValue = 0.5 + (y / squaresY) * 0.5;
+                const color = new THREE.Color(0, greenValue, blueValue);
+                
+                // Crea il materiale
+                const material = new THREE.MeshBasicMaterial({ color: color });
+                
+                // Crea il quadrato
+                const square = new THREE.Mesh(squareGeometry, material);
+                
+                // Posiziona il quadrato
+                square.position.x = (x - squaresX/2 + 0.5) * (squareSize + gap);
+                square.position.y = (squaresY/2 - y - 0.5) * (squareSize + gap);
+                
+                // Aggiungi proprietà per l'animazione
+                square.userData = {
+                    originalScale: 1,
+                    targetScale: 1,
+                    hover: false,
+                    originalColor: color.clone()
+                };
+                
+                // Aggiungi alla scena
+                scene.add(square);
+                squares.push(square);
+            }
+        }
+        
+        // Posiziona la camera
+        camera.position.z = 5;
+        
+        // Gestione dell'hover
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+        
+        function onMouseMove(event) {
+            // Calcola la posizione del mouse in coordinate normalizzate (-1 a +1)
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = - (event.clientY / window.innerHeight) * 2 + 1;
+            
+            // Aggiorna il raycaster
+            raycaster.setFromCamera(mouse, camera);
+            
+            // Controlla le intersezioni con un raggio più ampio
+            const intersects = raycaster.intersectObjects(squares);
+            
+            // Reset di tutti i quadrati
+            squares.forEach(square => {
+                square.userData.targetScale = 1;
+                square.material.color.copy(square.userData.originalColor);
+            });
+            
+            // Applica l'effetto hover ai quadrati intersecati e a quelli vicini
+            if (intersects.length > 0) {
+                const hoveredSquare = intersects[0].object;
+                const hoveredPosition = hoveredSquare.position.clone();
+                
+                squares.forEach(square => {
+                    const distance = square.position.distanceTo(hoveredPosition);
+                    
+                    // Effetto più ampio: influenza i quadrati fino a 2 unità di distanza
+                    if (distance < 2.5) {
+                        // Calcola l'intensità dell'effetto in base alla distanza
+                        const intensity = 1 - (distance / 2.5);
+                        
+                        // Scala in base alla distanza (più vicino = più grande)
+                        square.userData.targetScale = 1 + (0.4 * intensity);
+                        
+                        // Leggera modifica del colore per evidenziare l'area di hover
+                        const newColor = square.userData.originalColor.clone();
+                        newColor.r += 0.2 * intensity;
+                        square.material.color.lerp(newColor, 0.3);
+                    }
+                });
+            }
+        }
+        
+        window.addEventListener('mousemove', onMouseMove);
+        
+        // Animazione
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            // Animazione dello scale con interpolazione più graduale
+            squares.forEach(square => {
+                const scale = square.scale.x;
+                const targetScale = square.userData.targetScale;
+                
+                // Interpolazione più graduale per un effetto più fluido
+                if (Math.abs(scale - targetScale) > 0.001) {
+                    square.scale.x = square.scale.y = scale + (targetScale - scale) * 0.05;
+                }
+            });
+            
+            renderer.render(scene, camera);
+        }
+        
+        // Gestione del ridimensionamento della finestra
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+        
+        window.addEventListener('resize', onWindowResize);
+        
+        // Avvia l'animazione
+        animate();
+    </script>
+</body>
+</html>

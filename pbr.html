@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ottimizzazione Tessuti Three.js</title>
+    <style>
+        body { margin: 0; overflow: hidden; font-family: sans-serif; }
+        #info {
+            position: absolute;
+            top: 20px; left: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 15px;
+            border-radius: 8px;
+            pointer-events: none; /* Lascia cliccare la scena sotto */
+            max-width: 300px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        h1 { font-size: 1.2rem; margin: 0 0 10px 0; }
+        p { font-size: 0.9rem; line-height: 1.4; color: #333; }
+        .highlight { color: #e63946; font-weight: bold; }
+        
+        /* UI Controls */
+        #controls-ui {
+            position: absolute;
+            bottom: 30px; left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            background: rgba(255,255,255,0.8);
+            padding: 10px;
+            border-radius: 30px;
+        }
+        .color-btn {
+            width: 40px; height: 40px;
+            border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .color-btn:hover { transform: scale(1.1); }
+    </style>
+    
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+</head>
+<body>
+
+    <div id="info">
+        <h1>Metodo Runtime PBR</h1>
+        <p>Nota come la texture del tessuto (una semplice immagine di rumore) viene ripetuta (<span class="highlight">Tiling</span>) per ottenere alta definizione senza pesare sui MB.</p>
+        <p>Le gambe usano un materiale standard per simulare il cromo lucido.</p>
+    </div>
+
+    <div id="controls-ui">
+        <button class="color-btn" style="background-color: #2c3e50;" onclick="changeColor(0x2c3e50)"></button>
+        <button class="color-btn" style="background-color: #e74c3c;" onclick="changeColor(0xe74c3c)"></button>
+        <button class="color-btn" style="background-color: #27ae60;" onclick="changeColor(0x27ae60)"></button>
+        <button class="color-btn" style="background-color: #d35400;" onclick="changeColor(0xd35400)"></button>
+    </div>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+
+        let camera, scene, renderer;
+        let seatMaterial; // Lo rendiamo globale per poterlo modificare dai bottoni
+
+        init();
+        animate();
+
+        function init() {
+            const container = document.createElement('div');
+            document.body.appendChild(container);
+
+            // 1. SCENA E CAMERA
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0xeeeeee);
+
+            camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+            camera.position.set(3, 2, 3);
+
+            // 2. RENDERER E ILLUMINAZIONE AMBIENTALE (CRUCIALE PER IL REALISMO)
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.toneMapping = THREE.ACESFilmicToneMapping; // Tone mapping cinematografico
+            renderer.outputColorSpace = THREE.SRGBColorSpace; // Colori corretti
+            container.appendChild(renderer.domElement);
+
+            // Usiamo un ambiente pre-generato per luci e riflessi realistici (HDRI simulato)
+            const environment = new RoomEnvironment();
+            const pmremGenerator = new THREE.PMREMGenerator(renderer);
+            scene.environment = pmremGenerator.fromScene(environment).texture;
+
+            // 3. CONTROLLI
+            const controls = new OrbitControls(camera, renderer.domElement);
+            controls.target.set(0, 0.5, 0);
+            controls.enableDamping = true;
+            controls.minDistance = 1;
+            controls.maxDistance = 10;
+
+            // ---------------------------------------------------------
+            // IL CUORE DELL'OTTIMIZZAZIONE: CREAZIONE MATERIALI
+            // ---------------------------------------------------------
+
+            // A. Caricamento Texture (Usiamo una texture di "rumore" generica online)
+            const textureLoader = new THREE.TextureLoader();
+            // Carichiamo una texture leggera che useremo come NormalMap e RoughnessMap
+            // In un progetto reale, useresti le tue texture tileable (seamless)
+            const fabricPattern = textureLoader.load('https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/terrain/grasslight-big.jpg');
+            
+            // >>> IL SEGRETO: TILING <<<
+            fabricPattern.wrapS = THREE.RepeatWrapping;
+            fabricPattern.wrapT = THREE.RepeatWrapping;
+            fabricPattern.repeat.set(4, 4); // Ripetiamo la texture 4 volte sulla superficie!
+            fabricPattern.colorSpace = THREE.NoColorSpace; // Importante per mappe dati (non colore)
+
+            // B. Materiale Tessuto (MeshPhysicalMaterial)
+            seatMaterial = new THREE.MeshPhysicalMaterial({
+                color: 0x2c3e50,       // Colore base (Blu scuro)
+                roughness: 0.8,        // Tessuto non riflette nitidamente
+                metalness: 0.0,        // È tessuto, non metallo
+                
+                // Dettagli superficiali
+                normalMap: fabricPattern, 
+                normalScale: new THREE.Vector2(0.5, 0.5), // Intensità della trama
+
+                // Effetto Velluto (Sheen) - Rende il tessuto realistico ai bordi
+                sheen: 1.0,
+                sheenRoughness: 0.5,
+                sheenColor: 0xffffff,
+                
+                side: THREE.DoubleSide
+            });
+
+            // C. Materiale Gambe (MeshStandardMaterial)
+            const legsMaterial = new THREE.MeshStandardMaterial({
+                color: 0xffffff,
+                roughness: 0.1,  // Molto liscio
+                metalness: 1.0   // Completamente metallico (Cromo)
+            });
+
+            // ---------------------------------------------------------
+            // COSTRUZIONE MODELLO (Al posto di caricare un GLB)
+            // ---------------------------------------------------------
+            
+            const chairGroup = new THREE.Group();
+
+            // Seduta (Box smussato via geometria semplice)
+            const seatGeo = new THREE.BoxGeometry(1, 0.1, 1);
+            // Creiamo delle UV decenti (in un GLB sarebbero già fatte in Blender)
+            const seatMesh = new THREE.Mesh(seatGeo, seatMaterial);
+            seatMesh.position.y = 0.5;
+            seatMesh.castShadow = true;
+            seatMesh.receiveShadow = true;
+            chairGroup.add(seatMesh);
+
+            // Schienale
+            const backGeo = new THREE.BoxGeometry(1, 0.8, 0.1);
+            const backMesh = new THREE.Mesh(backGeo, seatMaterial);
+            backMesh.position.set(0, 0.95, -0.45);
+            chairGroup.add(backMesh);
+
+            // Cuscino (Per mostrare meglio il tessuto)
+            const cushionGeo = new THREE.BoxGeometry(0.8, 0.05, 0.8);
+            const cushionMesh = new THREE.Mesh(cushionGeo, seatMaterial);
+            cushionMesh.position.set(0, 0.56, 0);
+            chairGroup.add(cushionMesh);
+
+            // Gambe (Cilindri)
+            const legGeo = new THREE.CylinderGeometry(0.03, 0.02, 0.5);
+            
+            const positions = [
+                { x: 0.4, z: 0.4 },
+                { x: -0.4, z: 0.4 },
+                { x: 0.4, z: -0.4 },
+                { x: -0.4, z: -0.4 }
+            ];
+
+            positions.forEach(pos => {
+                const leg = new THREE.Mesh(legGeo, legsMaterial);
+                leg.position.set(pos.x, 0.25, pos.z);
+                chairGroup.add(leg);
+            });
+
+            scene.add(chairGroup);
+
+            // Ombra al pavimento (Fake shadow per realismo senza calcoli costosi)
+            const shadowGeo = new THREE.PlaneGeometry(1.2, 1.2);
+            const shadowMat = new THREE.MeshBasicMaterial({ 
+                color: 0x000000, 
+                transparent: true, 
+                opacity: 0.3 
+            });
+            const shadow = new THREE.Mesh(shadowGeo, shadowMat);
+            shadow.rotation.x = -Math.PI / 2;
+            shadow.position.y = 0.01; // Appena sopra il pavimento
+            scene.add(shadow);
+
+            window.addEventListener('resize', onWindowResize);
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            renderer.render(scene, camera);
+        }
+
+        // Funzione esposta globalmente per i bottoni HTML
+        window.changeColor = function(colorHex) {
+            // Qui avviene la magia: cambiamo solo il colore, 
+            // mantenendo texture, normal map e sheen intatti.
+            seatMaterial.color.setHex(colorHex);
+        }
+    </script>
+</body>
+</html>

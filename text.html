@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Test Animazioni Smooth</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f5f6fa;
+            margin: 0;
+            padding: 40px;
+            color: #0e2447;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 700px;
+            margin: auto;
+        }
+
+        .box {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin-bottom: 40px;
+            box-shadow: 0px 10px 25px rgba(0, 0, 0, 0.08);
+            opacity: 1;
+        }
+
+        .box h2 {
+            margin-top: 0;
+        }
+
+        /* ----------------------------- */
+        /* 4 — TEXT WORD-BY-WORD REVEAL */
+        /* ----------------------------- */
+
+        .reveal-container {
+            display: inline-block;
+        }
+
+        .word-wrapper {
+            overflow: hidden;
+            display: inline-block;
+            margin-right: 6px;
+        }
+
+        .reveal-word {
+            display: inline-block;
+            transform: translateY(100%);
+            opacity: 0;
+            animation: wordReveal 0.65s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes wordReveal {
+            0% {
+                transform: translateY(100%);
+                opacity: 0;
+            }
+            100% {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+    </style>
+
+</head>
+<body>
+
+    <h1>Test Animazioni Smooth</h1>
+
+    <div class="container">
+
+        <!-- ONLY the new effect (clean demo) -->
+        <div class="box">
+            <h2>4. Text Reveal — Word by Word</h2>
+
+            <p id="reveal-text" class="reveal-container">
+                Questo è l’effetto in cui ogni parola entra una alla volta in modo fluido e professionale.
+            </p>
+        </div>
+
+    </div>
+
+    <script>
+        // Seleziona il paragrafo
+        const paragraph = document.getElementById("reveal-text");
+        const text = paragraph.innerText.trim();
+
+        // Spezza in parole
+        const words = text.split(" ");
+
+        // Ricostruisci con span animati
+        paragraph.innerHTML = ""; 
+
+        words.forEach((word, index) => {
+            const wrapper = document.createElement("span");
+            wrapper.classList.add("word-wrapper");
+
+            const span = document.createElement("span");
+            span.classList.add("reveal-word");
+            span.style.animationDelay = (index * 0.12) + "s";
+            span.innerText = word;
+
+            wrapper.appendChild(span);
+            paragraph.appendChild(wrapper);
+        });
+    </script>
+
+</body>
+</html>
