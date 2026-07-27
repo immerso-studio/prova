@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Grid System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter Tight', sans-serif;
+            overflow: hidden;
+            background: #000000;
+        }
+
+        .hero-section {
+            position: relative;
+            width: 100%;
+            height: 100vh;
+            background: #000000;
+            overflow: hidden;
+        }
+
+        #threejs-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        /* Scheda futuristica con taglio 45° su tutti gli angoli */
+        .info-card {
+            position: absolute;
+            bottom: 40px;
+            right: 40px;
+            width: 520px;
+            background: #f5f2ea;
+            padding: 40px;
+            z-index: 3;
+            clip-path: polygon(
+                20px 0,
+                calc(100% - 20px) 0,
+                100% 20px,
+                100% calc(100% - 20px),
+                calc(100% - 20px) 100%,
+                20px 100%,
+                0 calc(100% - 20px),
+                0 20px
+            );
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 
+                0 25px 50px rgba(0, 0, 0, 0.25),
+                0 0 0 1px rgba(255, 255, 255, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(20px);
+            transform: translateY(100px) scale(0.9);
+            opacity: 0;
+        }
+
+        .card-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        .card-text {
+            font-size: 1.15rem;
+            font-weight: 400;
+            color: #444;
+            line-height: 1.7;
+            margin-bottom: 25px;
+        }
+
+        .smarmellate-link {
+            color: #00a8ff;
+            font-weight: 700;
+            text-decoration: none;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.3s ease;
+            border-bottom: 2px solid transparent;
+            font-size: 1.15rem;
+        }
+
+        .smarmellate-link:hover {
+            color: #0077cc;
+            border-bottom: 2px solid #00a8ff;
+        }
+
+        .image-preview {
+            position: absolute;
+            left: -260px;
+            top: 50%;
+            transform: translateY(-50%) scale(0.95);
+            width: 240px;
+            height: 240px;
+            background: #000;
+            border-radius: 15px;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            box-shadow: 
+                0 15px 35px rgba(0, 168, 255, 0.3),
+                0 0 0 2px rgba(255, 255, 255, 0.8);
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 4;
+        }
+
+        .image-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 15px;
+        }
+
+        .smarmellate-link:hover + .image-preview,
+        .image-preview:hover {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(-50%) scale(1);
+        }
+
+        .loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            color: #00a8ff;
+            font-size: 1.5rem;
+            font-family: 'Inter Tight', sans-serif;
+        }
+
+        .grid-info {
+            position: absolute;
+            bottom: 40px;
+            left: 40px;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.9rem;
+            z-index: 3;
+            font-family: 'Inter Tight', sans-serif;
+        }
+
+        @media (max-width: 768px) {
+            .info-card {
+                width: 380px;
+                right: 20px;
+                bottom: 20px;
+                padding: 30px;
+            }
+
+            .card-text, .smarmellate-link {
+                font-size: 1.05rem;
+            }
+
+            .image-preview {
+                position: fixed;
+                left: 50%;
+                top: 50%;
+                transform: translate(-50%, -50%) scale(0.9);
+                z-index: 4;
+                width: 200px;
+                height: 200px;
+            }
+
+            .smarmellate-link:hover + .image-preview,
+            .image-preview:hover {
+                transform: translate(-50%, -50%) scale(1);
+            }
+
+            .grid-info {
+                left: 20px;
+                bottom: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="loading" id="loading">
+        INIZIALIZZAZIONE SISTEMA...
+    </div>
+
+    <section class="hero-section">
+        <div id="threejs-container"></div>
+
+        <!-- Scheda informativa futuristica -->
+        <div class="info-card" id="infoCard">
+            <div class="card-content">
+                <p class="card-text">
+                    Dal 2022 rompiamo gli schemi tra tecnologia e creatività. Abbiamo lavorato con aziende solide ed enti artistici visionari, unendo questi due mondi con un unico filo conduttore: l'innovazione.
+                </p>
+                
+                <p class="card-text">
+                    Non facciamo solo siti o grafiche. Creiamo ecosistemi digitali capaci di raccontare storie complesse in modo semplice e, soprattutto, memorabile.
+                </p>
+                
+                <p class="card-text">
+                    E facciamo <span class="smarmellate-link" id="smarmellateLink">smarmellate</span>.
+                    <div class="image-preview" id="imagePreview">
+                        <img src="assets/immerso/1.jpg" alt="Smarmellate" onerror="this.style.display='none'; this.parentNode.innerHTML='🍯 Immagine non trovata<br>Controlla il percorso';">
+                    </div>
+                </p>
+            </div>
+        </div>
+
+        <div class="grid-info">
+            INTERACTIVE GRID SYSTEM · MOVE MOUSE TO EXPLORE
+        </div>
+    </section>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    
+    <script>
+        class InteractiveGridSystem {
+            constructor() {
+                this.scene = new THREE.Scene();
+                this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+                this.renderer = new THREE.WebGLRenderer({ 
+                    alpha: true, 
+                    antialias: true,
+                    powerPreference: "high-performance"
+                });
+                
+                this.mouse = new THREE.Vector2(0, 0);
+                this.targetMouse = new THREE.Vector2(0, 0);
+                this.gridLines = [];
+                this.intersectionPoints = [];
+                
+                this.init();
+                this.animate();
+            }
+
+            init() {
+                this.renderer.setSize(window.innerWidth, window.innerHeight);
+                this.renderer.setClearColor(0x000000, 0);
+                this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+                document.getElementById('threejs-container').appendChild(this.renderer.domElement);
+
+                this.camera.position.z = 35;
+
+                this.createInteractiveGrid();
+
+                window.addEventListener('resize', this.onWindowResize.bind(this));
+                window.addEventListener('mousemove', this.onMouseMove.bind(this));
+                window.addEventListener('touchmove', this.onTouchMove.bind(this));
+
+                // Animazione GSAP per la scheda
+                this.animateInfoCard();
+
+                // Aggiungi event listener per smarmellate
+                this.setupSmarmellateHover();
+
+                // Precarica l'immagine
+                this.preloadImage();
+
+                setTimeout(() => {
+                    document.getElementById('loading').style.display = 'none';
+                }, 1500);
+            }
+
+            createInteractiveGrid() {
+                const gridSize = 40;
+                const spacing = 1.2;
+
+                const lineMaterial = new THREE.LineBasicMaterial({ 
+                    color: 0xffffff, 
+                    transparent: true,
+                    opacity: 0.15,
+                    linewidth: 1
+                });
+
+                // Linee verticali
+                for (let x = -gridSize; x <= gridSize; x++) {
+                    const points = [];
+                    for (let y = -gridSize; y <= gridSize; y++) {
+                        points.push(new THREE.Vector3(x * spacing, y * spacing, 0));
+                    }
+                    const geometry = new THREE.BufferGeometry().setFromPoints(points);
+                    const line = new THREE.Line(geometry, lineMaterial);
+                    line.userData = { 
+                        type: 'vertical', 
+                        index: x + gridSize, 
+                        originalPoints: points.slice(),
+                        currentLinewidth: 1,
+                        targetLinewidth: 1
+                    };
+                    this.scene.add(line);
+                    this.gridLines.push(line);
+                }
+
+                // Linee orizzontali
+                for (let y = -gridSize; y <= gridSize; y++) {
+                    const points = [];
+                    for (let x = -gridSize; x <= gridSize; x++) {
+                        points.push(new THREE.Vector3(x * spacing, y * spacing, 0));
+                    }
+                    const geometry = new THREE.BufferGeometry().setFromPoints(points);
+                    const line = new THREE.Line(geometry, lineMaterial);
+                    line.userData = { 
+                        type: 'horizontal', 
+                        index: y + gridSize, 
+                        originalPoints: points.slice(),
+                        currentLinewidth: 1,
+                        targetLinewidth: 1
+                    };
+                    this.scene.add(line);
+                    this.gridLines.push(line);
+                }
+            }
+
+            preloadImage() {
+                // Precarica l'immagine per evitare ritardi
+                const img = new Image();
+                img.src = 'assets/immerso/1.jpg';
+                img.onload = () => {
+                    console.log('Immagine caricata con successo');
+                };
+                img.onerror = () => {
+                    console.error('Errore nel caricamento dell\'immagine');
+                    const preview = document.getElementById('imagePreview');
+                    preview.innerHTML = '🍯 Immagine non trovata<br>Controlla il percorso: assets/immerso/1.jpg';
+                    preview.style.background = 'linear-gradient(135deg, #ff6b6b, #ee5a24)';
+                    preview.style.color = 'white';
+                };
+            }
+
+            setupSmarmellateHover() {
+                const smarmellateLink = document.getElementById('smarmellateLink');
+                const imagePreview = document.getElementById('imagePreview');
+
+                // Animazione GSAP per l'hover
+                smarmellateLink.addEventListener('mouseenter', () => {
+                    gsap.to(imagePreview, {
+                        duration: 0.4,
+                        opacity: 1,
+                        scale: 1,
+                        ease: "back.out(1.7)"
+                    });
+                });
+
+                smarmellateLink.addEventListener('mouseleave', () => {
+                    gsap.to(imagePreview, {
+                        duration: 0.3,
+                        opacity: 0,
+                        scale: 0.95,
+                        ease: "power2.in"
+                    });
+                });
+
+                // Aggiungi anche hover sull'immagine per mantenerla visibile
+                imagePreview.addEventListener('mouseenter', () => {
+                    gsap.to(imagePreview, {
+                        duration: 0.2,
+                        opacity: 1,
+                        scale: 1
+                    });
+                });
+
+                imagePreview.addEventListener('mouseleave', () => {
+                    gsap.to(imagePreview, {
+                        duration: 0.3,
+                        opacity: 0,
+                        scale: 0.95
+                    });
+                });
+            }
+
+            animateInfoCard() {
+                // Animazione GSAP per l'entrata della scheda
+                gsap.to('#infoCard', {
+                    duration: 1.5,
+                    y: 0,
+                    scale: 1,
+                    opacity: 1,
+                    ease: "power3.out",
+                    delay: 1
+                });
+
+                // Animazione del testo in sequenza
+                gsap.from('.card-text', {
+                    duration: 1.2,
+                    y: 30,
+                    opacity: 0,
+                    stagger: 0.3,
+                    delay: 1.8,
+                    ease: "power2.out"
+                });
+
+                // Animazione speciale per "smarmellate"
+                gsap.to('#smarmellateLink', {
+                    duration: 2,
+                    color: "#00a8ff",
+                    textShadow: "0 0 20px rgba(0, 168, 255, 0.5)",
+                    repeat: -1,
+                    yoyo: true,
+                    ease: "sine.inOut",
+                    delay: 3
+                });
+            }
+
+            onMouseMove(event) {
+                this.targetMouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+                this.targetMouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+            }
+
+            onTouchMove(event) {
+                event.preventDefault();
+                const touch = event.touches[0];
+                this.targetMouse.x = (touch.clientX / window.innerWidth) * 2 - 1;
+                this.targetMouse.y = -(touch.clientY / window.innerHeight) * 2 + 1;
+            }
+
+            animate() {
+                requestAnimationFrame(this.animate.bind(this));
+
+                // Smooth mouse tracking
+                this.mouse.x += (this.targetMouse.x - this.mouse.x) * 0.08;
+                this.mouse.y += (this.targetMouse.y - this.mouse.y) * 0.08;
+
+                // Camera movement
+                this.camera.position.x += (this.mouse.x * 3 - this.camera.position.x) * 0.05;
+                this.camera.position.y += (this.mouse.y * 2 - this.camera.position.y) * 0.05;
+                this.camera.lookAt(this.scene.position);
+
+                const time = Date.now() * 0.001;
+                const worldMouse = new THREE.Vector3(this.mouse.x * 45, this.mouse.y * 30, 0);
+
+                // Aggiorna la deformazione della griglia e lo spessore delle linee
+                this.updateGridDeformation(worldMouse, time);
+
+                this.renderer.render(this.scene, this.camera);
+            }
+
+            updateGridDeformation(worldMouse, time) {
+                const deformationStrength = 1.5;
+                const influenceRadius = 15;
+                const waveSpeed = 2;
+                const maxLinewidth = 3;
+                const linewidthInfluenceRadius = 8;
+
+                this.gridLines.forEach(line => {
+                    const positions = line.geometry.attributes.position;
+                    const originalPoints = line.userData.originalPoints;
+
+                    let maxLineInfluence = 0;
+
+                    for (let i = 0; i < positions.count; i++) {
+                        const originalPoint = originalPoints[i];
+                        const currentPoint = new THREE.Vector3(positions.getX(i), positions.getY(i), 0);
+                        
+                        const distanceToMouse = currentPoint.distanceTo(worldMouse);
+                        const mouseInfluence = Math.max(0, 1 - distanceToMouse / influenceRadius);
+                        
+                        maxLineInfluence = Math.max(maxLineInfluence, mouseInfluence);
+
+                        const waveX = Math.sin(time * waveSpeed + originalPoint.y * 0.2) * 0.4;
+                        const waveY = Math.cos(time * waveSpeed * 0.8 + originalPoint.x * 0.2) * 0.4;
+
+                        const directionToMouse = new THREE.Vector3()
+                            .subVectors(currentPoint, worldMouse)
+                            .normalize();
+                        
+                        const pushStrength = mouseInfluence * deformationStrength;
+                        const pushX = directionToMouse.x * pushStrength;
+                        const pushY = directionToMouse.y * pushStrength;
+
+                        const newX = originalPoint.x + waveX + pushX;
+                        const newY = originalPoint.y + waveY + pushY;
+
+                        positions.setX(i, positions.getX(i) + (newX - positions.getX(i)) * 0.1);
+                        positions.setY(i, positions.getY(i) + (newY - positions.getY(i)) * 0.1);
+                    }
+
+                    positions.needsUpdate = true;
+
+                    const targetLinewidth = 1 + maxLineInfluence * (maxLinewidth - 1);
+                    line.userData.currentLinewidth += (targetLinewidth - line.userData.currentLinewidth) * 0.15;
+                    
+                    line.material.opacity = 0.1 + maxLineInfluence * 0.3;
+                    line.material.linewidth = line.userData.currentLinewidth;
+
+                    line.material.opacity = Math.min(0.5, 0.15 + maxLineInfluence * 0.35);
+                });
+            }
+
+            onWindowResize() {
+                this.camera.aspect = window.innerWidth / window.innerHeight;
+                this.camera.updateProjectionMatrix();
+                this.renderer.setSize(window.innerWidth, window.innerHeight);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            new InteractiveGridSystem();
+        });
+
+        window.addEventListener('error', function(e) {
+            console.error('Errore:', e.error);
+            document.getElementById('loading').innerHTML = 'ERRORE DI SISTEMA. RICARICA LA PAGINA.';
+        });
+    </script>
+</body>
+</html>

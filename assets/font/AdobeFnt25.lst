@@ -1,0 +1,59 @@
+%!Adobe-FontList 1.25
+%Locale:0x410
+
+%BeginFont
+Handler:DirectoryHandler
+FontType:Type1
+FontName:DAMN-Regular
+FamilyName:DAMN
+StyleName:Regular
+FullName:DAMN Regular
+MenuName:DAMN
+StyleBits:0
+FamilyNameNative:DAMN
+StyleNameNative:Regular
+FullNameNative:DAMN Regular
+WritingScript:Cyrillic
+OutlineFileName:C:\Users\paolo\Desktop\REPOSITORY AR\prova\assets\Font\DAMN.otf
+DataFormat:sfntData
+UsesStandardEncoding:yes
+isCFF:yes
+hasSVG:no
+hasCOLR:no
+VariableFontType:NonVariableFont
+FileLength:17288
+FileModTime:1682501107
+WeightClass:400
+WidthClass:5
+AngleClass:0
+NameArray:0,Mac,4,DAMN Regular
+NameArray:0,Win,1,DAMN
+%EndFont
+
+%BeginFont
+Handler:DirectoryHandler
+FontType:TrueType
+FontName:DAMN-Regular
+FamilyName:DAMN
+StyleName:Regular
+FullName:DAMN Regular
+MenuName:DAMN
+StyleBits:0
+FamilyNameNative:DAMN
+StyleNameNative:Regular
+FullNameNative:DAMN Regular
+WritingScript:Cyrillic
+OutlineFileName:C:\Users\paolo\Desktop\REPOSITORY AR\prova\assets\Font\DAMN.ttf
+DataFormat:sfntData
+hasSVG:no
+hasCOLR:no
+VariableFontType:NonVariableFont
+FileLength:43864
+FileModTime:1682501107
+WeightClass:400
+WidthClass:5
+AngleClass:0
+NameArray:0,Mac,4,DAMN Regular
+NameArray:0,Win,1,DAMN
+%EndFont
+

@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Casa Interattiva 3D</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+            background: #000;
+            touch-action: none;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -khtml-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            position: fixed;
+            width: 100%;
+            height: 100%;
+        }
+        
+        #canvas-container {
+            width: 100vw;
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+        }
+        
+        .hotspot {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            background: rgba(255, 255, 255, 0.95);
+            border: 3px solid #333;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            font-weight: bold;
+            color: #333;
+            cursor: pointer;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            pointer-events: auto;
+            z-index: 10;
+            opacity: 0;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+        }
+
+        /* Hotspot ancora più grandi per mobile molto piccolo */
+        @media (max-width: 480px) {
+            .hotspot {
+                width: 55px;
+                height: 55px;
+                font-size: 30px;
+            }
+        }
+
+        @media (max-width: 360px) {
+            .hotspot {
+                width: 50px;
+                height: 50px;
+                font-size: 28px;
+            }
+        }
+        
+        .hotspot.visible {
+            opacity: 1;
+        }
+        
+        .hotspot:hover {
+            transform: translate(-50%, -50%) scale(1.2);
+            background: rgba(255, 255, 255, 1);
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
+        }
+        
+        .info-card {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(150%);
+            width: 90%;
+            max-width: 500px;
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            transition: transform 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            z-index: 100;
+            border: 2px solid rgba(255, 255, 255, 0.5);
+        }
+
+        /* Info card per mobile */
+        @media (max-width: 768px) {
+            .info-card {
+                bottom: 15px;
+                padding: 18px;
+                border-radius: 12px;
+            }
+            
+            .info-card h2 {
+                font-size: 20px;
+                margin-bottom: 10px;
+            }
+            
+            .info-card p {
+                font-size: 14px;
+                line-height: 1.5;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .info-card {
+                bottom: 10px;
+                padding: 15px;
+                border-radius: 10px;
+            }
+            
+            .info-card h2 {
+                font-size: 18px;
+            }
+            
+            .info-card p {
+                font-size: 13px;
+            }
+        }
+        
+        .info-card.active {
+            transform: translateX(-50%) translateY(0);
+        }
+        
+        .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 32px;
+            height: 32px;
+            background: #333;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            font-size: 18px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            z-index: 101;
+        }
+
+        @media (max-width: 768px) {
+            .close-btn {
+                width: 30px;
+                height: 30px;
+                font-size: 16px;
+                top: 8px;
+                right: 8px;
+            }
+        }
+        
+        .close-btn:hover {
+            background: #555;
+            transform: rotate(90deg);
+        }
+        
+        .info-card h2 {
+            color: #333;
+            margin-bottom: 12px;
+            font-size: 22px;
+            padding-right: 30px;
+        }
+        
+        .info-card p {
+            color: #666;
+            line-height: 1.5;
+            margin-bottom: 8px;
+        }
+        
+        .loading {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 20px;
+            z-index: 1000;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .loading {
+                font-size: 18px;
+                padding: 15px;
+            }
+        }
+
+        /* Messaggio per mobile */
+        .mobile-message {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: white;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 12px 20px;
+            border-radius: 10px;
+            font-size: 14px;
+            text-align: center;
+            z-index: 50;
+            display: none;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        @media (max-width: 768px) {
+            .mobile-message {
+                display: block;
+                width: 90%;
+                font-size: 13px;
+                padding: 10px 15px;
+            }
+        }
+
+        /* Prevenire scroll su mobile */
+        html, body {
+            overscroll-behavior: none;
+            -webkit-overflow-scrolling: touch;
+        }
+    </style>
+</head>
+<body>
+    <div id="canvas-container"></div>
+    <div class="loading" id="loading">Caricamento scena 3D...</div>
+    <div class="mobile-message" id="mobile-message">Tocca i punti + per scoprire i dettagli degli arredi</div>
+    
+    <div class="info-card" id="info-card">
+        <button class="close-btn" id="close-btn">✕</button>
+        <h2 id="item-title">Titolo</h2>
+        <p id="item-description">Descrizione dell'oggetto</p>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script>
+        let scene, camera, renderer, controls;
+        let furniture = [];
+        let hotspots = [];
+        let isDetailView = false;
+        let currentItem = null;
+        let isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+        // Coordinate predefinite per ogni elemento
+        const cameraPositions = {
+            'panoramica': {
+                position: { x: 4.80, y: 1.68, z: -0.29 },
+                target: { x: -0.11, y: 0.45, z: -0.29 }
+            },
+            '1_tavolino.glb': {
+                position: { x: 2.13, y: 1.38, z: 0.92 },
+                target: { x: 0.65, y: 0.38, z: -0.00 }
+            },
+            '1_divano.glb': {
+                position: { x: 1.36, y: 1.93, z: 1.54 },
+                target: { x: -0.11, y: 0.93, z: 0.62 }
+            },
+            '1_poltrona.glb': {
+                position: { x: 2.98, y: 1.11, z: -1.12 },
+                target: { x: 1.07, y: 0.71, z: -1.56 }
+            }
+        };
+
+        const furnitureData = {
+            '1_divano.glb': {
+                name: 'Divano',
+                description: 'Elegante divano moderno con rivestimento in tessuto di alta qualità. Design confortevole e raffinato.',
+                hotspotOffset: { x: 0, y: 0.5, z: 0 }
+            },
+            '1_poltrona.glb': {
+                name: 'Poltrona',
+                description: 'Poltrona ergonomica dal design contemporaneo. Perfetta per momenti di relax e lettura.',
+                hotspotOffset: { x: 0, y: 0.4, z: 0 }
+            },
+            '1_tavolino.glb': {
+                name: 'Tavolino',
+                description: 'Tavolino da caffè con finitura elegante. Ideale per completare lo spazio living.',
+                hotspotOffset: { x: 0, y: 0.3, z: 0 }
+            }
+        };
+
+        function init() {
+            const container = document.getElementById('canvas-container');
+
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x1a1a1a);
+
+            // Camera con campo visivo più ampio per mobile
+            const fov = isMobile ? 45 : 30;
+            camera = new THREE.PerspectiveCamera(
+                fov,
+                window.innerWidth / window.innerHeight,
+                0.1,
+                1000
+            );
+
+            // Imposta la posizione iniziale della camera (panoramica)
+            const initialPos = cameraPositions.panoramica.position;
+            camera.position.set(initialPos.x, initialPos.y, initialPos.z);
+            
+            renderer = new THREE.WebGLRenderer({ 
+                antialias: true,
+                powerPreference: "high-performance",
+                alpha: false
+            });
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobile ? 1.5 : 2));
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            container.appendChild(renderer.domElement);
+
+            // Disabilita completamente i controlli Orbit
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableRotate = false;
+            controls.enableZoom = false;
+            controls.enablePan = false;
+            controls.enableDamping = false;
+            controls.enabled = false;
+
+            // Imposta il target iniziale della camera (panoramica)
+            const initialTarget = cameraPositions.panoramica.target;
+            controls.target.set(initialTarget.x, initialTarget.y, initialTarget.z);
+            controls.update();
+
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+            scene.add(ambientLight);
+
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.9);
+            directionalLight.position.set(5, 10, 5);
+            directionalLight.castShadow = true;
+            directionalLight.shadow.mapSize.width = isMobile ? 512 : 1024;
+            directionalLight.shadow.mapSize.height = isMobile ? 512 : 1024;
+            scene.add(directionalLight);
+
+            const hemisphereLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.5);
+            scene.add(hemisphereLight);
+
+            loadModels();
+
+            window.addEventListener('resize', onWindowResize);
+            document.getElementById('close-btn').addEventListener('click', exitDetailView);
+
+            // Nascondi il messaggio mobile dopo 5 secondi
+            if (isMobile) {
+                setTimeout(() => {
+                    const message = document.getElementById('mobile-message');
+                    message.style.transition = 'opacity 1s ease';
+                    message.style.opacity = '0';
+                    setTimeout(() => {
+                        message.style.display = 'none';
+                    }, 1000);
+                }, 5000);
+            }
+
+            // Debug per mobile
+            if (isMobile) {
+                console.log('Dispositivo mobile rilevato');
+                console.log('Dimensioni viewport:', window.innerWidth, 'x', window.innerHeight);
+            }
+        }
+
+        function loadModels() {
+            const loader = new THREE.GLTFLoader();
+            const basePath = 'assets/stanza/';
+            let loadedCount = 0;
+            const totalModels = 4;
+
+            loader.load(
+                basePath + '1_ambiente_bake.glb',
+                (gltf) => {
+                    const ambiente = gltf.scene;
+                    ambiente.traverse((child) => {
+                        if (child.isMesh) {
+                            child.receiveShadow = true;
+                            // Ottimizzazione per mobile
+                            if (isMobile) {
+                                child.material.precision = 'mediump';
+                            }
+                        }
+                    });
+                    scene.add(ambiente);
+                    loadedCount++;
+                    checkLoadingComplete(loadedCount, totalModels);
+                },
+                undefined,
+                (error) => console.error('Errore caricamento ambiente:', error)
+            );
+
+            ['1_divano.glb', '1_poltrona.glb', '1_tavolino.glb'].forEach((filename) => {
+                loader.load(
+                    basePath + filename,
+                    (gltf) => {
+                        const model = gltf.scene;
+                        model.userData.filename = filename;
+                        model.userData.info = furnitureData[filename];
+                        
+                        model.traverse((child) => {
+                            if (child.isMesh) {
+                                child.castShadow = true;
+                                child.receiveShadow = true;
+                                // Ottimizzazione per mobile
+                                if (isMobile) {
+                                    child.material.precision = 'mediump';
+                                }
+                            }
+                        });
+                        
+                        scene.add(model);
+                        furniture.push(model);
+                        
+                        createHotspot(model);
+                        
+                        loadedCount++;
+                        checkLoadingComplete(loadedCount, totalModels);
+                    },
+                    undefined,
+                    (error) => console.error(`Errore caricamento ${filename}:`, error)
+                );
+            });
+        }
+
+        function checkLoadingComplete(loaded, total) {
+            if (loaded === total) {
+                setTimeout(() => {
+                    document.getElementById('loading').style.display = 'none';
+                    // Forza un aggiornamento degli hotspot dopo il caricamento
+                    updateHotspots();
+                }, 500);
+            }
+        }
+
+        function createHotspot(model) {
+            const hotspot = document.createElement('div');
+            hotspot.className = 'hotspot';
+            hotspot.textContent = '+';
+            hotspot.setAttribute('role', 'button');
+            hotspot.setAttribute('aria-label', `Scopri ${model.userData.info.name}`);
+            hotspot.setAttribute('tabindex', '0');
+            document.getElementById('canvas-container').appendChild(hotspot);
+            
+            // Event listener per click e touch
+            const handleActivate = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (!isDetailView) {
+                    focusOnItem(model);
+                }
+            };
+            
+            hotspot.addEventListener('click', handleActivate);
+            hotspot.addEventListener('touchstart', handleActivate, { passive: false });
+            
+            hotspots.push({ element: hotspot, model: model });
+        }
+
+        function updateHotspots() {
+            hotspots.forEach(({ element, model }) => {
+                const offset = model.userData.info.hotspotOffset;
+                const box = new THREE.Box3().setFromObject(model);
+                const center = box.getCenter(new THREE.Vector3());
+                center.y = box.max.y + offset.y;
+                center.x += offset.x;
+                center.z += offset.z;
+
+                const screenPos = center.clone().project(camera);
+                
+                const x = (screenPos.x * 0.5 + 0.5) * window.innerWidth;
+                const y = (-(screenPos.y * 0.5) + 0.5) * window.innerHeight;
+                
+                element.style.left = `${x}px`;
+                element.style.top = `${y}px`;
+                
+                // Controlla se l'hotspot è visibile e non siamo in modalità dettaglio
+                const isVisible = screenPos.z < 1 && !isDetailView && screenPos.x > -1 && screenPos.x < 1 && screenPos.y > -1 && screenPos.y < 1;
+                
+                if (isVisible) {
+                    if (!element.classList.contains('visible')) {
+                        element.classList.add('visible');
+                    }
+                } else {
+                    if (element.classList.contains('visible')) {
+                        element.classList.remove('visible');
+                    }
+                }
+            });
+        }
+
+        function focusOnItem(model) {
+            if (isDetailView) return;
+            
+            isDetailView = true;
+            currentItem = model;
+
+            // Nascondi tutti gli hotspot immediatamente
+            hotspots.forEach(({ element }) => {
+                element.classList.remove('visible');
+            });
+
+            const filename = model.userData.filename;
+            const cameraData = cameraPositions[filename];
+            
+            if (!cameraData) {
+                console.error('Coordinate camera non trovate per:', filename);
+                return;
+            }
+
+            const startPosition = camera.position.clone();
+            const startTarget = controls.target.clone();
+            
+            const targetPosition = new THREE.Vector3(
+                cameraData.position.x,
+                cameraData.position.y,
+                cameraData.position.z
+            );
+            
+            const targetTarget = new THREE.Vector3(
+                cameraData.target.x,
+                cameraData.target.y,
+                cameraData.target.z
+            );
+
+            animateCamera(startPosition, targetPosition, startTarget, targetTarget);
+
+            const info = model.userData.info;
+            document.getElementById('item-title').textContent = info.name;
+            document.getElementById('item-description').textContent = info.description;
+            document.getElementById('info-card').classList.add('active');
+        }
+
+        function exitDetailView() {
+            if (!isDetailView) return;
+            
+            isDetailView = false;
+            
+            const startPosition = camera.position.clone();
+            const startTarget = controls.target.clone();
+            
+            const panoramaData = cameraPositions.panoramica;
+            const targetPosition = new THREE.Vector3(
+                panoramaData.position.x,
+                panoramaData.position.y,
+                panoramaData.position.z
+            );
+            
+            const targetTarget = new THREE.Vector3(
+                panoramaData.target.x,
+                panoramaData.target.y,
+                panoramaData.target.z
+            );
+
+            animateCamera(startPosition, targetPosition, startTarget, targetTarget, () => {
+                currentItem = null;
+            });
+
+            document.getElementById('info-card').classList.remove('active');
+        }
+
+        function animateCamera(startPos, endPos, startTarget, endTarget, callback) {
+            const duration = 1000;
+            const startTime = Date.now();
+
+            function animate() {
+                const elapsed = Date.now() - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                const eased = easeInOutCubic(progress);
+
+                camera.position.lerpVectors(startPos, endPos, eased);
+                controls.target.lerpVectors(startTarget, endTarget, eased);
+                controls.update();
+
+                if (progress < 1) {
+                    requestAnimationFrame(animate);
+                } else if (callback) {
+                    callback();
+                }
+            }
+            animate();
+        }
+
+        function easeInOutCubic(t) {
+            return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+        }
+
+        function onWindowResize() {
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+            
+            camera.aspect = width / height;
+            camera.updateProjectionMatrix();
+            renderer.setSize(width, height);
+            
+            // Forza aggiornamento hotspot dopo resize
+            updateHotspots();
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            updateHotspots();
+            renderer.render(scene, camera);
+        }
+
+        // Prevenire comportamenti indesiderati su mobile
+        document.addEventListener('touchmove', function(event) {
+            if (event.scale !== 1) {
+                event.preventDefault();
+            }
+        }, { passive: false });
+
+        document.addEventListener('gesturestart', function(event) {
+            event.preventDefault();
+        });
+
+        document.addEventListener('gesturechange', function(event) {
+            event.preventDefault();
+        });
+
+        document.addEventListener('gestureend', function(event) {
+            event.preventDefault();
+        });
+
+        // Previeni lo scroll della pagina
+        document.addEventListener('scroll', function(event) {
+            event.preventDefault();
+            window.scrollTo(0, 0);
+        });
+
+        window.addEventListener('load', function() {
+            setTimeout(function() {
+                window.scrollTo(0, 0);
+            }, 0);
+        });
+
+        // Fix per l'altezza su mobile
+        function setViewportHeight() {
+            let vh = window.innerHeight * 0.01;
+            document.documentElement.style.setProperty('--vh', `${vh}px`);
+        }
+
+        setViewportHeight();
+        window.addEventListener('resize', setViewportHeight);
+
+        init();
+        animate();
+    </script>
+</body>
+</html>

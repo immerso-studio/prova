@@ -3,180 +3,593 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quadrati Smussati in Gradiente</title>
+    <title>BLUE LOCUS - Hero Section</title>
+    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
+        @font-face {
+            font-family: 'DAMN';
+            src: url('assets/font/DAMN.otf') format('opentype'),
+                 url('assets/font/DAMN.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+            font-display: swap;
+        }
+        
         body {
             margin: 0;
             padding: 0;
             overflow: hidden;
-            background-color: #006266; /* Blu petrolio */
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #002122;
+            font-family: 'Rubik', sans-serif;
+            cursor: none;
         }
         canvas {
             display: block;
-        }
-        .info {
             position: absolute;
-            bottom: 20px;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+        
+        /* NUOVO: Sfumatura diagonale che copre tutto lo schermo */
+        .gradient-overlay {
+            position: absolute;
+            top: 0;
             left: 0;
             width: 100%;
-            text-align: center;
+            height: 100%;
+            z-index: 2;
+            pointer-events: none;
+            background: linear-gradient(
+                135deg,
+                rgba(0, 33, 34, 1) 0%,
+                rgba(0, 33, 34, 0.7) 30%,
+                rgba(0, 33, 34, 0.4) 50%,
+                rgba(0, 33, 34, 0) 70%
+            );
+        }
+        
+        .hero-content {
+            position: absolute;
+            top: 80px;
+            left: 80px;
+            text-align: left;
             color: white;
-            font-size: 14px;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
-            z-index: 100;
+            z-index: 3; /* Sopra la sfumatura */
+            max-width: 600px;
+        }
+        .title-container {
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+        .divider {
+            width: 100%;
+            height: 1px;
+            background: rgba(255, 255, 255, 0.8);
+            margin-bottom: 1.5rem;
+            opacity: 0;
+            transform: translateX(-20px);
+            transition: all 1s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+        .divider.visible {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        .title-mask {
+            overflow: hidden;
+            display: block;
+        }
+        .title {
+            font-family: 'DAMN', sans-serif;
+            font-size: 10rem;
+            font-weight: 900;
+            letter-spacing: 0.15em;
+            line-height: 0.9;
+            text-transform: uppercase;
+            margin: 0 0 0.5rem 0;
+            color: #ffffff;
+        }
+        .title-word {
+            display: inline-block;
+            transform: translateY(100%);
+            opacity: 0;
+            transition: all 0.8s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+        .title-word.visible {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        .description-mask {
+            overflow: hidden;
+            display: block;
+        }
+        .description {
+            font-family: 'Rubik', sans-serif;
+            font-size: 1rem;
+            font-weight: 300;
+            letter-spacing: 0.1em;
+            line-height: 1.4;
+            text-transform: uppercase;
+            margin: 0;
+            color: rgba(255, 255, 255, 0.8);
+        }
+        .description-word {
+            display: inline-block;
+            transform: translateY(100%);
+            opacity: 0;
+            transition: all 0.8s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+        .description-word.visible {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        .cursor {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 1000;
+            mix-blend-mode: difference;
+            transform: translate(-50%, -50%);
+        }
+        
+        @media (max-width: 768px) {
+            .hero-content {
+                top: 60px;
+                left: 40px;
+                right: 40px;
+            }
+            .title {
+                font-size: 7rem;
+                letter-spacing: 0.1em;
+            }
+            .description {
+                font-size: 0.9rem;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="info">Passa il mouse sui quadrati per vedere l'effetto hover</div>
+    <div class="cursor"></div>
+    
+    <!-- Canvas Three.js per gli elementi grafici -->
+    
+    <!-- NUOVO: Sfumatura diagonale che copre tutto lo schermo -->
+    <div class="gradient-overlay"></div>
+    
+    <!-- Contenuto testuale sopra la sfumatura -->
+    <div class="hero-content">
+        <div class="divider"></div>
+        <div class="title-container">
+            <div class="title-mask">
+                <h1 class="title">
+                    <span class="title-word">BLUE</span><br>
+                    <span class="title-word">LOCUS</span>
+                </h1>
+            </div>
+        </div>
+        <div class="description-mask">
+            <p class="description">
+                <span class="description-word">Digital</span> 
+                <span class="description-word">innovation</span> 
+                <span class="description-word">meets</span> 
+                <span class="description-word">sustainable</span> 
+                <span class="description-word">technology.</span>
+            </p>
+        </div>
+    </div>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
-        // Inizializzazione
+        // Inizializzazione Three.js
         const scene = new THREE.Scene();
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        const renderer = new THREE.WebGLRenderer({ 
+            antialias: true,
+            alpha: true 
+        });
         
         renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setClearColor(0x006266); // Blu petrolio
+        renderer.setClearColor(0x002122, 1);
         document.body.appendChild(renderer.domElement);
         
         // Parametri per la griglia
-        const squareSize = 1;
+        const baseSize = 0.9;
         const gap = 0;
-        const borderRadius = 0.15; // Smussatura
         
-        // Calcola il numero di quadrati per riga e colonna
-        const squaresX = Math.ceil(window.innerWidth / 80);
-        const squaresY = Math.ceil(window.innerHeight / 80);
+        // Calcola il numero di elementi per riga e colonna
+        const elementsX = Math.ceil(window.innerWidth / 45);
+        const elementsY = Math.ceil(window.innerHeight / 45);
         
-        // Array per memorizzare i quadrati
-        const squares = [];
+        // Array per memorizzare gli elementi
+        const elements = [];
         
-        // Crea la geometria del quadrato smussato
-        const createRoundedSquareGeometry = (width, height, radius, segments) => {
+        // Variabile per controllare la comparsa diagonale
+        let diagonalRevealProgress = 0;
+        let revealAnimationStarted = false;
+        
+        // Variabili per l'animazione a onda - PIÙ VELOCE
+        let waveActive = false;
+        let waveProgress = 0;
+        let waveStartTime = 0;
+        const waveDuration = 1800; // RIDOTTO da 3000 a 1800ms (più veloce)
+        const waveInterval = 10000; // 10 secondi tra le onde
+
+        // Funzioni di easing per effetto più smooth
+        function easeInOutCubic(t) {
+            return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+        }
+
+        function easeOutQuart(t) {
+            return 1 - Math.pow(1 - t, 4);
+        }
+
+        function easeInOutSine(t) {
+            return -(Math.cos(Math.PI * t) - 1) / 2;
+        }
+
+        // Funzione per creare geometria morphing tra cerchio e quadrato smussato
+        function createMorphGeometry(progress, size, cornerRadius, segments) {
             const shape = new THREE.Shape();
+            const halfSize = size / 2;
             
-            // Definisci i punti per il quadrato smussato
-            shape.moveTo(-width/2 + radius, -height/2);
-            shape.lineTo(width/2 - radius, -height/2);
-            shape.quadraticCurveTo(width/2, -height/2, width/2, -height/2 + radius);
-            shape.lineTo(width/2, height/2 - radius);
-            shape.quadraticCurveTo(width/2, height/2, width/2 - radius, height/2);
-            shape.lineTo(-width/2 + radius, height/2);
-            shape.quadraticCurveTo(-width/2, height/2, -width/2, height/2 - radius);
-            shape.lineTo(-width/2, -height/2 + radius);
-            shape.quadraticCurveTo(-width/2, -height/2, -width/2 + radius, -height/2);
+            const currentRadius = cornerRadius * progress;
+            const circleInfluence = 1 - progress;
             
-            const geometry = new THREE.ShapeGeometry(shape, segments);
-            return geometry;
-        };
+            // MODIFICA: Riduci la dimensione dei cerchi iniziali
+            const circleScale = 0.25; // Ridotto da 0.4 a 0.25 per cerchi più piccoli
+            
+            const points = [];
+            const numPoints = segments * 4;
+            
+            for (let i = 0; i < numPoints; i++) {
+                const angle = (i / numPoints) * Math.PI * 2;
+                const quadrant = Math.floor(i / segments);
+                
+                let x, y;
+                
+                if (progress === 0) {
+                    // MODIFICA: Cerchi più piccoli
+                    x = Math.cos(angle) * (halfSize * circleScale);
+                    y = Math.sin(angle) * (halfSize * circleScale);
+                } else if (progress === 1) {
+                    // I quadrati rimangono della stessa dimensione
+                    switch (quadrant) {
+                        case 0:
+                            x = halfSize - currentRadius + Math.cos(angle) * currentRadius;
+                            y = halfSize - currentRadius + Math.sin(angle) * currentRadius;
+                            break;
+                        case 1:
+                            x = -halfSize + currentRadius + Math.cos(angle) * currentRadius;
+                            y = halfSize - currentRadius + Math.sin(angle) * currentRadius;
+                            break;
+                        case 2:
+                            x = -halfSize + currentRadius + Math.cos(angle) * currentRadius;
+                            y = -halfSize + currentRadius + Math.sin(angle) * currentRadius;
+                            break;
+                        case 3:
+                            x = halfSize - currentRadius + Math.cos(angle) * currentRadius;
+                            y = -halfSize + currentRadius + Math.sin(angle) * currentRadius;
+                            break;
+                    }
+                } else {
+                    // MODIFICA: Cerchi più piccoli durante la transizione
+                    const circleX = Math.cos(angle) * (halfSize * circleScale);
+                    const circleY = Math.sin(angle) * (halfSize * circleScale);
+                    
+                    let squareX, squareY;
+                    switch (quadrant) {
+                        case 0:
+                            squareX = halfSize - currentRadius + Math.cos(angle) * currentRadius;
+                            squareY = halfSize - currentRadius + Math.sin(angle) * currentRadius;
+                            break;
+                        case 1:
+                            squareX = -halfSize + currentRadius + Math.cos(angle) * currentRadius;
+                            squareY = halfSize - currentRadius + Math.sin(angle) * currentRadius;
+                            break;
+                        case 2:
+                            squareX = -halfSize + currentRadius + Math.cos(angle) * currentRadius;
+                            squareY = -halfSize + currentRadius + Math.sin(angle) * currentRadius;
+                            break;
+                        case 3:
+                            squareX = halfSize - currentRadius + Math.cos(angle) * currentRadius;
+                            squareY = -halfSize + currentRadius + Math.sin(angle) * currentRadius;
+                            break;
+                    }
+                    
+                    x = circleX * circleInfluence + squareX * progress;
+                    y = circleY * circleInfluence + squareY * progress;
+                }
+                
+                points.push(new THREE.Vector2(x, y));
+            }
+            
+            shape.moveTo(points[0].x, points[0].y);
+            for (let i = 1; i < points.length; i++) {
+                shape.lineTo(points[i].x, points[i].y);
+            }
+            shape.lineTo(points[0].x, points[0].y);
+            
+            return new THREE.ShapeGeometry(shape);
+        }
         
-        const squareGeometry = createRoundedSquareGeometry(squareSize, squareSize, borderRadius, 8);
+        function smoothStep(t) {
+            return t * t * (3 - 2 * t);
+        }
+
+        // Funzione per l'animazione a onda diagonale - PIÙ SMOOTH
+        function startWaveAnimation() {
+            waveActive = true;
+            waveProgress = 0;
+            waveStartTime = Date.now();
+        }
+
+        function updateWaveAnimation() {
+            if (!waveActive) return;
+
+            const elapsed = Date.now() - waveStartTime;
+            const rawProgress = Math.min(elapsed / waveDuration, 1);
+            
+            // Applica easing per effetto più smooth
+            waveProgress = easeInOutSine(rawProgress);
+            
+            elements.forEach(element => {
+                const userData = element.userData;
+                if (userData.revealProgress > 0) {
+                    // Calcola la posizione normalizzata (da 0 a 1) sia in X che in Y
+                    const normalizedX = (element.position.x + (elementsX * baseSize) / 2) / (elementsX * baseSize);
+                    const normalizedY = 1 - ((element.position.y + (elementsY * baseSize) / 2) / (elementsY * baseSize));
+                    
+                    // Calcola la distanza diagonale - l'onda si muove da alto-sinistra a basso-destra
+                    const diagonalDistance = (normalizedX + normalizedY) / 2;
+                    
+                    // L'onda si muove diagonalmente con easing
+                    const wavePosition = waveProgress;
+                    const distanceFromWave = Math.abs(diagonalDistance - wavePosition);
+                    
+                    // Influenza dell'onda - più smooth con curva di easing
+                    const rawInfluence = Math.max(0, 1 - (distanceFromWave * 3));
+                    const waveInfluence = easeOutQuart(rawInfluence);
+                    
+                    if (waveInfluence > 0) {
+                        userData.waveMorphProgress = waveInfluence;
+                        userData.needsGeometryUpdate = true;
+                    }
+                }
+            });
+
+            if (rawProgress >= 1) {
+                waveActive = false;
+                // Reset più smooth dopo che l'onda è passata
+                setTimeout(() => {
+                    const resetStartTime = Date.now();
+                    const resetDuration = 800;
+                    
+                    function smoothReset() {
+                        const resetElapsed = Date.now() - resetStartTime;
+                        const resetProgress = Math.min(resetElapsed / resetDuration, 1);
+                        const easeProgress = easeInOutCubic(resetProgress);
+                        
+                        elements.forEach(element => {
+                            const userData = element.userData;
+                            userData.waveMorphProgress = userData.waveMorphProgress * (1 - easeProgress);
+                            userData.needsGeometryUpdate = true;
+                        });
+                        
+                        if (resetProgress < 1) {
+                            requestAnimationFrame(smoothReset);
+                        }
+                    }
+                    
+                    smoothReset();
+                }, 200);
+            }
+        }
         
-        // Crea i materiali con gradiente verde-blu
-        for (let y = 0; y < squaresY; y++) {
-            for (let x = 0; x < squaresX; x++) {
-                // Calcola il colore in base alla posizione (gradiente diagonale)
-                const greenValue = 0.7 - (x / squaresX) * 0.5;
-                const blueValue = 0.5 + (y / squaresY) * 0.5;
-                const color = new THREE.Color(0, greenValue, blueValue);
+        // Crea gli elementi inizialmente nascosti
+        for (let y = 0; y < elementsY; y++) {
+            for (let x = 0; x < elementsX; x++) {
+                // COLORE UNIFORME - RIMOSSA LA SFUMATURA
+                const color = new THREE.Color(0, 0.5, 0.7); // Verde: 0.5, Blu: 0.7
                 
-                // Crea il materiale
-                const material = new THREE.MeshBasicMaterial({ color: color });
+                const material = new THREE.MeshBasicMaterial({ 
+                    color: color,
+                    transparent: true,
+                    opacity: 0, // Inizialmente trasparenti
+                    side: THREE.DoubleSide
+                });
                 
-                // Crea il quadrato
-                const square = new THREE.Mesh(squareGeometry, material);
+                const initialGeometry = createMorphGeometry(0, baseSize, 0.15, 8);
+                const element = new THREE.Mesh(initialGeometry, material);
                 
-                // Posiziona il quadrato
-                square.position.x = (x - squaresX/2 + 0.5) * (squareSize + gap);
-                square.position.y = (squaresY/2 - y - 0.5) * (squareSize + gap);
+                element.position.x = (x - elementsX/2 + 0.5) * (baseSize + gap);
+                element.position.y = (elementsY/2 - y - 0.5) * (baseSize + gap);
                 
-                // Aggiungi proprietà per l'animazione
-                square.userData = {
-                    originalScale: 1,
-                    targetScale: 1,
-                    hover: false,
-                    originalColor: color.clone()
+                // CALCOLO CORRETTO: invertiamo la direzione della diagonale
+                // Invece di andare da alto-sinistra a basso-destra, andiamo da basso-destra a alto-sinistra
+                const diagonalDistance = 1 - ((x / elementsX) + (y / elementsY)) / 2;
+                
+                element.userData = {
+                    targetScale: 0.3,
+                    currentScale: 0.3,
+                    morphProgress: 0,
+                    targetMorphProgress: 0,
+                    waveMorphProgress: 0,
+                    basePosition: new THREE.Vector3(
+                        (x - elementsX/2 + 0.5) * (baseSize + gap),
+                        (elementsY/2 - y - 0.5) * (baseSize + gap),
+                        0
+                    ),
+                    diagonalDistance: diagonalDistance,
+                    revealProgress: 0,
+                    needsGeometryUpdate: false
                 };
                 
-                // Aggiungi alla scena
-                scene.add(square);
-                squares.push(square);
+                element.scale.set(0.3, 0.3, 1);
+                scene.add(element);
+                elements.push(element);
             }
         }
         
-        // Posiziona la camera
         camera.position.z = 5;
         
-        // Gestione dell'hover
+        const mouseWorldPosition = new THREE.Vector3();
+        const mousePosition = new THREE.Vector2();
         const raycaster = new THREE.Raycaster();
-        const mouse = new THREE.Vector2();
         
-        function onMouseMove(event) {
-            // Calcola la posizione del mouse in coordinate normalizzate (-1 a +1)
-            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-            mouse.y = - (event.clientY / window.innerHeight) * 2 + 1;
+        function updateMousePosition(event) {
+            mousePosition.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mousePosition.y = - (event.clientY / window.innerHeight) * 2 + 1;
             
-            // Aggiorna il raycaster
-            raycaster.setFromCamera(mouse, camera);
+            const cursor = document.querySelector('.cursor');
+            cursor.style.left = event.clientX + 'px';
+            cursor.style.top = event.clientY + 'px';
             
-            // Controlla le intersezioni con un raggio più ampio
-            const intersects = raycaster.intersectObjects(squares);
-            
-            // Reset di tutti i quadrati
-            squares.forEach(square => {
-                square.userData.targetScale = 1;
-                square.material.color.copy(square.userData.originalColor);
-            });
-            
-            // Applica l'effetto hover ai quadrati intersecati e a quelli vicini
-            if (intersects.length > 0) {
-                const hoveredSquare = intersects[0].object;
-                const hoveredPosition = hoveredSquare.position.clone();
-                
-                squares.forEach(square => {
-                    const distance = square.position.distanceTo(hoveredPosition);
-                    
-                    // Effetto più ampio: influenza i quadrati fino a 2 unità di distanza
-                    if (distance < 2.5) {
-                        // Calcola l'intensità dell'effetto in base alla distanza
-                        const intensity = 1 - (distance / 2.5);
-                        
-                        // Scala in base alla distanza (più vicino = più grande)
-                        square.userData.targetScale = 1 + (0.4 * intensity);
-                        
-                        // Leggera modifica del colore per evidenziare l'area di hover
-                        const newColor = square.userData.originalColor.clone();
-                        newColor.r += 0.2 * intensity;
-                        square.material.color.lerp(newColor, 0.3);
-                    }
-                });
-            }
+            raycaster.setFromCamera(mousePosition, camera);
+            const plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
+            raycaster.ray.intersectPlane(plane, mouseWorldPosition);
         }
         
-        window.addEventListener('mousemove', onMouseMove);
+        window.addEventListener('mousemove', updateMousePosition);
         
-        // Animazione
+        // Animazione del testo parola per parola
+        function startTextAnimation() {
+            // Prima la linea divisoria
+            setTimeout(() => {
+                document.querySelector('.divider').classList.add('visible');
+            }, 300);
+            
+            // Poi le parole del titolo una alla volta
+            const titleWords = document.querySelectorAll('.title-word');
+            titleWords.forEach((word, index) => {
+                setTimeout(() => {
+                    word.classList.add('visible');
+                }, 800 + (index * 300));
+            });
+            
+            // Infine le parole della descrizione
+            const descriptionWords = document.querySelectorAll('.description-word');
+            descriptionWords.forEach((word, index) => {
+                setTimeout(() => {
+                    word.classList.add('visible');
+                }, 1800 + (index * 150));
+            });
+            
+            // POI INIZIA LA COMPARSA DEGLI ELEMENTI
+            setTimeout(() => {
+                revealAnimationStarted = true;
+                startDiagonalReveal();
+                
+                // Avvia l'animazione a onda ogni 10 secondi
+                setInterval(startWaveAnimation, waveInterval);
+            }, 2500);
+        }
+        
+        // Funzione per l'effetto di comparsa diagonale - CORRETTA
+        function startDiagonalReveal() {
+            const revealDuration = 2000;
+            const startTime = Date.now();
+            
+            function updateReveal() {
+                if (!revealAnimationStarted) return;
+                
+                const elapsed = Date.now() - startTime;
+                diagonalRevealProgress = Math.min(elapsed / revealDuration, 1);
+                
+                // Aggiorna tutti gli elementi
+                elements.forEach(element => {
+                    const userData = element.userData;
+                    
+                    // CALCOLO CORRETTO: ora la comparsa inizia dall'angolo in basso a destra
+                    // e procede verso l'alto a sinistra, sotto la scritta
+                    const revealThreshold = userData.diagonalDistance * 0.8;
+                    userData.revealProgress = Math.max(0, Math.min(1, 
+                        (diagonalRevealProgress - revealThreshold) / 0.2
+                    ));
+                    
+                    // Assicuriamoci che tutti gli elementi siano completamente visibili alla fine
+                    if (diagonalRevealProgress >= 0.95) {
+                        userData.revealProgress = 1;
+                    }
+                    
+                    // Aggiorna l'opacità in base al progresso di rivelazione
+                    element.material.opacity = userData.revealProgress * 0.9;
+                });
+                
+                if (diagonalRevealProgress < 1) {
+                    requestAnimationFrame(updateReveal);
+                }
+            }
+            
+            updateReveal();
+        }
+        
+        // Avvia l'animazione immediatamente
+        setTimeout(startTextAnimation, 500);
+        
         function animate() {
             requestAnimationFrame(animate);
             
-            // Animazione dello scale con interpolazione più graduale
-            squares.forEach(square => {
-                const scale = square.scale.x;
-                const targetScale = square.userData.targetScale;
+            // Aggiorna l'animazione a onda
+            if (waveActive) {
+                updateWaveAnimation();
+            }
+            
+            elements.forEach(element => {
+                const userData = element.userData;
                 
-                // Interpolazione più graduale per un effetto più fluido
-                if (Math.abs(scale - targetScale) > 0.001) {
-                    square.scale.x = square.scale.y = scale + (targetScale - scale) * 0.05;
+                // Solo se l'elemento è stato rivelato, applica l'effetto hover
+                if (userData.revealProgress > 0) {
+                    const distance = userData.basePosition.distanceTo(mouseWorldPosition);
+                    const maxDistance = 2.5;
+                    const rawInfluence = Math.max(0, 1 - (distance / maxDistance));
+                    const influence = smoothStep(rawInfluence);
+                    
+                    const minScale = 0.3;
+                    const maxScale = 0.8;
+                    const targetScale = minScale + ((maxScale - minScale) * influence);
+                    userData.targetScale = targetScale;
+                    
+                    userData.targetMorphProgress = influence > 0.1 ? influence : 0;
+                    
+                    if (Math.abs(userData.currentScale - userData.targetScale) > 0.001) {
+                        const scaleDiff = userData.targetScale - userData.currentScale;
+                        userData.currentScale += scaleDiff * 0.1;
+                        element.scale.set(userData.currentScale, userData.currentScale, 1);
+                    }
+                    
+                    // Combina l'effetto hover con l'effetto onda (prendi il valore più alto)
+                    const totalMorphProgress = Math.max(userData.targetMorphProgress, userData.waveMorphProgress);
+                    
+                    if (Math.abs(userData.morphProgress - totalMorphProgress) > 0.01) {
+                        const morphDiff = totalMorphProgress - userData.morphProgress;
+                        userData.morphProgress += morphDiff * 0.15; // Più responsive
+                        userData.needsGeometryUpdate = true;
+                    }
+                    
+                    if (userData.needsGeometryUpdate) {
+                        const newGeometry = createMorphGeometry(
+                            userData.morphProgress, 
+                            baseSize, 
+                            0.15, 
+                            12
+                        );
+                        
+                        element.geometry.dispose();
+                        element.geometry = newGeometry;
+                        userData.needsGeometryUpdate = false;
+                    }
+                    
+                    // Combina l'opacità della rivelazione con l'effetto hover
+                    element.material.opacity = userData.revealProgress * (0.7 + (0.3 * influence));
                 }
             });
             
             renderer.render(scene, camera);
         }
         
-        // Gestione del ridimensionamento della finestra
         function onWindowResize() {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
@@ -184,8 +597,13 @@
         }
         
         window.addEventListener('resize', onWindowResize);
+        document.addEventListener('mouseenter', () => {
+            document.body.style.cursor = 'none';
+        });
+        document.addEventListener('mouseleave', () => {
+            document.body.style.cursor = 'default';
+        });
         
-        // Avvia l'animazione
         animate();
     </script>
 </body>

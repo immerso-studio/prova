@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2D Interactive Columns</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+            background-color: #54665b;
+        }
+        
+        #container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+        
+        #info {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: white;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 14px;
+            z-index: 10;
+        }
+    </style>
+</head>
+<body>
+    <div id="container"></div>
+    <div id="info">Move mouse over columns - 2D Interactive Visualization</div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const container = document.getElementById('container');
+            
+            // Setup scene
+            const scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x54665b);
+
+            // Setup orthographic camera for 2D view
+            const aspect = window.innerWidth / window.innerHeight;
+            const camera = new THREE.OrthographicCamera(
+                -aspect * 10, // left
+                aspect * 10,  // right
+                10,           // top
+                -10,          // bottom
+                0.1,
+                1000
+            );
+            camera.position.z = 10;
+
+            // Setup renderer
+            const renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            container.appendChild(renderer.domElement);
+
+            // Column colors - mantengono il loro colore
+            const colors = [
+                0x87a896, 0xcccc6c, 0xae79af, 0x847263, 
+                0x6ba1b2, 0xd4a574, 0x9a8c75, 0x6d8a7d,
+                0x87a896, 0xcccc6c, 0xae79af, 0x847263,
+                0x6ba1b2, 0xd4a574, 0x9a8c75, 0x6d8a7d
+            ];
+            
+            // Create columns that fill the screen evenly
+            const columns = [];
+            const columnCount = 16;
+            const baseHeight = 10; // Tutte le colonne hanno la stessa altezza base
+            const maxHeight = 18;  // Altezza quando in hover
+            
+            // Calcoliamo la larghezza per riempire esattamente lo schermo
+            // senza spazi tra le colonne (i bordi si toccano)
+            const totalScreenWidth = aspect * 20; // Larghezza totale visibile
+            const columnWidth = totalScreenWidth / columnCount; // Larghezza di ogni colonna
+            
+            const startX = -totalScreenWidth / 2 + columnWidth / 2;
+
+            // Store target heights for animation
+            const targetHeights = [];
+
+            for (let i = 0; i < columnCount; i++) {
+                const color = colors[i]; // Ogni colonna mantiene il suo colore specifico
+                
+                // Create 2D rectangles
+                const geometry = new THREE.PlaneGeometry(columnWidth, baseHeight);
+                const material = new THREE.MeshBasicMaterial({ 
+                    color,
+                    side: THREE.DoubleSide
+                });
+                const column = new THREE.Mesh(geometry, material);
+                
+                // Posizionamento per far toccare i bordi
+                column.position.x = startX + i * columnWidth;
+                column.position.y = 0;
+                
+                // Store custom data
+                column.userData = {
+                    baseHeight: baseHeight,
+                    maxHeight: maxHeight,
+                    currentHeight: baseHeight,
+                    targetHeight: baseHeight,
+                    index: i,
+                    color: color, // Memorizza il colore
+                    baseX: column.position.x
+                };
+                
+                scene.add(column);
+                columns.push(column);
+                targetHeights.push(baseHeight);
+            }
+
+            // Raycaster for mouse interaction
+            const raycaster = new THREE.Raycaster();
+            const mouse = new THREE.Vector2(-2, -2); // Inizializza fuori dallo schermo
+
+            // Mouse move handler
+            const onMouseMove = (event) => {
+                mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+                mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+            };
+
+            window.addEventListener('mousemove', onMouseMove);
+
+            // Handle window resize
+            const onWindowResize = () => {
+                const newAspect = window.innerWidth / window.innerHeight;
+                
+                // Update camera
+                camera.left = -newAspect * 10;
+                camera.right = newAspect * 10;
+                camera.updateProjectionMatrix();
+                
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                
+                // Ricalcola la posizione delle colonne per il nuovo aspect ratio
+                const newTotalScreenWidth = newAspect * 20;
+                const newColumnWidth = newTotalScreenWidth / columnCount;
+                const newStartX = -newTotalScreenWidth / 2 + newColumnWidth / 2;
+                
+                // Aggiorna geometrie e posizioni
+                columns.forEach((column, i) => {
+                    // Aggiorna la geometria con la nuova larghezza
+                    column.geometry.dispose();
+                    column.geometry = new THREE.PlaneGeometry(newColumnWidth, baseHeight);
+                    
+                    // Aggiorna la posizione
+                    column.position.x = newStartX + i * newColumnWidth;
+                    column.userData.baseX = column.position.x;
+                    
+                    // Aggiorna la scala dell'altezza (se animata)
+                    column.scale.y = column.userData.currentHeight / baseHeight;
+                });
+            };
+
+            window.addEventListener('resize', onWindowResize);
+
+            // Animation loop
+            const animate = () => {
+                requestAnimationFrame(animate);
+
+                // Raycast for hover detection
+                raycaster.setFromCamera(mouse, camera);
+                const intersects = raycaster.intersectObjects(columns);
+
+                // Reset all targets to base height
+                columns.forEach((column, idx) => {
+                    targetHeights[idx] = baseHeight;
+                });
+
+                // Set hovered column to max height
+                if (intersects.length > 0) {
+                    const hoveredColumn = intersects[0].object;
+                    const idx = hoveredColumn.userData.index;
+                    targetHeights[idx] = maxHeight;
+                }
+
+                // Smooth animation for all columns
+                columns.forEach((column, idx) => {
+                    const targetHeight = targetHeights[idx];
+                    const currentHeight = column.userData.currentHeight;
+                    
+                    // Smooth interpolation
+                    const newHeight = currentHeight + (targetHeight - currentHeight) * 0.15;
+                    column.userData.currentHeight = newHeight;
+
+                    // Update geometry scale (not position, so they stay aligned at bottom)
+                    column.scale.y = newHeight / baseHeight;
+                    
+                    // Mantieni la posizione in modo che le colonne si alzino dal centro
+                    // (non cambia position.y perché scale.y scala dal centro)
+                });
+
+                renderer.render(scene, camera);
+            };
+
+            // Aggiungi un bordo visivo tra le colonne (opzionale, per vedere meglio i confini)
+            function addColumnBorders() {
+                const borderGeometry = new THREE.PlaneGeometry(totalScreenWidth, 0.05);
+                const borderMaterial = new THREE.MeshBasicMaterial({ 
+                    color: 0xffffff,
+                    transparent: true,
+                    opacity: 0.3
+                });
+                
+                // Linea orizzontale alla base
+                const baseLine = new THREE.Mesh(borderGeometry, borderMaterial);
+                baseLine.position.y = -baseHeight/2 - 0.5;
+                scene.add(baseLine);
+                
+                // Linea orizzontale in alto
+                const topLine = new THREE.Mesh(borderGeometry, borderMaterial);
+                topLine.position.y = baseHeight/2 + 0.5;
+                scene.add(topLine);
+            }
+            
+            addColumnBorders();
+
+            // Start animation
+            animate();
+
+            // Cleanup function
+            window.cleanupThreeJS = function() {
+                window.removeEventListener('mousemove', onMouseMove);
+                window.removeEventListener('resize', onWindowResize);
+                if (container && renderer.domElement) {
+                    container.removeChild(renderer.domElement);
+                }
+                renderer.dispose();
+                
+                // Dispose geometries and materials
+                columns.forEach(column => {
+                    column.geometry.dispose();
+                    column.material.dispose();
+                });
+            };
+        });
+    </script>
+</body>
+</html>

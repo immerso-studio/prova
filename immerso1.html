@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deep Dive Design - Split Rows</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@600;800&display=swap" rel="stylesheet">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            background-color: #f5f1e9;
+            font-family: 'Inter Tight', sans-serif;
+            overflow: hidden;
+        }
+
+        .hero-wrapper {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #canvas-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        /* Contenitore principale del testo */
+        .content-container {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            flex-direction: column; /* Impila le righe verticalmente */
+            justify-content: center;
+            align-items: center;
+            margin-top: 15vh; /* Sposta leggermente in basso rispetto al centro esatto per lasciare spazio al 3D */
+        }
+
+        /* Righe orizzontali per le parole */
+        .row-container {
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .reveal-mask {
+            overflow: hidden;
+            padding: 5px; 
+        }
+
+        /* Stile Blue Glass con angoli tagliati */
+        .angled-container {
+            background: rgba(0, 60, 255, 0.6); 
+            backdrop-filter: blur(12px); 
+            -webkit-backdrop-filter: blur(12px);
+            
+            padding: 15px 35px; /* Padding leggermente ridotto per far stare tutto */
+            display: inline-block;
+            
+            transform: translateY(110%); /* Start position for GSAP */
+
+            -webkit-clip-path: polygon(
+                20px 0%, calc(100% - 20px) 0%, 100% 20px, 100% calc(100% - 20px), 
+                calc(100% - 20px) 100%, 20px 100%, 0% calc(100% - 20px), 0% 20px
+            );
+            clip-path: polygon(
+                20px 0%, calc(100% - 20px) 0%, 100% 20px, 100% calc(100% - 20px), 
+                calc(100% - 20px) 100%, 20px 100%, 0% calc(100% - 20px), 0% 20px
+            );
+        }
+
+        .text-content {
+            font-size: 2.2rem; 
+            font-weight: 800;
+            color: #000;
+            text-transform: uppercase;
+            letter-spacing: -0.5px;
+            margin: 0;
+            line-height: 1;
+        }
+
+        /* Mobile Responsive */
+        @media screen and (max-width: 768px) {
+            .text-content { font-size: 1.5rem; }
+            .angled-container { padding: 10px 20px; }
+            .row-container { gap: 8px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="hero-wrapper">
+        <div id="canvas-container"></div>
+
+        <div class="content-container">
+            
+            <div class="row-container">
+                <div class="reveal-mask">
+                    <div class="angled-container pill-anim">
+                        <h1 class="text-content">A</h1>
+                    </div>
+                </div>
+                <div class="reveal-mask">
+                    <div class="angled-container pill-anim">
+                        <h1 class="text-content">DEEP</h1>
+                    </div>
+                </div>
+                <div class="reveal-mask">
+                    <div class="angled-container pill-anim">
+                        <h1 class="text-content">DIVE</h1>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row-container">
+                <div class="reveal-mask">
+                    <div class="angled-container pill-anim">
+                        <h1 class="text-content">INTO</h1>
+                    </div>
+                </div>
+                <div class="reveal-mask">
+                    <div class="angled-container pill-anim">
+                        <h1 class="text-content">DESIGN</h1>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // --- THREE.JS ---
+        let scene, camera, renderer, model;
+        let mouseX = 0, mouseY = 0;
+        let targetRotationX = 0, targetRotationY = 0;
+        const slowingFactor = 0.05; 
+
+        function initThreeJS() {
+            const container = document.getElementById('canvas-container');
+
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.z = 5; 
+
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setClearColor(0x000000, 0); 
+            container.appendChild(renderer.domElement);
+
+            const ambientLight = new THREE.AmbientLight(0xffffff, 1.2);
+            scene.add(ambientLight);
+
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+            directionalLight.position.set(2, 5, 5); 
+            scene.add(directionalLight);
+
+            const loader = new THREE.GLTFLoader();
+            // Assicurati che questo link sia corretto
+            const modelPath = 'assets/sedie/sedia-1.glb'; 
+
+            loader.load(modelPath, function (gltf) {
+                model = gltf.scene;
+                
+                // Posizionamento: Più in alto (y positivo) per stare sopra le scritte
+                model.scale.set(5, 5, 5); 
+                model.position.y = -1.5; 
+                
+                scene.add(model);
+            });
+
+            document.addEventListener('mousemove', onDocumentMouseMove);
+            window.addEventListener('resize', onWindowResize);
+        }
+
+        function onDocumentMouseMove(event) {
+            mouseX = (event.clientX - window.innerWidth / 2) / (window.innerWidth / 2);
+            mouseY = (event.clientY - window.innerHeight / 2) / (window.innerHeight / 2);
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            if (model) {
+                targetRotationY = mouseX * 0.3;
+                targetRotationX = mouseY * 0.2;
+                model.rotation.y += (targetRotationY - model.rotation.y) * slowingFactor;
+                model.rotation.x += (targetRotationX - model.rotation.x) * slowingFactor;
+            }
+            renderer.render(scene, camera);
+        }
+
+        // --- GSAP ANIMATION ---
+        function initGsapAnimation() {
+            // Seleziona tutti gli elementi con la classe .pill-anim
+            const pills = document.querySelectorAll(".pill-anim");
+
+            gsap.to(pills, {
+                y: "0%",
+                duration: 1.4,
+                ease: "expo.out",
+                stagger: 0.1, // Effetto cascata tra le parole
+                delay: 0.2
+            });
+        }
+
+        window.addEventListener('load', function() {
+            initThreeJS();
+            animate();
+            initGsapAnimation();
+        });
+    </script>
+
+</body>
+</html>

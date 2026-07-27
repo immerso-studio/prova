@@ -384,7 +384,7 @@
             { 
                 id: 5, 
                 name: 'Sedia Scandinava', 
-                file: 'assets/sedie/sedia-6.glb', 
+                file: 'assets/sedie/sedia-3.glb', 
                 position: { x: 5, y: 0, z: 0 },
                 description: 'Sedia in stile scandinavo con linee essenziali e naturali. Design minimal e funzionale.',
                 dimensions: '105 x 75 x 50 cm',
@@ -989,7 +989,7 @@
             
             // Torna alla vista panoramica con animazione smooth dalla posizione corrente
             setTimeout(() => {
-                setCameraView('overview');
+                resetToOverview();
                 showAllInteractivePoints();
                 
                 // Rimuovi classe dettaglio
@@ -1005,6 +1005,31 @@
                     currentChairRotation = 0;
                 }
             }, 200);
+        }
+
+        function resetToOverview() {
+            currentView = 'overview';
+            
+            // Reset completo della camera alla posizione base
+            cameraOffsetX = 0; // Reset dell'offset laterale
+            
+            // Aggiorna la posizione corrente con quella attuale della camera
+            currentCameraPos = { ...camera.position };
+            currentLookAt = { x: camera.position.x, y: 0.5, z: 0 };
+            
+            // Imposta la posizione target per la vista panoramica
+            targetCameraPos = { 
+                x: cameraBasePosition.x,
+                y: cameraBasePosition.y,
+                z: cameraBasePosition.z
+            };
+            targetLookAt = { x: cameraBasePosition.x, y: 0.5, z: 0 };
+            
+            // Attiva l'animazione
+            isAnimating = true;
+            
+            // Aggiorna la posizione della camera
+            updateCameraPosition();
         }
 
         function setCameraView(view) {
