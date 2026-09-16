@@ -317,6 +317,13 @@
     overflow:hidden;
     cursor:pointer;
     contain:strict;
+    /* blocca selezione del testo quando si tiene premuto */
+    -webkit-user-select:none;
+    -moz-user-select:none;
+    -ms-user-select:none;
+    user-select:none;
+    -webkit-touch-callout:none;
+    -webkit-tap-highlight-color:transparent;
   }
 
   /* il canvas WebGL è renderizzato a risoluzione ridotta e upscalato:
@@ -488,7 +495,17 @@
     footer .foot-right{display:none;}
     footer .foot-left{flex:1 1 100%; justify-content:flex-start;}
 
-    .floating-hint{display:none;}
+    /* su mobile il floating-hint NON segue il mouse:
+       è ancorato in basso centrato, come il vecchio mobile-hold-hint */
+    .floating-hint{
+      display:flex;
+      left:50% !important;
+      top:auto !important;
+      bottom:clamp(14px, 4vh, 32px);
+      transform:translateX(-50%) !important;
+      font-size:clamp(13px, 3.4vw, 16px);
+      padding:0.4rem 0.9rem;
+    }
 
     .tunnel-canvas-holder > canvas:not(#grainCanvas):not(#grainCanvasSoft){
       filter:blur(1.6px) saturate(1.15);
@@ -1007,6 +1024,9 @@
       startDollyTransition(mouse.pressed ? 1.0 : 0.0);
     }
     function press(){
+      // blocca la selezione del testo su tutta la pagina durante il press
+      document.body.style.userSelect = 'none';
+      document.body.style.webkitUserSelect = 'none';
       mouse.pressed = true;
       updateInteractionState();
       if (!vignetteFaded){ vignetteFaded = true; fadeVignette(false); }
@@ -1014,12 +1034,17 @@
     }
     function release(){
       if (!mouse.pressed) return;
+      document.body.style.userSelect = '';
+      document.body.style.webkitUserSelect = '';
       mouse.pressed = false;
       updateInteractionState();
       if (vignetteFaded){ vignetteFaded = false; fadeVignette(true); }
       stopSequence();
       setHint(defaultHint(), 'assets/icon/1.webp');
     }
+
+    /* blocca drag nativo delle immagini / selezione */
+    holder.addEventListener('dragstart', function(e){ e.preventDefault(); });
 
     holder.addEventListener('mousedown', function(e){
       if (e.button === 0 && !e.target.closest('.interactive-ui')) press();
@@ -1041,15 +1066,18 @@
       hideHint();
     });
 
+    /* touchstart con passive:false per poter chiamare preventDefault()
+       ed evitare la selezione del testo / scroll durante il long-press */
     holder.addEventListener('touchstart', function(e){
       if (e.target.closest('.interactive-ui')) return;
+      e.preventDefault();
       if (e.touches.length){
         var rect = holder.getBoundingClientRect();
         mouse.x = ((e.touches[0].clientX - rect.left) / rect.width) * 2 - 1;
         mouse.y = -((e.touches[0].clientY - rect.top) / rect.height) * 2 + 1;
       }
       press();
-    }, { passive: true });
+    }, { passive: false });
 
     holder.addEventListener('touchend', release, { passive: true });
     holder.addEventListener('touchcancel', release, { passive: true });
@@ -1369,12 +1397,20 @@
         u.uColorMix.value = currentColorMix;
       }
 
-      var swx = mouse.x * 0.7, swy = mouse.y * 0.6;
-      camera.position.x += (swx - camera.position.x) * Math.min(1.8 * dt, 1);
-      camera.position.y += (swy - camera.position.y) * Math.min(1.8 * dt, 1);
-      camera.lookAt(camera.position.x + swx * 0.2, camera.position.y + swy * 0.2, camera.position.z + 12);
+      /* ---------- PARALLAX: SOLO DESKTOP ----------
+         Su mobile la camera NON viene toccata in nessun modo:
+         resta esattamente nella posizione/orientamento di init
+         (0, 0, -1.8) → lookAt(0, 0, 15). */
+      if (!isMobile) {
+        var swx = mouse.x * 0.7, swy = mouse.y * 0.6;
+        camera.position.x += (swx - camera.position.x) * Math.min(1.8 * dt, 1);
+        camera.position.y += (swy - camera.position.y) * Math.min(1.8 * dt, 1);
+        camera.lookAt(camera.position.x + swx * 0.2, camera.position.y + swy * 0.2, camera.position.z + 12);
+      }
 
-      if (hintShouldBeVisible && hintVisible){
+      /* il floating-hint segue il mouse solo su desktop:
+         su mobile è ancorato in basso centrato via CSS */
+      if (!isMobile && hintShouldBeVisible && hintVisible){
         hintX += (hintTX - hintX) * 0.1;
         hintY += (hintTY - hintY) * 0.1;
         // transform invece di left/top: nessun reflow per frame
@@ -1386,12 +1422,10 @@
 
     requestAnimationFrame(animate);
 
-    if (!isMobile){
-      setTimeout(function(){
-        hintTextEl.textContent = defaultHint();
-        showHint();
-      }, 1200);
-    }
+    setTimeout(function(){
+      hintTextEl.textContent = defaultHint();
+      showHint();
+    }, isMobile ? 600 : 1200);
   }
 
   /* ============================================================
